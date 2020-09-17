@@ -10,5 +10,6 @@ Rails.application.routes.draw do
     rest_root
     rest_resources :things
     rest_resources :read_only_things
+    rest_resource :thing
   end
 end

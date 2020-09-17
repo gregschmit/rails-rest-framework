@@ -26,16 +26,72 @@ Or install it yourself with:
 
 ## Usage
 
-To transform a controller into a RESTful controller, you can either include `BaseControllerMixin` or
-`ModelControllerMixin`. `BaseControllerMixin` provides a `root` action and a simple interface for
-routing arbitrary additional actions:
+### Controller Mixins
+
+To transform a controller into a RESTful controller, you can either include `BaseControllerMixin`,
+`ReadOnlyModelControllerMixin`, or `ModelControllerMixin`. `BaseControllerMixin` provides a `root`
+action and a simple interface for routing arbitrary additional actions:
 
 ```
-class Api1Controller < ActionController::Base
+class ApiController < ApplicationController
+  include RESTFramework::BaseControllerMixin
+  @extra_actions = {test: [:get]}
+
+  def test
+    render inline: "Test successful!"
+  end
+end
+```
+
+`ModelControllerMixin` assists with providing the standard CRUD for your controller.
+
+```
+class Api::MoviesController < ApiController
   include RESTFramework::ModelControllerMixin
 
-  def root
-    render inline: "This is the root of your API!"
+  @recordset = Movie.where(enabled: true)  # by default, @recordset would include all movies
+end
+```
+
+`ReadOnlyModelControllerMixin` only enables list/show actions, but since we're naming this
+controller in a way that doesn't make the model obvious, we can set that explicitly:
+
+```
+class Api::ReadOnlyMoviesController < ApiController
+  include RESTFramework::ReadOnlyModelControllerMixin
+
+  @model = Movie
+end
+```
+
+Note that you can also override `get_model` and `get_recordset` instance methods to override the API
+behavior based on each request.
+
+### Routing
+
+You can use Rails' `resource`/`resources` routers to route your API, however if you want
+`@extra_actions`/`@extra_member_actions` to be routed automatically, then you can use the
+`rest_resource`/`rest_resources` routers provided by this gem. You can also use `rest_root` to route
+the root of your API:
+
+```
+Rails.application.routes.draw do
+  rest_root :api  # will find `api_controller` and route the `root` action to '/api'
+  namespace :api do
+    rest_resources :movies
+    rest_resources :read_only_movies
+  end
+end
+```
+
+Or if you want the API root to be routed to `Api::RootController#root`:
+
+```
+Rails.application.routes.draw do
+  namespace :api do
+    rest_root  # will route `Api::RootController#root` to '/' in this namespace ('/api')
+    rest_resources :movies
+    rest_resources :read_only_movies
   end
 end
 ```
