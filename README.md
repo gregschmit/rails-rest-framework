@@ -1,7 +1,6 @@
 # REST Framework
 
 ![Gem](https://img.shields.io/gem/v/rest_framework)
-
 [![Build Status](https://travis-ci.org/gregschmit/rails-rest-framework.svg?branch=master)](https://travis-ci.org/gregschmit/rails-rest-framework)
 
 REST Framework helps you build awesome APIs in Ruby on Rails.
