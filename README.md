@@ -1,6 +1,6 @@
 # REST Framework
 
-![Gem](https://img.shields.io/gem/v/rest_framework)
+[![Gem Version](https://badge.fury.io/rb/rest_framework.svg)](https://badge.fury.io/rb/rest_framework)
 [![Build Status](https://travis-ci.org/gregschmit/rails-rest-framework.svg?branch=master)](https://travis-ci.org/gregschmit/rails-rest-framework)
 
 REST Framework helps you build awesome APIs in Ruby on Rails.
@@ -68,13 +68,13 @@ end
 ```
 
 Note that you can also override `get_model` and `get_recordset` instance methods to override the API
-behavior based on each request.
+behavior dynamically per-request.
 
 ### Routing
 
 You can use Rails' `resource`/`resources` routers to route your API, however if you want
-`@extra_actions`/`@extra_member_actions` to be routed automatically, then you can use the
-`rest_resource`/`rest_resources` routers provided by this gem. You can also use `rest_root` to route
+`@extra_actions` / `@extra_member_actions` to be routed automatically, then you can use the
+`rest_resource` / `rest_resources` routers provided by this gem. You can also use `rest_root` to route
 the root of your API:
 
 ```
