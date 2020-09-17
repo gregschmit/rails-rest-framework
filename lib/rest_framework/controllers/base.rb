@@ -1,6 +1,9 @@
 module RESTFramework
 
+  # This module provides helpers for mixin `ClassMethods` submodules.
   module ClassMethodHelpers
+
+    # This helper assists in providing reader interfaces for mixin properties.
     def _restframework_attr_reader(property, default: nil)
       method = <<~RUBY
         def #{property}
@@ -14,6 +17,9 @@ module RESTFramework
     end
   end
 
+  # This module provides the common functionality for any controller mixins, a `root` action, and
+  # the ability to route arbitrary actions with `@extra_actions`. This is also where `api_response`
+  # is defined.
   module BaseControllerMixin
     # Default action for API root.
     # TODO: use api_response and show sub-routes.
@@ -47,7 +53,20 @@ module RESTFramework
       # end
 
       _restframework_attr_reader(:extra_actions, default: {})
-      _restframework_attr_reader(:skip_actions, default: [])
+
+      def skip_actions(skip_undefined: true)
+        # first, skip explicitly skipped actions
+        skip = _restframework_try_class_level_variable_get(:skip_actions, default: [])
+
+        # now add methods which don't exist, since we don't want to route those
+        if skip_undefined
+          [:index, :new, :create, :show, :edit, :update, :destroy].each do |a|
+            skip << a unless self.method_defined?(a)
+          end
+        end
+
+        return skip
+      end
     end
 
     def self.included(base)

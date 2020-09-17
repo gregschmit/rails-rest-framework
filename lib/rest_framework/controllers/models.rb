@@ -32,11 +32,14 @@ module RESTFramework
       _restframework_attr_reader(:extra_member_actions, default: {})
 
       # For model-based mixins, `@extra_collection_actions` is synonymous with `@extra_actions`.
-      def extra_actions
-        return (
+      # @param skip_undefined [Boolean] whether we should skip routing undefined actions
+      def extra_actions(skip_undefined: true)
+        actions = (
           _restframework_try_class_level_variable_get(:extra_collection_actions) ||
           _restframework_try_class_level_variable_get(:extra_actions, default: {})
         )
+        actions = actions.select { |a| self.method_defined?(a) } if skip_undefined
+        return actions
       end
     end
 
@@ -109,10 +112,10 @@ module RESTFramework
     end
 
     # Internal interface for get_model, protecting against infinite recursion with get_recordset.
-    private def _get_model(from_internal_get_recordset: false)
+    def _get_model(from_internal_get_recordset: false)
       return @model if @model
       return self.class.model if self.class.model
-      unless from_get_recordset  # prevent infinite recursion
+      unless from_internal_get_recordset  # prevent infinite recursion
         recordset = self._get_recordset(from_internal_get_model: true)
         return (@model = recordset.klass) if recordset
       end
@@ -124,10 +127,10 @@ module RESTFramework
     end
 
     # Internal interface for get_recordset, protecting against infinite recursion with get_model.
-    private def _get_recordset(from_internal_get_model: false)
+    def _get_recordset(from_internal_get_model: false)
       return @recordset if @recordset
       return self.class.recordset if self.class.recordset
-      unless from_get_model  # prevent infinite recursion
+      unless from_internal_get_model  # prevent infinite recursion
         model = self._get_model(from_internal_get_recordset: true)
         return (@recordset = model.all) if model
       end

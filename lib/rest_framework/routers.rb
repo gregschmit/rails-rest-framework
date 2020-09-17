@@ -41,7 +41,8 @@ module ActionDispatch::Routing
     # @param default_singular [Boolean] the default plurality of the resource if the plurality is
     #   not otherwise defined by the controller
     # @param name [Symbol] the resource name, from which path and controller are deduced by default
-    protected def _rest_resources(default_singular, name, **kwargs, &block)
+    # @param skip_undefined [Boolean] whether we should skip routing undefined actions
+    protected def _rest_resources(default_singular, name, skip_undefined: true, **kwargs, &block)
       controller = kwargs[:controller] || name
       if controller.is_a?(Class)
         controller_class = controller
@@ -50,9 +51,7 @@ module ActionDispatch::Routing
       end
 
       # set controller if it's not explicitly set
-      unless kwargs[:controller]
-        kwargs[:controller] = name
-      end
+      kwargs[:controller] = name unless kwargs[:controller]
 
       # determine plural/singular resource
       if kwargs.delete(:force_singular)
@@ -67,10 +66,14 @@ module ActionDispatch::Routing
       resource_method = singular ? :resource : :resources
 
       # call either `resource` or `resources`, passing appropriate modifiers
-      public_send(resource_method, name, except: controller_class.skip_actions, **kwargs) do
+      skip_undefined = kwargs.delete(:skip_undefined) || true
+      skip = controller_class.skip_actions(skip_undefined: skip_undefined)
+      public_send(resource_method, name, except: skip, **kwargs) do
         if controller_class.respond_to?(:extra_member_actions)
           member do
-            controller_class.extra_member_actions.each do |action, methods|
+            actions = controller_class.extra_member_actions
+            actions = actions.select { |k,v| controller_class.method_defined?(k) } if skip_undefined
+            actions.each do |action, methods|
               methods = [methods] if methods.is_a?(Symbol) || methods.is_a?(String)
               methods.each do |m|
                 public_send(m, action)
@@ -80,7 +83,9 @@ module ActionDispatch::Routing
         end
 
         collection do
-          controller_class.extra_actions.each do |action, methods|
+          actions = controller_class.extra_actions
+          actions = actions.select { |k,v| controller_class.method_defined?(k) } if skip_undefined
+          actions.each do |action, methods|
             methods = [methods] if methods.is_a?(Symbol) || methods.is_a?(String)
             methods.each do |m|
               public_send(m, action)

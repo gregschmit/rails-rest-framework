@@ -24,6 +24,22 @@ Or install it yourself with:
 
     $ gem install rest_framework
 
+## Usage
+
+To transform a controller into a RESTful controller, you can either include `BaseControllerMixin` or
+`ModelControllerMixin`. `BaseControllerMixin` provides a `root` action and a simple interface for
+routing arbitrary additional actions:
+
+```
+class Api1Controller < ActionController::Base
+  include RESTFramework::ModelControllerMixin
+
+  def root
+    render inline: "This is the root of your API!"
+  end
+end
+```
+
 ## Development/Testing
 
 After you clone the repository, cd'ing into the directory should create a new gemset if you are
@@ -37,10 +53,10 @@ To run unit tests:
 
     $ rake test:unit
 
-To run integration tests on a sample app:
+To run integration tests:
 
-    $ rake test:app
+    $ rake test:integration
 
-To run that sample app live:
-
-    $ rake test:app:run
+To interact with the integration app, you can `cd test/integration` and operate it via the normal
+Rails interfaces. Ensure you run `rake db:schema:load` before running `rails server` or
+`rails console`.

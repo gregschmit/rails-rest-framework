@@ -1,7 +1,9 @@
-require_relative '../test_helper'
+require_relative 'unit_test_helper'
 
 class RESTFrameworkTest < Minitest::Test
-  def test_that_it_has_a_version_number
+  parallelize_me!  # unit tests can be parallelized
+
+  def test_version_number
     refute_nil RESTFramework::VERSION
   end
 
