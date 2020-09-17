@@ -1,8 +1,9 @@
 class Api1Controller < ApplicationController
   include RESTFramework::ModelControllerMixin
+  layout 'rest_framework'
 
   def root
-    render inline: "Test successful on API1!"
+    api_response({message: "Welcome to your API root!"})
   end
 end
 

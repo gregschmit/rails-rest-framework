@@ -26,6 +26,7 @@ Gem::Specification.new do |spec|
     "LICENSE",
     "lib/rest_framework/VERSION_STAMP",
     *Dir['lib/**/*.rb'],
+    *Dir['app/**/*'],
   ]
-  spec.require_paths = ["lib"]
+  spec.require_paths = ["lib", "app"]
 end

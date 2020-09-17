@@ -31,6 +31,9 @@ class Application < Rails::Application
   config.eager_load = false
   config.action_dispatch.show_exceptions = false
   config.action_controller.allow_forgery_protection = false
+  config.serve_static_files = true
+  config.assets.debug = false
+  config.assets.check_precompiled_asset = false
 
   config.session_store :cookie_store, :key => '_session'
   config.secret_token = 'a_test_token'

@@ -25,10 +25,10 @@ module ActionDispatch::Routing
 
       # convert class name to class
       begin
-        controller = mod.const_get(name, false)
+        controller = mod.const_get(name)
       rescue NameError
         if fallback_reverse_pluralization
-          controller = mod.const_get(name_reverse, false)
+          controller = mod.const_get(name_reverse)
         else
           raise
         end

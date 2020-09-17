@@ -53,6 +53,7 @@ module RESTFramework
       # end
 
       _restframework_attr_reader(:extra_actions, default: {})
+      _restframework_attr_reader(:template_logo_text, default: 'Rails REST Framework')
 
       def skip_actions(skip_undefined: true)
         # first, skip explicitly skipped actions
@@ -73,11 +74,42 @@ module RESTFramework
       base.extend ClassMethods
     end
 
+    def _get_routes
+      begin
+        formatter = ActionDispatch::Routing::ConsoleFormatter::Sheet
+      rescue NameError
+        formatter = ActionDispatch::Routing::ConsoleFormatter
+      end
+      return ActionDispatch::Routing::RoutesInspector.new(Rails.application.routes.routes).format(
+        formatter.new
+      ).lines[1..].map { |r| r.split.last(3) }.map { |r|
+        {verb: r[0], path: r[1], action: r[2]}
+      }.select { |r| r[:path].start_with?(request.path) }
+    end
+
     # Helper alias for `respond_to`/`render`, and replace nil responses with blank ones.
-    def api_response(value, **kwargs)
+    def api_response(payload, html_kwargs: nil, json_kwargs: nil, **kwargs)
+      html_kwargs ||= {}
+      json_kwargs ||= {}
+
       respond_to do |format|
-        format.html
-        format.json { render json: value || '', **kwargs }
+        format.html {
+          kwargs = kwargs.merge(html_kwargs)
+          @template_logo_text ||= "Rails REST Framework"
+          @title ||= self.controller_name.camelize
+          @routes ||= self._get_routes
+          @payload = payload
+          begin
+            render(**kwargs)
+          rescue ActionView::MissingTemplate  # fallback to rest_framework default view
+            kwargs[:template] = "rest_framework/default"
+          end
+          render(**kwargs)
+        }
+        format.json {
+          kwargs = kwargs.merge(json_kwargs)
+          render(json: payload || '', **kwargs)
+        }
       end
     end
   end

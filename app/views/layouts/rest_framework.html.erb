@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <title><%= @title %></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= favicon_link_tag 'rest_framework_favicon.ico' %>
+
+    <%= stylesheet_link_tag 'application', media: 'all' %>
+    <%= javascript_include_tag 'application' %>
+    <%= stylesheet_link_tag 'rest_framework', media: 'all' %>
+    <%= javascript_include_tag 'rest_framework' %>
+  </head>
+
+  <body>
+    <div class="bg-dark">
+      <div class="w-100 m-0 p-0" style="height: .3em; background-color: #a00;"></div>
+      <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+          <span class="navbar-brand p-0">
+            <h1 class="text-light font-weight-light m-0 p-0" style="font-size: 1em"><%= @template_logo_text %></h1>
+          </span>
+        </div>
+      </nav>
+    </div>
+    <div class="container py-3">
+      <div class="container">
+        <div class="row">
+          <h1><%= @title %></h1>
+        </div>
+        <div class="row">
+          <h2>Payload</h2><br>
+          <div><pre><%= JSON.pretty_generate(JSON.parse(@payload.to_json)) %></pre></div>
+        </div>
+        <% unless @routes.blank? %>
+          <div class="row">
+            <h2>Routes</h2>
+            <%= render partial: 'rest_framework/routes' %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,18 @@
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Verb</th>
+      <th scope="col">Path</th>
+      <th scope="col">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @routes.each do |r| %>
+    <tr>
+      <td><%= r[:verb] %></td>
+      <td><%= r[:path] %></td>
+      <td><%= r[:action] %></td>
+    </tr>
+    <% end %>
+  </tbody>
+</table>
