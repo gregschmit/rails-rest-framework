@@ -24,7 +24,7 @@
         <hr/>
         <div class="row">
           <h2>Payload</h2><br>
-          <div><pre><%= JSON.pretty_generate(JSON.parse(@serialized_payload)) %></pre></div>
+          <div><pre><%= JSON.pretty_generate(JSON.parse(@serialized_payload)) unless @serialized_payload.blank? %></pre></div>
         </div>
         <% unless @routes.blank? %>
           <div class="row">

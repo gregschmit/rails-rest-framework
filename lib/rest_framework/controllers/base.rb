@@ -84,15 +84,18 @@ module RESTFramework
 
     # Helper alias for `respond_to`/`render`, and replace nil responses with blank ones.
     def api_response(payload, html_kwargs: nil, json_kwargs: nil, **kwargs)
-      payload ||= ''  # replace nil with ''
       html_kwargs ||= {}
       json_kwargs ||= {}
 
-      # serialize
-      if self.respond_to?(:get_model_serializer_config, true)
-        serialized_payload = payload.to_json(self.get_model_serializer_config)
+      # serialize the payload if it's not blank
+      if payload.blank?
+        serialized_payload = ''
       else
-        serialized_payload = payload.to_json
+        if self.respond_to?(:get_model_serializer_config, true)
+          serialized_payload = payload.to_json(self.get_model_serializer_config)
+        else
+          serialized_payload = payload.to_json
+        end
       end
 
       respond_to do |format|
