@@ -88,7 +88,7 @@ module RESTFramework
       json_kwargs ||= {}
 
       # serialize
-      if self.respond_to?(:get_model_serializer_config, true) && payload < ActiveRecord::Base
+      if self.respond_to?(:get_model_serializer_config, true)
         serialized_payload = payload.to_json(self.get_model_serializer_config)
       else
         serialized_payload = payload.to_json
