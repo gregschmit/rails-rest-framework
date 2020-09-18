@@ -1,9 +1,8 @@
 class Api1Controller < ApplicationController
   include RESTFramework::ModelControllerMixin
-  layout 'rest_framework'
 
   def root
-    api_response({message: "Welcome to your API root!"})
+    api_response({message: "Welcome to your custom API1 root!"})
   end
 end
 

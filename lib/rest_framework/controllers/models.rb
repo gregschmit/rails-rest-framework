@@ -50,7 +50,7 @@ module RESTFramework
 
     # Get a list of fields for the current action.
     def get_fields
-      return @fields if @fields
+      return @fields if instance_variable_defined?(:@fields) && @fields
 
       # index action should use list_fields
       name = (action_name == 'index') ? 'list' : action_name
@@ -59,9 +59,8 @@ module RESTFramework
         @fields = self.class.send("#{name}_fields")
       rescue NameError
       end
-      @fields ||= self.class.fields || []
 
-      return @fields
+      return @fields ||= self.class.fields || []
     end
 
     # Get a configuration passable to `as_json` for the model.
@@ -112,7 +111,7 @@ module RESTFramework
 
     # Internal interface for get_model, protecting against infinite recursion with get_recordset.
     def _get_model(from_internal_get_recordset: false)
-      return @model if @model
+      return @model if instance_variable_defined?(:@model) && @model
       return self.class.model if self.class.model
       unless from_internal_get_recordset  # prevent infinite recursion
         recordset = self._get_recordset(from_internal_get_model: true)
@@ -127,7 +126,7 @@ module RESTFramework
 
     # Internal interface for get_recordset, protecting against infinite recursion with get_model.
     def _get_recordset(from_internal_get_model: false)
-      return @recordset if @recordset
+      return @recordset if instance_variable_defined?(:@recordset) && @recordset
       return self.class.recordset if self.class.recordset
       unless from_internal_get_model  # prevent infinite recursion
         model = self._get_model(from_internal_get_recordset: true)

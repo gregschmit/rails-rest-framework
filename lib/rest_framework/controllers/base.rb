@@ -2,7 +2,6 @@ module RESTFramework
 
   # This module provides helpers for mixin `ClassMethods` submodules.
   module ClassMethodHelpers
-
     # This helper assists in providing reader interfaces for mixin properties.
     def _restframework_attr_reader(property, default: nil)
       method = <<~RUBY
@@ -31,25 +30,21 @@ module RESTFramework
     module ClassMethods
       extend ClassMethodHelpers
 
-      # Interface for getting class-level instance/class variables.
+      # Interface for getting class-level instance/class variables. Note: we check if they are
+      # defined first rather than rescuing NameError to prevent uninitialized variable warnings.
       private def _restframework_try_class_level_variable_get(name, default: nil)
-        begin
-          v = instance_variable_get("@#{name}")
+        instance_variable = "@#{name}"
+        if self.instance_variable_defined?(instance_variable)
+          v = self.instance_variable_get(instance_variable)
           return v unless v.nil?
-        rescue NameError
         end
-        begin
-          v = class_variable_get("@@#{name}")
+        class_variable = "@@#{name}"
+        if self.class_variable_defined?(class_variable)
+          v = self.class_variable_get(class_variable)
           return v unless v.nil?
-        rescue NameError
         end
         return default
       end
-
-      # Interface for registering exceptions handlers.
-      # private def _restframework_register_exception_handlers
-      #   rescue_from
-      # end
 
       _restframework_attr_reader(:singleton_controller)
       _restframework_attr_reader(:extra_actions, default: {})
@@ -93,7 +88,7 @@ module RESTFramework
       json_kwargs ||= {}
 
       # serialize
-      if self.respond_to?(:get_model_serializer_config, true)
+      if self.respond_to?(:get_model_serializer_config, true) && payload < ActiveRecord::Base
         serialized_payload = payload.to_json(self.get_model_serializer_config)
       else
         serialized_payload = payload.to_json
