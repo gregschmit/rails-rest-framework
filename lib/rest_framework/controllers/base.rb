@@ -84,6 +84,7 @@ module RESTFramework
 
     # Helper alias for `respond_to`/`render`, and replace nil responses with blank ones.
     def api_response(payload, html_kwargs: nil, json_kwargs: nil, **kwargs)
+      payload ||= ''  # replace nil with ''
       html_kwargs ||= {}
       json_kwargs ||= {}
 
