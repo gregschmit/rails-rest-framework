@@ -21,7 +21,6 @@ module RESTFramework
 
       _restframework_attr_reader(:model)
       _restframework_attr_reader(:recordset)
-      _restframework_attr_reader(:singleton_controller)
 
       _restframework_attr_reader(:fields)
       _restframework_attr_reader(:list_fields)
@@ -152,14 +151,14 @@ module RESTFramework
     # TODO: pagination classes like Django
     def index
       @records = self.get_filtered_recordset
-      api_response(@records, **self.get_model_serializer_config)
+      api_response(@records)
     end
   end
 
   module ShowModelMixin
     def show
       @record = self.get_record
-      api_response(@record, **self.get_model_serializer_config)
+      api_response(@record)
     end
   end
 
@@ -170,7 +169,7 @@ module RESTFramework
       rescue ActiveRecord::RecordInvalid => e
         api_response(e.record.messages, status: 400)
       end
-      api_response(@record, **self.get_model_serializer_config)
+      api_response(@record)
     end
   end
 
@@ -180,7 +179,7 @@ module RESTFramework
       if @record
         @record.attributes(self.get_update_params)
         @record.save!
-        api_response(@record, **self.get_model_serializer_config)
+        api_response(@record)
       else
         api_response({detail: "Record not found."}, status: 404)
       end

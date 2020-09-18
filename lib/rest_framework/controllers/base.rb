@@ -22,9 +22,8 @@ module RESTFramework
   # is defined.
   module BaseControllerMixin
     # Default action for API root.
-    # TODO: use api_response and show sub-routes.
     def root
-      render inline: "This is the root of your awesome API!"
+      api_response({message: "This is the root of your awesome API!"})
     end
 
     protected
@@ -52,6 +51,7 @@ module RESTFramework
       #   rescue_from
       # end
 
+      _restframework_attr_reader(:singleton_controller)
       _restframework_attr_reader(:extra_actions, default: {})
       _restframework_attr_reader(:template_logo_text, default: 'Rails REST Framework')
 
@@ -92,13 +92,21 @@ module RESTFramework
       html_kwargs ||= {}
       json_kwargs ||= {}
 
+      # serialize
+      if self.respond_to?(:get_model_serializer_config, true)
+        serialized_payload = payload.to_json(**self.get_model_serializer_config)
+      else
+        serialized_payload = payload.to_json
+      end
+
       respond_to do |format|
         format.html {
           kwargs = kwargs.merge(html_kwargs)
-          @template_logo_text ||= "Rails REST Framework"
+          @template_logo_text ||= self.class.template_logo_text
           @title ||= self.controller_name.camelize
           @routes ||= self._get_routes
           @payload = payload
+          @serialized_payload = serialized_payload
           begin
             render(**kwargs)
           rescue ActionView::MissingTemplate  # fallback to rest_framework default view
@@ -108,7 +116,7 @@ module RESTFramework
         }
         format.json {
           kwargs = kwargs.merge(json_kwargs)
-          render(json: payload || '', **kwargs)
+          render(json: serialized_payload || '', **kwargs)
         }
       end
     end

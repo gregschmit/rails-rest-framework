@@ -2,17 +2,7 @@
 <html>
   <head>
     <title><%= @title %></title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
-
-    <%= favicon_link_tag 'rest_framework_favicon.ico' %>
-
-    <%= stylesheet_link_tag 'application', media: 'all' %>
-    <%= javascript_include_tag 'application' %>
-    <%= stylesheet_link_tag 'rest_framework', media: 'all' %>
-    <%= javascript_include_tag 'rest_framework' %>
+    <%= render partial: 'rest_framework/head' %>
   </head>
 
   <body>
@@ -31,9 +21,10 @@
         <div class="row">
           <h1><%= @title %></h1>
         </div>
+        <hr/>
         <div class="row">
           <h2>Payload</h2><br>
-          <div><pre><%= JSON.pretty_generate(JSON.parse(@payload.to_json)) %></pre></div>
+          <div><pre><%= JSON.pretty_generate(JSON.parse(@serialized_payload)) %></pre></div>
         </div>
         <% unless @routes.blank? %>
           <div class="row">

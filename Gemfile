@@ -9,6 +9,3 @@ gem "minitest-proveit", "~> 1.0"
 
 gem "sqlite3"
 gem "byebug"
-
-gem 'bootstrap'
-gem 'jquery-rails'
