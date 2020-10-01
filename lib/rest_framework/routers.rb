@@ -1,4 +1,3 @@
-require 'rails'
 require 'action_dispatch/routing/mapper'
 
 module ActionDispatch::Routing
@@ -67,11 +66,11 @@ module ActionDispatch::Routing
 
       # call either `resource` or `resources`, passing appropriate modifiers
       skip_undefined = kwargs.delete(:skip_undefined) || true
-      skip = controller_class.skip_actions(skip_undefined: skip_undefined)
+      skip = controller_class.get_skip_actions(skip_undefined: skip_undefined)
       public_send(resource_method, name, except: skip, **kwargs) do
         if controller_class.respond_to?(:extra_member_actions)
           member do
-            actions = controller_class.extra_member_actions
+            actions = controller_class.extra_member_actions || {}
             actions = actions.select { |k,v| controller_class.method_defined?(k) } if skip_undefined
             actions.each do |action, methods|
               methods = [methods] if methods.is_a?(Symbol) || methods.is_a?(String)
@@ -83,8 +82,9 @@ module ActionDispatch::Routing
         end
 
         collection do
-          actions = controller_class.extra_actions
+          actions = controller_class.extra_actions || {}
           actions = actions.select { |k,v| controller_class.method_defined?(k) } if skip_undefined
+          actions.reject! { |k,v| skip.include? k }
           actions.each do |action, methods|
             methods = [methods] if methods.is_a?(Symbol) || methods.is_a?(String)
             methods.each do |m|
@@ -111,6 +111,26 @@ module ActionDispatch::Routing
       end
     end
 
+    # Route a controller without the default resourceful paths.
+    def rest_route(path=nil, skip_undefined: true, **kwargs, &block)
+      controller = kwargs.delete(:controller) || path
+      path = path.to_s
+
+      # route actions
+      controller_class = self._get_controller_class(controller, pluralize: false)
+      skip = controller_class.get_skip_actions(skip_undefined: skip_undefined)
+      actions = controller_class.extra_actions || {}
+      actions = actions.select { |k,v| controller_class.method_defined?(k) } if skip_undefined
+      actions.reject! { |k,v| skip.include? k }
+      actions.each do |action, methods|
+        methods = [methods] if methods.is_a?(Symbol) || methods.is_a?(String)
+        methods.each do |m|
+          public_send(m, File.join(path, action.to_s), controller: controller, action: action)
+        end
+        yield if block_given?
+      end
+    end
+
     # Route a controller's `#root` to '/' in the current scope/namespace, along with other actions.
     # @param label [Symbol] the snake_case name of the controller
     def rest_root(path=nil, **kwargs, &block)
@@ -124,7 +144,7 @@ module ActionDispatch::Routing
 
       # route any additional actions
       controller_class = self._get_controller_class(controller, pluralize: false)
-      controller_class.extra_actions.each do |action, methods|
+      (controller_class.extra_actions || {}).each do |action, methods|
         methods = [methods] if methods.is_a?(Symbol) || methods.is_a?(String)
         methods.each do |m|
           public_send(m, File.join(path, action.to_s), controller: controller, action: action)

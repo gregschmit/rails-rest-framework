@@ -1,0 +1,39 @@
+<header class="bg-dark">
+  <div class="w-100 m-0 p-0" style="height: .3em; background-color: #900;"></div>
+  <div class="container">
+    <nav class="navbar py-0 navbar-expand-md navbar-dark bg-dark">
+      <span class="navbar-brand p-0">
+        <a href="/">
+          <h1 class="text-light font-weight-light m-0 p-0" style="font-size: 1em">{{ site.title }}</h1>
+        </a>
+      </span>
+
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link active" href="/">Home</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Guide
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              {% for section in site.guide | sort:"position" %}
+                <a class="dropdown-item" href="{{ section.url }}">{{ section.title }}</a>
+              {% endfor %}
+            </div>
+          </li>
+          <li class="nav-item">
+            <span style="display: block; padding-left: .8em; padding-top: .6em; width: 6em;">
+              <iframe src="https://ghbtns.com/github-btn.html?user=gregschmit&repo=rails-rest-framework&type=star&count=true" frameborder="0" scrolling="0" width="150" height="20" title="GitHub"></iframe>
+            </span>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+</header>

@@ -1,6 +1,6 @@
 class Api2::ReadOnlyThingsController < Api2Controller
   include RESTFramework::ReadOnlyModelControllerMixin
 
-  @model = Thing
-  @fields = %w(id name)
+  self.model = Thing
+  self.fields = %w(id name)
 end

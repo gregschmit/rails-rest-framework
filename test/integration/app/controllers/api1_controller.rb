@@ -1,5 +1,5 @@
 class Api1Controller < ApplicationController
-  include RESTFramework::ModelControllerMixin
+  include RESTFramework::BaseControllerMixin
 
   def root
     api_response({message: "Welcome to your custom API1 root!"})

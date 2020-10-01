@@ -1,0 +1,76 @@
+---
+# Only the main Sass file needs front matter (the dashes are enough)
+---
+@charset "utf-8";
+
+// header adjustments
+h1,h2,h3,h4,h5,h6 { width: 100%; font-weight: normal; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.7rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.3rem; }
+h5 { font-size: 1.1rem; }
+h6 { font-size: 1rem; }
+
+// inline code (to align with highlight vs theme)
+code {
+  color: #a31515;
+  background-color: #eee;
+  padding: .1em .2em;
+  border: 1px solid #aaa;
+  border-radius: .3em;
+}
+pre code {
+  background-color: #eee !important;
+}
+
+// navbar
+.navbar {
+  .navbar-toggler {
+    margin: .2em 0;
+    padding: .2em .3em;
+    border: none;
+    .navbar-toggler-icon {
+      height: 1.1em;
+      width: 1.1em;
+    }
+  }
+  .navbar-nav .nav-item .nav-link {
+    padding: .5em .6em;
+
+    &:hover { background-color: #262a2f; }
+  }
+}
+.navbar .dropdown-menu {
+  .dropdown-item {
+    font-size: .9em;
+    padding: .2em .8em;
+    color: #900;
+
+    &:hover { color: #800; }
+  }
+}
+
+// heading links
+h1, h2, h3, h4, h5, h6 {
+  a {
+    color: #eee;
+    &:hover { text-decoration: none; }
+  }
+}
+
+// headers table
+.headers-table {
+  padding: .5em .9em .5em .8em;
+  background-color: #eee;
+  border: 1px solid #ddd;
+  border-radius: .3em;
+
+  ul {
+    list-style-type: none;
+    margin: 0;
+    padding-left: 0;
+    ul { padding-left: .8em; }
+  }
+  &:empty { display: none; }
+}

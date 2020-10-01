@@ -11,7 +11,7 @@
       <nav class="navbar navbar-dark bg-dark">
         <div class="container">
           <span class="navbar-brand p-0">
-            <h1 class="text-light font-weight-light m-0 p-0" style="font-size: 1em"><%= @template_logo_text %></h1>
+            <h1 class="text-light font-weight-light m-0 p-0" style="font-size: 1em"><%= @template_logo_text || 'Rails REST Framework' %></h1>
           </span>
         </div>
       </nav>
@@ -22,10 +22,41 @@
           <h1><%= @title %></h1>
         </div>
         <hr/>
-        <div class="row">
-          <h2>Payload</h2><br>
-          <div><pre><%= JSON.pretty_generate(JSON.parse(@serialized_payload)) unless @serialized_payload.blank? %></pre></div>
-        </div>
+        <% if @json_payload || @xml_payload %>
+          <div class="row">
+            <h2>Payload</h2>
+            <div class="w-100">
+              <ul class="nav nav-tabs">
+                <% if @json_payload %>
+                  <li class="nav-item">
+                    <a class="nav-link active" href="#tab-json" data-toggle="tab" role="tab">
+                      JSON
+                    </a>
+                  </li>
+                <% end %>
+                <% if @xml_payload %>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#tab-xml" data-toggle="tab" role="tab">
+                      XML
+                    </a>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+            <div class="tab-content w-100 pt-3">
+              <div class="tab-pane fade show active" id="tab-json" role="tab">
+                <% if @json_payload %>
+                  <div><pre><code class="language-json"><%= JSON.pretty_generate(JSON.parse(@json_payload)) %></code></pre></div>
+                <% end %>
+              </div>
+              <div class="tab-pane fade" id="tab-xml" role="tab">
+                <% if @xml_payload %>
+                  <div><pre><code class="language-xml"><%= @xml_payload %></code></pre></div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
         <% unless @routes.blank? %>
           <div class="row">
             <h2>Routes</h2>

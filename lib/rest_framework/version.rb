@@ -8,10 +8,10 @@ module RESTFramework
 
       # First, attempt to get the version from git.
       begin
-        version = `git describe`.strip
+        version = `git describe 2>/dev/null`.strip
         raise "blank version" if version.nil? || version.match(/^\w*$/)
         # Check for local changes.
-        changes = `git status --porcelain`
+        changes = `git status --porcelain 2>/dev/null`
         version << '.localchanges' if changes.strip.length > 0
         return version
       rescue
@@ -21,7 +21,7 @@ module RESTFramework
       begin
         version = File.read(File.expand_path("VERSION_STAMP", __dir__))
         unless version.nil? || version.match(/^\w*$/)
-          return (@_version = version)  # cache VERSION_STAMP content in @_version
+          return (@_version = version)  # cache VERSION_STAMP content
         end
       rescue
       end
