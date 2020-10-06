@@ -13,6 +13,8 @@ module RESTFramework
           :recordset,
           :fields,
           :action_fields,
+          :native_serializer_config,
+          :native_serializer_action_config,
           :filterset_fields,
           :allowed_parameters,
           :allowed_action_parameters,
@@ -40,6 +42,19 @@ module RESTFramework
       action = :list if action == :index && !action_fields.key?(:index)
 
       return action_fields[action] || self.class.fields || []
+    end
+
+    # Get a native serializer config for an action (or the current action if none given).
+    def get_native_serializer_config(action: nil)
+      native_serializer_action_config = self.class.native_serializer_action_config || {}
+
+      # action will, by default, be the current action name
+      action = action_name.to_sym unless action
+
+      # index action should use :list serializer config if :index is not provided
+      action = :list if action == :index && !native_serializer_action_config.key?(:index)
+
+      return native_serializer_action_config[action] || self.class.native_serializer_config
     end
 
     # Get a list of parameters allowed for an action (or the current action if none given).
@@ -178,12 +193,8 @@ module RESTFramework
   module DestroyModelMixin
     def destroy
       @record = self.get_record
-      if @record
-        @record.destroy!
-        api_response('')
-      else
-        api_response({detail: "Method 'DELETE' not allowed."}, status: 405)
-      end
+      @record.destroy!
+      api_response(nil)
     end
   end
 

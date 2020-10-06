@@ -36,6 +36,8 @@ module RESTFramework
         ])
         base.rescue_from(ActiveRecord::RecordNotFound, with: :record_not_found)
         base.rescue_from(ActiveRecord::RecordInvalid, with: :record_invalid)
+        base.rescue_from(ActiveRecord::RecordNotSaved, with: :record_not_saved)
+        base.rescue_from(ActiveRecord::RecordNotDestroyed, with: :record_not_destroyed)
       end
     end
 
@@ -49,6 +51,14 @@ module RESTFramework
 
     def record_not_found(e)
       return api_response({message: "Record not found.", exception: e}, status: 404)
+    end
+
+    def record_not_saved(e)
+      return api_response({message: "Record not saved.", exception: e}, status: 406)
+    end
+
+    def record_not_destroyed(e)
+      return api_response({message: "Record not destroyed.", exception: e}, status: 406)
     end
 
     def _get_routes
@@ -70,6 +80,11 @@ module RESTFramework
       html_kwargs ||= {}
       json_kwargs ||= {}
       xml_kwargs ||= {}
+
+      # make empty responses status 204 unless a status is already explicitly defined
+      if (payload.nil? || payload == '') && !kwargs.key?(:status)
+        kwargs[:status] = 204
+      end
 
       respond_to do |format|
         if payload.respond_to?(:to_json)
@@ -94,7 +109,8 @@ module RESTFramework
           kwargs = kwargs.merge(html_kwargs)
           begin
             render(**kwargs)
-          rescue ActionView::MissingTemplate  # fallback to rest_framework default view
+          rescue ActionView::MissingTemplate  # fallback to rest_framework layout/view
+            kwargs[:layout] = "rest_framework"
             kwargs[:template] = "rest_framework/default"
           end
           render(**kwargs)

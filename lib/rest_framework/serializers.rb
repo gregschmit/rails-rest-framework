@@ -24,17 +24,26 @@ module RESTFramework
 
     # Get a configuration passable to `as_json` for the model.
     def get_native_serializer_config
+      # return a serializer config if one is defined
+      serializer_config = @controller.send(:get_native_serializer_config)
+      return serializer_config if serializer_config
+
+      # build serializer config from fields
       fields = @controller.send(:get_fields)
       unless fields.blank?
         columns, methods = fields.partition { |f| f.to_s.in?(@model.column_names) }
         return {only: columns, methods: methods}
       end
+
       return {}
     end
 
     # Convert the object(s) to Ruby primitives.
     def serialize
-      return @object.as_json(self.get_native_serializer_config)
+      if @object
+        return @object.as_json(self.get_native_serializer_config)
+      end
+      return nil
     end
   end
 end
