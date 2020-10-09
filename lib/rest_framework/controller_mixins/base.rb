@@ -75,7 +75,7 @@ module RESTFramework
     end
 
     # Helper alias for `respond_to`/`render`, and replace nil responses with blank ones. `payload`
-    # must be already serialized to Ruby primitives.
+    # should be already serialized to Ruby primitives.
     def api_response(payload, html_kwargs: nil, json_kwargs: nil, xml_kwargs: nil, **kwargs)
       html_kwargs ||= {}
       json_kwargs ||= {}

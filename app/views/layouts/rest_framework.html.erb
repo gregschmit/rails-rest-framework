@@ -19,7 +19,7 @@
     <div class="container py-3">
       <div class="container">
         <div class="row">
-          <h1><%= @title %></h1>
+          <h1><%= (@header_text if defined? @header_text) || @title %></h1>
         </div>
         <hr/>
         <% if @json_payload || @xml_payload %>

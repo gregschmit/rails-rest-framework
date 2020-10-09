@@ -31,43 +31,37 @@ module RESTFramework
       return self.class.serializer_class || NativeModelSerializer
     end
 
-    # Get a list of fields for an action (or the current action if none given).
-    def get_fields(action: nil)
+    # Get a list of fields for the current action.
+    def get_fields
       action_fields = self.class.action_fields || {}
-
-      # action will, by default, be the current action name
-      action = action_name.to_sym unless action
+      action = self.action_name.to_sym
 
       # index action should use :list fields if :index is not provided
       action = :list if action == :index && !action_fields.key?(:index)
 
-      return action_fields[action] || self.class.fields || []
+      return (action_fields[action] if action) || self.class.fields || []
     end
 
-    # Get a native serializer config for an action (or the current action if none given).
-    def get_native_serializer_config(action: nil)
-      native_serializer_action_config = self.class.native_serializer_action_config || {}
-
-      # action will, by default, be the current action name
-      action = action_name.to_sym unless action
+    # Get a native serializer config for the current action.
+    def get_native_serializer_config
+      action_serializer_config = self.class.native_serializer_action_config || {}
+      action = self.action_name.to_sym
 
       # index action should use :list serializer config if :index is not provided
-      action = :list if action == :index && !native_serializer_action_config.key?(:index)
+      action = :list if action == :index && !action_serializer_config.key?(:index)
 
-      return native_serializer_action_config[action] || self.class.native_serializer_config
+      return (action_serializer_config[action] if action) || self.class.native_serializer_config
     end
 
-    # Get a list of parameters allowed for an action (or the current action if none given).
-    def get_allowed_parameters(action: nil)
+    # Get a list of parameters allowed for the current action.
+    def get_allowed_parameters
       allowed_action_parameters = self.class.allowed_action_parameters || {}
-
-      # action will, by default, be the current action name
-      action = action_name.to_sym unless action
+      action = self.action_name.to_sym
 
       # index action should use :list allowed parameters if :index is not provided
       action = :list if action == :index && !allowed_action_parameters.key?(:index)
 
-      return allowed_action_parameters[action] || self.class.allowed_parameters
+      return (allowed_action_parameters[action] if action) || self.class.allowed_parameters
     end
 
     # Filter the request body for keys in current action's allowed_parameters/fields config.
