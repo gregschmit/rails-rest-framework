@@ -67,7 +67,7 @@ module RESTFramework
     # Filter the request body for keys in current action's allowed_parameters/fields config.
     def _get_parameter_values_from_request_body
       fields = self.get_allowed_parameters || self.get_fields
-      return @_get_field_values_from_request_body ||= (request.request_parameters.select { |p|
+      return @_get_parameter_values_from_request_body ||= (request.request_parameters.select { |p|
         fields.include?(p.to_sym) || fields.include?(p.to_s)
       })
     end
@@ -77,7 +77,7 @@ module RESTFramework
     # Filter params for keys allowed by the current action's filterset_fields/fields config.
     def _get_filterset_values_from_params
       fields = self.filterset_fields || self.get_fields
-      return @_get_field_values_from_params ||= request.query_parameters.select { |p|
+      return @_get_filterset_values_from_params ||= request.query_parameters.select { |p|
         fields.include?(p.to_sym) || fields.include?(p.to_s)
       }
     end

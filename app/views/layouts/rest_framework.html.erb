@@ -46,7 +46,7 @@
             <div class="tab-content w-100 pt-3">
               <div class="tab-pane fade show active" id="tab-json" role="tab">
                 <% if @json_payload %>
-                  <div><pre><code class="language-json"><%= JSON.pretty_generate(JSON.parse(@json_payload)) %></code></pre></div>
+                  <div><pre><code class="language-json"><%= JSON.pretty_generate(JSON.parse(@json_payload)) unless @json_payload == '' %></code></pre></div>
                 <% end %>
               </div>
               <div class="tab-pane fade" id="tab-xml" role="tab">

@@ -59,7 +59,7 @@ module RESTFramework
       return serializer_config if serializer_config
 
       # otherwise, build a serializer config from fields
-      fields = @controller.send(:get_fields)
+      fields = @controller.send(:get_fields) if @controller
       unless fields.blank?
         columns, methods = fields.partition { |f| f.to_s.in?(@model.column_names) }
         return {only: columns, methods: methods}
@@ -68,54 +68,41 @@ module RESTFramework
       return {}
     end
 
-    # Recursive method for traversing a config and evaluating nested serializers.
-    def _resolve_serializer_config(node: nil)
-      # First base case: found a serializer, so evaluate it and return it.
-      if node.is_a?(Class) && (node < BaseSerializer)
-        return node.new(controller: @controller).get_resolved_serializer_config
-      end
-
-      # Second base case: found a serializer instance, so evaluate it and return it.
-      if node.is_a?(BaseSerializer)
-        return node.get_resolved_serializer_config
-      end
-
-      # Third base case: node is not iterable, so return it.
-      unless node.respond_to?(:each)
-        return node
-      end
-
-      # Recursive case: node is iterable, so iterate and recursively resolve serializers.
-      if node.is_a? Hash
-        node.each do |k,v|
-          node[k] = self._resolve_serializer_config(node: v)
-        end
-      else
-        node.map! do |v|
-          self._resolve_serializer_config(node: v)
-        end
-      end
-
-      return node
-    end
-
-    # Get a serializer config and resolve any nested serializers into configs.
-    def get_resolved_serializer_config
-      config = self.get_serializer_config
-
-      # traverse the config, resolving nested serializers
-      return _resolve_serializer_config(node: config)
-    end
-
     # Convert the object(s) to Ruby primitives.
     def serialize
       if @object
         @many = @object.respond_to?(:each) if @many.nil?
-        return @object.as_json(
-          self.get_resolved_serializer_config
-        )
+        return @object.as_json(self.get_serializer_config)
       end
       return nil
+    end
+
+    # Allow a serializer instance to be used as a hash directly in a nested serializer config.
+    def [](key)
+      unless instance_variable_defined?(:@_nested_config)
+        @_nested_config = self.get_serializer_config
+      end
+      return @_nested_config[key]
+    end
+    def []=(key, value)
+      unless instance_variable_defined?(:@_nested_config)
+        @_nested_config = self.get_serializer_config
+      end
+      return @_nested_config[key] = value
+    end
+
+    # Allow a serializer class to be used as a hash directly in a nested serializer config.
+    def self.[](key)
+      unless instance_variable_defined?(:@_nested_config)
+        @_nested_config = self.new.get_serializer_config
+      end
+      return @_nested_config[key]
+    end
+    def self.[]=(key, value)
+      unless instance_variable_defined?(:@_nested_config)
+        @_nested_config = self.new.get_serializer_config
+      end
+      return @_nested_config[key] = value
     end
   end
 end

@@ -74,35 +74,42 @@ module RESTFramework
       }.select { |r| r[:path].start_with?(request.path) }
     end
 
-    # Helper alias for `respond_to`/`render`, and replace nil responses with blank ones. `payload`
-    # should be already serialized to Ruby primitives.
-    def api_response(payload, html_kwargs: nil, json_kwargs: nil, xml_kwargs: nil, **kwargs)
+    # Helper alias for `respond_to`/`render`. `payload` should be already serialized to Ruby
+    # primitives.
+    def api_response(payload=nil, html_kwargs: nil, json_kwargs: nil, xml_kwargs: nil, **kwargs)
       html_kwargs ||= {}
       json_kwargs ||= {}
       xml_kwargs ||= {}
 
-      # make empty responses status 204 unless a status is already explicitly defined
-      if (payload.nil? || payload == '') && !kwargs.key?(:status)
-        kwargs[:status] = 204
-      end
+      # allow blank (no-content) responses
+      @blank = kwargs[:blank]
 
       respond_to do |format|
-        if payload.respond_to?(:to_json)
-          format.json {
-            kwargs = kwargs.merge(json_kwargs)
-            render(json: payload || '', **kwargs)
-          }
-        end
-        if payload.respond_to?(:to_xml)
-          format.xml {
-            kwargs = kwargs.merge(xml_kwargs)
-            render(xml: payload || '', **kwargs)
-          }
+        if @blank
+          format.json {head :no_content}
+          format.xml {head :no_content}
+        else
+          if payload.respond_to?(:to_json)
+            format.json {
+              kwargs = kwargs.merge(json_kwargs)
+              render(json: payload, layout: false, **kwargs)
+            }
+          end
+          if payload.respond_to?(:to_xml)
+            format.xml {
+              kwargs = kwargs.merge(xml_kwargs)
+              render(xml: payload, layout: false, **kwargs)
+            }
+          end
         end
         format.html {
           @payload = payload
-          @json_payload = payload.to_json
-          @xml_payload = payload.to_xml
+          @json_payload = ''
+          @xml_payload = ''
+          unless @blank
+            @json_payload = payload.to_json if payload.respond_to?(:to_json)
+            @xml_payload = payload.to_xml if payload.respond_to?(:to_xml)
+          end
           @template_logo_text ||= "Rails REST Framework"
           @title ||= self.controller_name.camelize
           @routes ||= self._get_routes
