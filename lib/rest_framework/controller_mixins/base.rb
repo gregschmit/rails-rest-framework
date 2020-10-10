@@ -69,14 +69,14 @@ module RESTFramework
       end
       return ActionDispatch::Routing::RoutesInspector.new(Rails.application.routes.routes).format(
         formatter.new
-      ).lines[1..].map { |r| r.split.last(3) }.map { |r|
+      ).lines.drop(1).map { |r| r.split.last(3) }.map { |r|
         {verb: r[0], path: r[1], action: r[2]}
       }.select { |r| r[:path].start_with?(request.path) }
     end
 
     # Helper alias for `respond_to`/`render`. `payload` should be already serialized to Ruby
     # primitives.
-    def api_response(payload=nil, html_kwargs: nil, json_kwargs: nil, xml_kwargs: nil, **kwargs)
+    def api_response(payload, html_kwargs: nil, json_kwargs: nil, xml_kwargs: nil, **kwargs)
       html_kwargs ||= {}
       json_kwargs ||= {}
       xml_kwargs ||= {}

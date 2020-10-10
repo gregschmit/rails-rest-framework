@@ -14,6 +14,6 @@ class Api2::RootController < Api2Controller
   end
 
   def truly_blank
-    api_response(blank: true)
+    api_response('', blank: true)
   end
 end
