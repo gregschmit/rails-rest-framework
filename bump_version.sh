@@ -5,7 +5,6 @@ usage() {
   printf "  -p   bump patch (e.g., 1.1.4 -> 1.1.5)\n" 1>&2
   printf "  -m   bump minor (e.g., 1.1.4 -> 1.2.0)\n" 1>&2
   printf "  -M   bump major (e.g., 1.1.4 -> 2.0.0)\n" 1>&2
-  printf "\nTo just bump patch, don't pass any arguments.\n" 1>&2
 }
 
 # parse opts
