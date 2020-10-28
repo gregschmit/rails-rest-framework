@@ -34,6 +34,11 @@ module RESTFramework
           :skip_actions,
           :paginator_class,
         ])
+
+        # skip csrf since this is an API
+        base.skip_before_action(:verify_authenticity_token) rescue nil
+
+        # handle some common exceptions
         base.rescue_from(ActiveRecord::RecordNotFound, with: :record_not_found)
         base.rescue_from(ActiveRecord::RecordInvalid, with: :record_invalid)
         base.rescue_from(ActiveRecord::RecordNotSaved, with: :record_not_saved)
