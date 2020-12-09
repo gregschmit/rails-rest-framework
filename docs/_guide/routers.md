@@ -76,7 +76,7 @@ end
 
 ## Resourceful Routing
 
-The REST framework provides resourceful routers `rest_resource` and `rest_resources`, analogous to
+The REST Framework provides resourceful routers `rest_resource` and `rest_resources`, analogous to
 Rails' `resource` and `resources`. These routers will inspect their corresponding controllers and
 route `extra_actions` (aliased with `extra_collection_actions`) and `extra_member_actions`
 automatically.

@@ -4,7 +4,7 @@ title: Controller Mixins
 ---
 # Controller Mixins
 
-This is the core of the REST framework. Generally speaking, projects already have an existing
+This is the core of the REST Framework. Generally speaking, projects already have an existing
 controller inheritance hierarchy, so we want developers to be able to maintain that project
 structure while leveraging the power of the REST Framework. Also, different controllers which
 inherit from the same parent often need different REST Framework mix-ins. For these reasons, REST
