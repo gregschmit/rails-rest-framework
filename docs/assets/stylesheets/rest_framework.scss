@@ -3,6 +3,9 @@
 ---
 @charset "utf-8";
 
+$rf-red: #a31515;
+$rf-darkred: #5f0c0c;
+
 // header adjustments
 h1,h2,h3,h4,h5,h6 { width: 100%; font-weight: normal; }
 h1 { font-size: 2rem; }
@@ -14,7 +17,7 @@ h6 { font-size: 1rem; }
 
 // inline code (to align with highlight vs theme)
 code {
-  color: #a31515;
+  color: $rf-red;
   background-color: #eee;
   padding: .1em .2em;
   border: 1px solid #aaa;
@@ -51,8 +54,17 @@ pre code {
   }
 }
 
-// heading links
+// anchors
+a {
+  color: $rf-red;
+  &:hover { color: $rf-darkred; }
+}
+
+// headings (and heading links)
 h1, h2, h3, h4, h5, h6 {
+  margin-top: 1.8rem;
+  margin-bottom: 1.2rem;
+  color: $rf-red;
   a {
     color: #eee;
     &:hover { text-decoration: none; }
@@ -61,15 +73,18 @@ h1, h2, h3, h4, h5, h6 {
 
 // headers table
 .headers-table {
-  padding: .5em .9em .5em .8em;
+  padding: .5em 1em;
   background-color: #eee;
-  border: 1px solid #ddd;
+  border: 1px solid #aaa;
   border-radius: .3em;
+  font-size: .9em;
 
+  & > ul > li { font-weight: bold; }
   ul {
     list-style-type: none;
     margin: 0;
     padding-left: 0;
+    li { margin: .3em 0; }
     ul { padding-left: .8em; }
   }
   &:empty { display: none; }

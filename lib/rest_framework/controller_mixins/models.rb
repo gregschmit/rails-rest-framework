@@ -20,6 +20,7 @@ module RESTFramework
           :allowed_action_parameters,
           :serializer_class,
           :extra_member_actions,
+          :disable_creation_from_recordset,
         ])
         base.alias_method(:extra_collection_actions=, :extra_actions=)
       end
@@ -165,7 +166,13 @@ module RESTFramework
 
   module CreateModelMixin
     def create
-      @record = self.get_model.create!(self.get_create_params)
+      if self.get_recordset.respond_to?(:create!) && !self.disable_creation_from_recordset
+        # Create with any properties inherited from the recordset (like associations).
+        @record = self.get_recordset.create!(self.get_create_params)
+      else
+        # Otherwise, perform a "bare" create.
+        @record = self.get_model.create!(self.get_create_params)
+      end
       @serialized_record = self.get_serializer_class.new(
         object: @record, controller: self
       ).serialize
