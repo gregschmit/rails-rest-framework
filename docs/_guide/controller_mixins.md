@@ -143,13 +143,15 @@ end
 
 #### recordset
 
-The `recordset` property allows you to define the set of records this API should be limited to.
+The `recordset` property allows you to define the set of records this API should be limited to. If
+you need to change the recordset based on properties of the request, then you can override the
+`get_recordset` method.
 
 ```ruby
 class Api::MoviesController < ApiController
   include RESTFramework::ModelControllerMixin
 
-  self.recordset = Movie.where(enabled: true)
+  self.recordset = Movie.where(enabled: true).order()
 end
 ```
 
@@ -200,7 +202,18 @@ class Api::MoviesController < ApiController
 end
 ```
 
-[//]: <> TODO: #### filterset_fields
+#### filterset_fields
+
+Basic filtering is supported by the `ModelControllerMixin`, and the `filterset_fields` property
+allows you to define which fields are allowed to be filtered against.
+
+```ruby
+class Api::MoviesController < ApiController
+  include RESTFramework::ModelControllerMixin
+
+  self.filterset_fields = [:id, :name]
+end
+```
 
 [//]: <> TODO: #### allowed_parameters
 

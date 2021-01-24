@@ -16,10 +16,7 @@ require "rails"
   'rails/test_unit/railtie',
   'sprockets/railtie',
 ].each do |railtie|
-  begin
-    require railtie
-  rescue LoadError
-  end
+  require railtie
 end
 
 # Require the gems listed in Gemfile, including any gems
@@ -31,6 +28,7 @@ class Application < Rails::Application
 
   config.eager_load = false
   config.action_dispatch.show_exceptions = false
+  config.consider_all_requests_local = true
   config.action_controller.allow_forgery_protection = false
   config.serve_static_files = true
   config.assets.debug = false

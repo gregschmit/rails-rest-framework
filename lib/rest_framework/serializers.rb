@@ -2,9 +2,8 @@ module RESTFramework
   class BaseSerializer
     attr_reader :errors
 
-    def initialize(object: nil, data: nil, controller: nil, **kwargs)
+    def initialize(object: nil, controller: nil, **kwargs)
       @object = object
-      @data = data
       @controller = controller
     end
   end
@@ -12,16 +11,15 @@ module RESTFramework
   # This serializer uses `.as_json` to serialize objects. Despite the name, `.as_json` is a Rails
   # method which converts objects to Ruby primitives (with the top-level being either an array or a
   # hash).
-  class NativeModelSerializer < BaseSerializer
+  class NativeSerializer < BaseSerializer
     class_attribute :config
     class_attribute :singular_config
     class_attribute :plural_config
     class_attribute :action_config
 
-    def initialize(model: nil, many: nil, **kwargs)
+    def initialize(many: nil, **kwargs)
       super(**kwargs)
       @many = many
-      @model = model || (@controller ? @controller.send(:get_model) : nil)
     end
 
     # Get controller action, if possible.
@@ -34,41 +32,36 @@ module RESTFramework
       action = self.get_action
 
       if action && self.action_config
-        # index action should use :list serializer config if :index is not provided
+        # Index action should use :list serializer config if :index is not provided.
         action = :list if action == :index && !self.action_config.key?(:index)
 
         return self.action_config[action] if self.action_config[action]
       end
 
-      # no action_config, so try singular/plural config
+      # No action_config, so try singular/plural config.
       return self.plural_config if @many && self.plural_config
       return self.singular_config if !@many && self.singular_config
 
-      # lastly, try the default config
+      # Lastly, try returning the default config.
       return self.config
     end
 
-    # Get a configuration passable to `as_json` for the model.
+    # Get a configuration passable to `as_json` for the object.
     def get_serializer_config
-      # return a locally defined serializer config if one is defined
-      local_config = self.get_local_serializer_config
-      return local_config if local_config
+      # Return a locally defined serializer config if one is defined.
+      if local_config = self.get_local_serializer_config
+        return local_config
+      end
 
-      # return a serializer config if one is defined
-      serializer_config = @controller.send(:get_native_serializer_config)
-      return serializer_config if serializer_config
-
-      # otherwise, build a serializer config from fields
-      fields = @controller.send(:get_fields) if @controller
-      unless fields.blank?
-        columns, methods = fields.partition { |f| f.to_s.in?(@model.column_names) }
-        return {only: columns, methods: methods}
+      # Return a serializer config if one is defined.
+      if serializer_config = @controller.send(:get_native_serializer_config)
+        return serializer_config
       end
 
       return {}
     end
 
-    # Convert the object(s) to Ruby primitives.
+    # Convert the object (record or recordset) to Ruby primitives.
     def serialize
       if @object
         @many = @object.respond_to?(:each) if @many.nil?
@@ -103,6 +96,30 @@ module RESTFramework
         @_nested_config = self.new.get_serializer_config
       end
       return @_nested_config[key] = value
+    end
+  end
+
+  # `NativeModelSerializer` is similar to `NativeSerializer` but with some customizations to work
+  # with `ActiveModel`.
+  class NativeModelSerializer < NativeSerializer
+    def initialize(model: nil, **kwargs)
+      super(**kwargs)
+      @model = model || (@controller ? @controller.send(:get_model) : nil)
+    end
+
+    # Get a configuration passable to `as_json` for the object.
+    def get_serializer_config
+      config = super
+      return config unless config.blank?
+
+      # If the config wasn't determined, build a serializer config from model fields.
+      fields = @controller.try(:get_fields) if @controller
+      unless fields.blank?
+        columns, methods = fields.partition { |f| f.to_s.in?(@model.column_names) }
+        return {only: columns, methods: methods}
+      end
+
+      return {}
     end
   end
 end

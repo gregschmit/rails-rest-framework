@@ -1,3 +1,5 @@
+require_relative '../serializers'
+
 module RESTFramework
 
   # This module provides the common functionality for any controller mixins, a `root` action, and
@@ -28,12 +30,28 @@ module RESTFramework
     def self.included(base)
       if base.is_a? Class
         base.extend ClassMethods
-        base.class_attribute(*[
-          :singleton_controller,
+
+        # Add class attributes which don't exist yet.
+        [
           :extra_actions,
-          :skip_actions,
+          :filter_backends,
+          :native_serializer_config,
+          :native_serializer_action_config,
           :paginator_class,
-        ])
+          :page_size,
+          :page_query_param,
+          :page_size_query_param,
+          :max_page_size,
+          :serializer_class,
+          :singleton_controller,
+          :skip_actions,
+        ].each do |a|
+          base.class_attribute a unless base.respond_to?(a)
+
+          # Set defaults manually so we can still support Rails 4.
+          base.page_size_query_param = 'page_size' if a == :page_size_query_param
+          base.page_query_param = 'page' if a == :page_query_param
+        end
 
         # skip csrf since this is an API
         base.skip_before_action(:verify_authenticity_token) rescue nil
@@ -47,6 +65,45 @@ module RESTFramework
     end
 
     protected
+
+    # Helper to get filtering backends with a sane default.
+    def get_filter_backends
+      if self.class.filter_backends
+        return self.class.filter_backends
+      end
+
+      # By default, return nil.
+      return nil
+    end
+
+    # Filter the recordset over all configured filter backends.
+    def get_filtered_data(data)
+      (self.get_filter_backends || []).each do |filter_class|
+        filter = filter_class.new(controller: self)
+        data = filter.get_filtered_data(data)
+      end
+
+      return data
+    end
+
+    # Helper to get the configured serializer class, or `NativeModelSerializer` as a default.
+    def get_serializer_class
+      return self.class.serializer_class || NativeModelSerializer
+    end
+
+    # Get a native serializer config for the current action.
+    def get_native_serializer_config
+      action_serializer_config = self.class.native_serializer_action_config || {}
+      action = self.action_name.to_sym
+
+      # Handle case where :index action is not defined.
+      if action == :index && !action_serializer_config.key?(:index)
+        # Default is :show if `singleton_controller`, otherwise :list.
+        action = self.class.singleton_controller ? :show : :list
+      end
+
+      return (action_serializer_config[action] if action) || self.class.native_serializer_config
+    end
 
     def record_invalid(e)
       return api_response(
@@ -66,6 +123,7 @@ module RESTFramework
       return api_response({message: "Record not destroyed.", exception: e}, status: 406)
     end
 
+    # Helper for showing routes under a controller action, used for the browsable API.
     def _get_routes
       begin
         formatter = ActionDispatch::Routing::ConsoleFormatter::Sheet
@@ -124,8 +182,8 @@ module RESTFramework
           rescue ActionView::MissingTemplate  # fallback to rest_framework layout/view
             kwargs[:layout] = "rest_framework"
             kwargs[:template] = "rest_framework/default"
+            render(**kwargs)
           end
-          render(**kwargs)
         }
       end
     end

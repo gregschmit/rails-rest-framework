@@ -1,5 +1,5 @@
 require_relative 'base'
-require_relative '../serializers'
+require_relative '../filters'
 
 module RESTFramework
 
@@ -8,28 +8,59 @@ module RESTFramework
     def self.included(base)
       if base.is_a? Class
         BaseControllerMixin.included(base)
-        base.class_attribute(*[
+
+        # Add class attributes which don't exist yet.
+        [
+          # Core attributes related to models.
           :model,
           :recordset,
-          :fields,
-          :action_fields,
-          :native_serializer_config,
-          :native_serializer_action_config,
-          :filterset_fields,
+
+          # Attributes for create/update parameters.
           :allowed_parameters,
           :allowed_action_parameters,
-          :serializer_class,
-          :extra_member_actions,
-          :disable_creation_from_recordset,
-        ])
+
+          # Attributes for configuring record fields.
+          :fields,
+          :action_fields,
+
+          # Attributes for default model filtering (and ordering).
+          :filterset_fields,
+          :ordering_fields,
+          :ordering_query_param,
+
+          # Other misc attributes.
+          :extra_member_actions,  # Extra actions on individual records.
+          :disable_creation_from_recordset,  # Option to disable `recordset.create` behavior.
+        ].each do |a|
+          base.class_attribute a unless base.respond_to?(a)
+
+          # Set defaults manually so we can still support Rails 4.
+          base.ordering_query_param = 'ordering' if a == :ordering_query_param
+        end
+
         base.alias_method(:extra_collection_actions=, :extra_actions=)
       end
     end
 
     protected
 
-    def get_serializer_class
-      return self.class.serializer_class || NativeModelSerializer
+    # Get a list of parameters allowed for the current action.
+    def get_allowed_parameters
+      allowed_action_parameters = self.class.allowed_action_parameters || {}
+      action = self.action_name.to_sym
+
+      # index action should use :list allowed parameters if :index is not provided
+      action = :list if action == :index && !allowed_action_parameters.key?(:index)
+
+      return (allowed_action_parameters[action] if action) || self.class.allowed_parameters
+    end
+
+    def get_filter_backends
+      backends = super
+      return backends if backends
+
+      # By default, return the standard model filter backend.
+      return [RESTFramework::ModelFilter, RESTFramework::ModelOrderingFilter]
     end
 
     # Get a list of fields for the current action.
@@ -43,28 +74,6 @@ module RESTFramework
       return (action_fields[action] if action) || self.class.fields || []
     end
 
-    # Get a native serializer config for the current action.
-    def get_native_serializer_config
-      action_serializer_config = self.class.native_serializer_action_config || {}
-      action = self.action_name.to_sym
-
-      # index action should use :list serializer config if :index is not provided
-      action = :list if action == :index && !action_serializer_config.key?(:index)
-
-      return (action_serializer_config[action] if action) || self.class.native_serializer_config
-    end
-
-    # Get a list of parameters allowed for the current action.
-    def get_allowed_parameters
-      allowed_action_parameters = self.class.allowed_action_parameters || {}
-      action = self.action_name.to_sym
-
-      # index action should use :list allowed parameters if :index is not provided
-      action = :list if action == :index && !allowed_action_parameters.key?(:index)
-
-      return (allowed_action_parameters[action] if action) || self.class.allowed_parameters
-    end
-
     # Filter the request body for keys in current action's allowed_parameters/fields config.
     def _get_parameter_values_from_request_body
       fields = self.get_allowed_parameters || self.get_fields
@@ -75,29 +84,10 @@ module RESTFramework
     alias :get_create_params :_get_parameter_values_from_request_body
     alias :get_update_params :_get_parameter_values_from_request_body
 
-    # Filter params for keys allowed by the current action's filterset_fields/fields config.
-    def _get_filterset_values_from_params
-      fields = self.filterset_fields || self.get_fields
-      return @_get_filterset_values_from_params ||= request.query_parameters.select { |p|
-        fields.include?(p.to_sym) || fields.include?(p.to_s)
-      }
-    end
-    alias :get_lookup_params :_get_filterset_values_from_params
-    alias :get_filter_params :_get_filterset_values_from_params
-
-    # Get the recordset, filtered by the filter params.
-    def get_filtered_recordset
-      filter_params = self.get_filter_params
-      unless filter_params.blank?
-        return self.get_recordset.where(**self.get_filter_params.to_hash.symbolize_keys)
-      end
-      return self.get_recordset
-    end
-
     # Get a record by `id` or return a single record if recordset is filtered down to a single
     # record.
     def get_record
-      records = self.get_filtered_recordset
+      records = self.get_filtered_data(self.get_recordset)
       if params['id']  # direct lookup
         return records.find(params['id'])
       elsif records.length == 1
@@ -144,23 +134,28 @@ module RESTFramework
   end
 
   module ListModelMixin
-    # TODO: pagination classes like Django
     def index
-      @records = self.get_filtered_recordset
-      @serialized_records = self.get_serializer_class.new(
-        object: @records, controller: self
-      ).serialize
-      return api_response(@serialized_records)
+      @records = self.get_filtered_data(self.get_recordset)
+
+      # Handle pagination, if enabled.
+      if self.class.paginator_class
+        paginator = self.class.paginator_class.new(data: @records, controller: self)
+        page = paginator.get_page
+        serialized_page = self.get_serializer_class.new(object: page, controller: self).serialize
+        data = paginator.get_paginated_response(serialized_page)
+      else
+        data = self.get_serializer_class.new(object: @records, controller: self).serialize
+      end
+
+      return api_response(data)
     end
   end
 
   module ShowModelMixin
     def show
       @record = self.get_record
-      @serialized_record = self.get_serializer_class.new(
-        object: @record, controller: self
-      ).serialize
-      return api_response(@serialized_record)
+      serialized_record = self.get_serializer_class.new(object: @record, controller: self).serialize
+      return api_response(serialized_record)
     end
   end
 
@@ -173,10 +168,8 @@ module RESTFramework
         # Otherwise, perform a "bare" create.
         @record = self.get_model.create!(self.get_create_params)
       end
-      @serialized_record = self.get_serializer_class.new(
-        object: @record, controller: self
-      ).serialize
-      return api_response(@serialized_record)
+      serialized_record = self.get_serializer_class.new(object: @record, controller: self).serialize
+      return api_response(serialized_record)
     end
   end
 
@@ -184,10 +177,8 @@ module RESTFramework
     def update
       @record = self.get_record
       @record.update!(self.get_update_params)
-      @serialized_record = self.get_serializer_class.new(
-        object: @record, controller: self
-      ).serialize
-      return api_response(@serialized_record)
+      serialized_record = self.get_serializer_class.new(object: @record, controller: self).serialize
+      return api_response(serialized_record)
     end
   end
 
