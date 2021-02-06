@@ -5,7 +5,7 @@ ActiveRecord::Schema.define do
     t.integer :age
     t.decimal :balance, precision: 8, scale: 2
 
-    t.timestamps
+    t.timestamps null: true
   end
 
   create_table :things, force: true do |t|
@@ -15,6 +15,6 @@ ActiveRecord::Schema.define do
     t.boolean :is_discounted, default: false
     t.references :owner, index: true, foreign_key: { to_table: :users, on_delete: :cascade }
 
-    t.timestamps
+    t.timestamps null: true
   end
 end

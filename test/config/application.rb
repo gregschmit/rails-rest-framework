@@ -24,8 +24,7 @@ end
 Bundler.require(*Rails.groups)
 
 class Application < Rails::Application
-  config.load_defaults 6.0
-
+  config.autoloader = :zeitwerk
   config.eager_load = false
   config.action_dispatch.show_exceptions = false
   config.consider_all_requests_local = true

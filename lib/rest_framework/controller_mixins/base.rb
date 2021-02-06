@@ -31,26 +31,35 @@ module RESTFramework
       if base.is_a? Class
         base.extend ClassMethods
 
-        # Add class attributes which don't exist yet.
-        [
-          :extra_actions,
-          :filter_backends,
-          :native_serializer_config,
-          :native_serializer_action_config,
-          :paginator_class,
-          :page_size,
-          :page_query_param,
-          :page_size_query_param,
-          :max_page_size,
-          :serializer_class,
-          :singleton_controller,
-          :skip_actions,
-        ].each do |a|
-          base.class_attribute a unless base.respond_to?(a)
+        # Add class attributes (with defaults) unless they already exist.
+        {
+          extra_actions: nil,
+          extra_member_actions: nil,
+          filter_backends: nil,
+          native_serializer_config: nil,
+          native_serializer_action_config: nil,
+          paginator_class: nil,
+          page_size: nil,
+          page_query_param: 'page',
+          page_size_query_param: 'page_size',
+          max_page_size: nil,
+          serializer_class: nil,
+          singleton_controller: nil,
+          skip_actions: nil,
+        }.each do |a, default|
+          unless base.respond_to?(a)
+            base.class_attribute(a)
 
-          # Set defaults manually so we can still support Rails 4.
-          base.page_size_query_param = 'page_size' if a == :page_size_query_param
-          base.page_query_param = 'page' if a == :page_query_param
+            # Set default manually so we can still support Rails 4. Maybe later we can use the
+            # default parameter on `class_attribute`.
+            base.send(:"#{a}=", default)
+          end
+        end
+
+        # Alias `extra_actions` to `extra_collection_actions`.
+        unless base.respond_to?(:extra_collection_actions)
+          base.alias_method(:extra_collection_actions, :extra_actions)
+          base.alias_method(:extra_collection_actions=, :extra_actions=)
         end
 
         # skip csrf since this is an API

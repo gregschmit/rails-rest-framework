@@ -9,36 +9,36 @@ module RESTFramework
       if base.is_a? Class
         BaseControllerMixin.included(base)
 
-        # Add class attributes which don't exist yet.
-        [
+        # Add class attributes (with defaults) unless they already exist.
+        {
           # Core attributes related to models.
-          :model,
-          :recordset,
+          model: nil,
+          recordset: nil,
 
           # Attributes for create/update parameters.
-          :allowed_parameters,
-          :allowed_action_parameters,
+          allowed_parameters: nil,
+          allowed_action_parameters: nil,
 
           # Attributes for configuring record fields.
-          :fields,
-          :action_fields,
+          fields: nil,
+          action_fields: nil,
 
           # Attributes for default model filtering (and ordering).
-          :filterset_fields,
-          :ordering_fields,
-          :ordering_query_param,
+          filterset_fields: nil,
+          ordering_fields: nil,
+          ordering_query_param: 'ordering',
 
           # Other misc attributes.
-          :extra_member_actions,  # Extra actions on individual records.
-          :disable_creation_from_recordset,  # Option to disable `recordset.create` behavior.
-        ].each do |a|
-          base.class_attribute a unless base.respond_to?(a)
+          disable_creation_from_recordset: nil,  # Option to disable `recordset.create` behavior.
+        }.each do |a, default|
+          unless base.respond_to?(a)
+            base.class_attribute(a)
 
-          # Set defaults manually so we can still support Rails 4.
-          base.ordering_query_param = 'ordering' if a == :ordering_query_param
+            # Set default manually so we can still support Rails 4. Maybe later we can use the
+            # default parameter on `class_attribute`.
+            base.send(:"#{a}=", default)
+          end
         end
-
-        base.alias_method(:extra_collection_actions=, :extra_actions=)
       end
     end
 
@@ -55,6 +55,7 @@ module RESTFramework
       return (allowed_action_parameters[action] if action) || self.class.allowed_parameters
     end
 
+    # Get the list of filtering backends to use.
     def get_filter_backends
       backends = super
       return backends if backends

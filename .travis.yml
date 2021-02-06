@@ -1,10 +1,11 @@
 ---
 language: ruby
+env:
+- "RAILS_VERSION=4.2"
+- "RAILS_VERSION=5.2"
+- "RAILS_VERSION=6.0"
 rvm:
-  - 2.5.0
-  - 2.6.5
+- 2.5.0
+- 2.6.5
 script:
-  - cd test/integration
-  - rake db:test:prepare
-  - cd ../..
-  - rake test
+- rake test

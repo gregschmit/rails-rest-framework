@@ -116,18 +116,5 @@ To run the full test suite:
 $ rake test
 ```
 
-To run unit tests:
-
-```shell
-$ rake test:unit
-```
-
-To run integration tests:
-
-```shell
-$ rake test:integration
-```
-
-To interact with the integration app, you can `cd test/integration` and operate it via the normal
-Rails interfaces. Ensure you run `rake db:schema:load` before running `rails server` or
-`rails console`.
+To interact with the test app, `cd test` and operate it via the normal Rails interfaces. Ensure you
+run `rake db:schema:load` before running `rails server` or `rails console`.

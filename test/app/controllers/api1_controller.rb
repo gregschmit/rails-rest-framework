@@ -1,3 +1,4 @@
+# Api1 should test very simple functionality of the REST framework.
 class Api1Controller < ApplicationController
   include RESTFramework::BaseControllerMixin
 

@@ -1,4 +1,4 @@
-class Api1::UserController < Api1Controller
+class Api1::UsersController < Api1Controller
   include RESTFramework::ModelControllerMixin
 
   self.fields = %w(login is_admin balance)

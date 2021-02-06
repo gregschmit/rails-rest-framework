@@ -1,28 +1,21 @@
 require "bundler/gem_tasks"
 require "rake/testtask"
 
+require "rails"
+
+require 'fileutils'
+TEST_APP_ROOT = File.expand_path('test', __dir__)
+
 Rake::TestTask.new :test do |t|
-  t.description = "Run entire test suite"
-  t.libs << "test"
-  t.libs << "lib"
-  t.pattern = 'test/**/*_test.rb'
+  FileUtils.chdir TEST_APP_ROOT do
+    if Rails::VERSION::MAJOR >= 6
+      system('bin/rails db:test:prepare')
+    else
+      system('rake db:schema:load')
+    end
+  end
+  t.description = "Prepare and run the test suite."
+  t.pattern = 'test/test/**/*.rb'
 end
 
 task :default => :test
-
-# Add helpers for unit and integration tests.
-namespace :test do
-  Rake::TestTask.new :unit do |t|
-    t.description = "Run unit test suite"
-    t.libs << "test"
-    t.libs << "lib"
-    t.pattern = 'test/unit/**/*_test.rb'
-  end
-
-  Rake::TestTask.new :integration do |t|
-    t.description = "Run integration test suite"
-    t.libs << "test"
-    t.libs << "lib"
-    t.pattern = 'test/integration/**/*_test.rb'
-  end
-end
