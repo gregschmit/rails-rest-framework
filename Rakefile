@@ -7,15 +7,10 @@ require 'fileutils'
 TEST_APP_ROOT = File.expand_path('test', __dir__)
 
 Rake::TestTask.new :test do |t|
-  # Setup test db.
+  # Setup test database.
   FileUtils.chdir TEST_APP_ROOT do
-    if Rails::VERSION::MAJOR >= 6
-      puts "\n== Preparing database =="
-      system('bin/rails db:test:prepare')
-    else
-      puts "\n== Loading schema =="
-      system('rake db:schema:load')
-    end
+    puts "\n== Loading Schema =="
+    system('bundle exec rake db:schema:load')
   end
 
   # Define test parameters.
