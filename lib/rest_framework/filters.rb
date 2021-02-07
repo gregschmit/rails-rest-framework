@@ -10,7 +10,7 @@ module RESTFramework
   end
 
   # A simple filtering backend that supports filtering a recordset based on fields defined on the
-  # controller class.
+  # controller class. TODO: handle data types better.
   class ModelFilter < BaseFilter
     # Filter params for keys allowed by the current action's filterset_fields/fields config.
     def _get_filter_params

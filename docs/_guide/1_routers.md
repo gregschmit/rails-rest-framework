@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Routers
+position: 1
+slug: routers
 ---
 # Routers
 
@@ -93,8 +95,9 @@ end
 
 ## Non-resourceful Routing
 
-Non-resourceful routers do not route the standard resource routes (`index`, `create`, `show`,
-`list`, `update`, `delete`). Any actions must be defined as `extra_actions` on the controller.
+The `rest_route` non-resourceful router does not route the standard resource routes (`index`,
+`create`, `show`, `list`, `update`, `delete`). Any actions must be defined as `extra_actions` on the
+controller.
 
 ```ruby
 Rails.application.routes.draw do

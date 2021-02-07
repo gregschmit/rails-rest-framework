@@ -5,7 +5,7 @@ url: "https://rails-rest-framework.com"
 collections:
   guide:
     output: true
-    permalink: /:collection/:path/
+    permalink: /:collection/:slug/
 
 # Build settings
 markdown: kramdown

@@ -22,7 +22,7 @@
               Guide
             </a>
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-              {% for section in site.guide | sort:"position" %}
+              {% for section in site.guide %}
                 <a class="dropdown-item" href="{{ section.url }}">{{ section.title }}</a>
               {% endfor %}
             </div>

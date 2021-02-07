@@ -8,18 +8,25 @@ module RESTFramework
     end
   end
 
-  # This serializer uses `.as_json` to serialize objects. Despite the name, `.as_json` is a Rails
-  # method which converts objects to Ruby primitives (with the top-level being either an array or a
-  # hash).
-  class NativeSerializer < BaseSerializer
+  # This serializer uses `.as_json` to serialize objects. Despite the name, `.as_json` is an
+  # `ActiveModel` method which converts objects to Ruby primitives (with the top-level being either
+  # an array or a hash).
+  class NativeModelSerializer < BaseSerializer
     class_attribute :config
     class_attribute :singular_config
     class_attribute :plural_config
     class_attribute :action_config
 
-    def initialize(many: nil, **kwargs)
+    def initialize(many: nil, model: nil, **kwargs)
       super(**kwargs)
-      @many = many
+
+      if many.nil?
+        @many = @object.respond_to?(:count) ? @object.count : nil
+      else
+        @many = many
+      end
+
+      @model = model || (@controller ? @controller.send(:get_model) : nil)
     end
 
     # Get controller action, if possible.
@@ -56,6 +63,13 @@ module RESTFramework
       # Return a serializer config if one is defined.
       if serializer_config = @controller.send(:get_native_serializer_config)
         return serializer_config
+      end
+
+      # If the config wasn't determined, build a serializer config from model fields.
+      fields = @controller.try(:get_fields) if @controller
+      unless fields.blank?
+        columns, methods = fields.partition { |f| f.to_s.in?(@model.column_names) }
+        return {only: columns, methods: methods}
       end
 
       return {}
@@ -99,27 +113,4 @@ module RESTFramework
     end
   end
 
-  # `NativeModelSerializer` is similar to `NativeSerializer` but with some customizations to work
-  # with `ActiveModel`.
-  class NativeModelSerializer < NativeSerializer
-    def initialize(model: nil, **kwargs)
-      super(**kwargs)
-      @model = model || (@controller ? @controller.send(:get_model) : nil)
-    end
-
-    # Get a configuration passable to `as_json` for the object.
-    def get_serializer_config
-      config = super
-      return config unless config.blank?
-
-      # If the config wasn't determined, build a serializer config from model fields.
-      fields = @controller.try(:get_fields) if @controller
-      unless fields.blank?
-        columns, methods = fields.partition { |f| f.to_s.in?(@model.column_names) }
-        return {only: columns, methods: methods}
-      end
-
-      return {}
-    end
-  end
 end

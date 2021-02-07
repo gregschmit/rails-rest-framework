@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Controller Mixins
+position: 2
+slug: controller-mixins
 ---
 # Controller Mixins
 
@@ -35,7 +37,7 @@ end
 ## BaseControllerMixin
 
 To transform a controller into the simplest possible RESTful controller, you can include
-`BaseControllerMixin`, which provides a `root` action.
+`BaseControllerMixin`, which provides a `root` action so it can be used at the API root.
 
 ```ruby
 class ApiController < ApplicationController
@@ -110,8 +112,6 @@ class ApiController < ApplicationController
 end
 ```
 
-[//]: <> TODO: ### Controller Methods (explain method overrides)
-
 ## ModelControllerMixin
 
 `ModelControllerMixin` assists with providing the standard model CRUD (create, read, update,
@@ -145,13 +145,36 @@ end
 
 The `recordset` property allows you to define the set of records this API should be limited to. If
 you need to change the recordset based on properties of the request, then you can override the
-`get_recordset` method.
+`get_recordset()` method.
+
+```ruby
+class Api::CoolMoviesController < ApiController
+  include RESTFramework::ModelControllerMixin
+
+  self.recordset = Movie.where(cool: true).order({id: :asc})
+end
+```
+
+#### extra_member_actions
+
+The `extra_member_actions` property allows you to define additional actions on individual records.
 
 ```ruby
 class Api::MoviesController < ApiController
   include RESTFramework::ModelControllerMixin
 
-  self.recordset = Movie.where(enabled: true).order()
+  self.extra_member_actions = {disable: :post}
+
+  def disable
+    @record = self.get_record  # REST Framework will rescue ActiveRecord::RecordNotFound
+
+    # REST Framework will rescue ActiveRecord::RecordInvalid or ActiveRecord::RecordNotSaved
+    @record.update!(enabled: false)
+
+    serialized_record = self.get_serializer_class.new(object: @record, controller: self).serialize
+
+    return api_response(serialized_record)
+  end
 end
 ```
 
@@ -187,8 +210,8 @@ end
 
 #### native_serializer_config / native_serializer_action_config
 
-These properties define the serializer configuration if you are using the native Ruby on Rails
-serilizer, either globally or per-action.
+These properties define the serializer configuration if you are using the native `ActiveModel`
+serializer, either globally or per-action.
 
 ```ruby
 class Api::MoviesController < ApiController
@@ -202,30 +225,44 @@ class Api::MoviesController < ApiController
 end
 ```
 
-#### filterset_fields
+#### allowed_parameters / allowed_action_parameters
 
-Basic filtering is supported by the `ModelControllerMixin`, and the `filterset_fields` property
-allows you to define which fields are allowed to be filtered against.
+These properties define the permitted parameters to be used in the request body for create/update
+actions. If you need different allowed parameters, then you can also override the
+`get_create_params` or `get_update_params` methods.
 
 ```ruby
 class Api::MoviesController < ApiController
   include RESTFramework::ModelControllerMixin
 
-  self.filterset_fields = [:id, :name]
+  self.allowed_parameters = [:name]
 end
 ```
 
-[//]: <> TODO: #### allowed_parameters
+#### disable_creation_from_recordset
 
-[//]: <> TODO: #### allowed_action_parameters
+The `disable_creation_from_recordset` is a boolean to disable the default behavior in the `create`
+action which calls `create()` from the `get_recordset()` method. That default behavior means that if
+you've hardcoded any filtering by overriding the `recordset` property or the `get_recordset()`
+method, those properties are set by default.
 
-[//]: <> TODO: #### serializer_class
+For example, if this is your controller:
 
-[//]: <> TODO: #### extra_member_actions
+```ruby
+class Api::CoolMoviesController < ApiController
+  include RESTFramework::ModelControllerMixin
 
-[//]: <> TODO: #### disable_creation_from_recordset
+  def get_recordset
+    return Movie.where(cool: true)
+  end
+end
+```
 
-[//]: <> TODO: ### Controller Methods (explain method overrides)
+Then if you hit the `create` action with the payload `{name: "Superman"}`, it will also set `cool`
+to `true` because that inherits from the record set.
+
+If `disable_creation_from_recordset` is `true`, then this behavior changes and the `model` will be
+used when creating the record.
 
 ## ReadOnlyModelControllerMixin
 

@@ -23,6 +23,10 @@ module RESTFramework
           fields: nil,
           action_fields: nil,
 
+          # Attributes for the default native serializer.
+          native_serializer_config: nil,
+          native_serializer_action_config: nil,
+
           # Attributes for default model filtering (and ordering).
           filterset_fields: nil,
           ordering_fields: nil,
@@ -43,6 +47,11 @@ module RESTFramework
     end
 
     protected
+
+    # Helper to get the configured serializer class, or `NativeModelSerializer` as a default.
+    def get_serializer_class
+      return self.class.serializer_class || NativeModelSerializer
+    end
 
     # Get a list of parameters allowed for the current action.
     def get_allowed_parameters
@@ -76,14 +85,14 @@ module RESTFramework
     end
 
     # Filter the request body for keys in current action's allowed_parameters/fields config.
-    def _get_parameter_values_from_request_body
+    def get_body_params
       fields = self.get_allowed_parameters || self.get_fields
-      return @_get_parameter_values_from_request_body ||= (request.request_parameters.select { |p|
+      return @get_body_params ||= (request.request_parameters.select { |p|
         fields.include?(p.to_sym) || fields.include?(p.to_s)
       })
     end
-    alias :get_create_params :_get_parameter_values_from_request_body
-    alias :get_update_params :_get_parameter_values_from_request_body
+    alias :get_create_params :get_body_params
+    alias :get_update_params :get_body_params
 
     # Get a record by `id` or return a single record if recordset is filtered down to a single
     # record.

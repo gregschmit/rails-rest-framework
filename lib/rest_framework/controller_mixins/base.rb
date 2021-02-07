@@ -36,8 +36,6 @@ module RESTFramework
           extra_actions: nil,
           extra_member_actions: nil,
           filter_backends: nil,
-          native_serializer_config: nil,
-          native_serializer_action_config: nil,
           paginator_class: nil,
           page_size: nil,
           page_query_param: 'page',
@@ -95,9 +93,9 @@ module RESTFramework
       return data
     end
 
-    # Helper to get the configured serializer class, or `NativeModelSerializer` as a default.
+    # Helper to get the configured serializer class.
     def get_serializer_class
-      return self.class.serializer_class || NativeModelSerializer
+      return self.class.serializer_class
     end
 
     # Get a native serializer config for the current action.
