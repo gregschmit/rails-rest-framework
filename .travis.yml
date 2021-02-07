@@ -5,8 +5,8 @@ env:
 - "RAILS_VERSION=5.2"
 - "RAILS_VERSION=6.0"
 before_install:
-- gem uninstall bundler --force -x -a
 - gem install -N bundler:1.17.3
+- bundle _1.17.3_ install
 rvm:
 - 2.5.0
 - 2.6.5
