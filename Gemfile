@@ -15,6 +15,8 @@ gem "minitest-proveit", ">= 1.0"
 gem "sqlite3", "~> #{rails_version_major <= 4 ? '1.3.0' : '1.4.0'}"
 gem "byebug"
 
-# Documentation
-gem "github-pages", ">= 208"
-gem "yard"
+# Documentation (Exclude from test environment.)
+group :development do
+  gem "github-pages", ">= 208"
+  gem "yard"
+end
