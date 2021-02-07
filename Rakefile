@@ -11,12 +11,10 @@ Rake::TestTask.new :test do |t|
   FileUtils.chdir TEST_APP_ROOT do
     if Rails::VERSION::MAJOR >= 6
       puts "\n== Preparing database =="
-      puts "RAILS_ENV: #{ENV["RAILS_ENV"]}"
-      puts "NODE_ENV: #{ENV["NODE_ENV"]}"
-      system('bin/rails db:test:prepare')
+      system('bundle exec rails db:test:prepare')
     else
       puts "\n== Loading schema =="
-      system('rake db:schema:load')
+      system('bundle exec rake db:schema:load')
     end
   end
 

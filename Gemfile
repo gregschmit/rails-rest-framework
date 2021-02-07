@@ -4,7 +4,7 @@ source "https://rubygems.org"
 gemspec
 
 # Allow testing against multiple Rails versions.
-rails_version = ENV["RAILS_VERSION"] || "5.2"
+rails_version = ENV["RAILS_VERSION"] || "6.0"
 rails_version_major = rails_version.split('.')[0].to_i
 gem "rails", "~> #{rails_version}"
 
