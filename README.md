@@ -112,7 +112,7 @@ end
 After you clone the repository, cd'ing into the directory should create a new gemset if you are
 using RVM. Then run `bundle install` to install the appropriate gems.
 
-To run the full test suite:
+To run the test suite:
 
 ```shell
 $ rake test
