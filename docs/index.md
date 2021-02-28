@@ -6,17 +6,18 @@ layout: default
 [![Gem Version](https://badge.fury.io/rb/rest_framework.svg)](https://badge.fury.io/rb/rest_framework)
 [![Build Status](https://travis-ci.org/gregschmit/rails-rest-framework.svg?branch=master)](https://travis-ci.org/gregschmit/rails-rest-framework)
 
-Rails REST Framework helps you build awesome Web APIs in Ruby on Rails.
+A framework for DRY RESTful APIs in Ruby on Rails.
 
 **The Problem**: Building controllers for APIs usually involves writing a lot of redundant CRUD
-logic, and routing them can be obnoxious.
+logic, and routing them can be obnoxious. Building and maintaining features like ordering,
+filtering, and pagination can be tedious.
 
-**The Solution**: This gem handles the common logic so you can focus on the parts of your API which
-make it unique.
+**The Solution**: This framework implements browsable API responses, CRUD for your models, and
+features like ordering/filtering/pagination, so you can focus on building awesome APIs.
 
-Website: https://rails-rest-framework.com
+Documentation: [https://rails-rest-framework.com](https://rails-rest-framework.com)
 
-Source: https://github.com/gregschmit/rails-rest-framework
+Source: [https://github.com/gregschmit/rails-rest-framework](https://github.com/gregschmit/rails-rest-framework)
 
 ## Installation
 
