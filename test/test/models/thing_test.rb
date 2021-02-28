@@ -2,7 +2,7 @@ require_relative '../test_helper'
 
 class ThingTest < ActiveSupport::TestCase
   def test_can_create_thing
-    t = Thing.create!(name: 'test_create')
+    Thing.create!(name: 'test_create')
     assert Thing.where(name: 'test_create').exists?
   end
 
