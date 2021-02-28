@@ -12,8 +12,8 @@ A framework for DRY RESTful APIs in Ruby on Rails.
 logic, and routing them can be obnoxious. Building and maintaining features like ordering,
 filtering, and pagination can be tedious.
 
-**The Solution**: This framework implements browsable API responses, CRUD for your models, and
-features like ordering/filtering/pagination, so you can focus on building awesome APIs.
+**The Solution**: This framework implements browsable API responses, CRUD actions for your models,
+and features like ordering/filtering/pagination, so you can focus on building awesome APIs.
 
 Documentation: [https://rails-rest-framework.com](https://rails-rest-framework.com)
 
