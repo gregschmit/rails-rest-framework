@@ -19,7 +19,7 @@ Website/Guide: [https://rails-rest-framework.com](https://rails-rest-framework.c
 
 Source: [https://github.com/gregschmit/rails-rest-framework](https://github.com/gregschmit/rails-rest-framework)
 
-YARD Docs: https://rubydoc.info/gems/rest_framework](https://rubydoc.info/gems/rest_framework)
+YARD Docs: [https://rubydoc.info/gems/rest_framework](https://rubydoc.info/gems/rest_framework)
 
 ## Installation
 
