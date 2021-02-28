@@ -12,6 +12,7 @@ logic, and routing them can be obnoxious.
 make it unique.
 
 Website: https://rails-rest-framework.com
+
 Source: https://github.com/gregschmit/rails-rest-framework
 
 ## Installation
