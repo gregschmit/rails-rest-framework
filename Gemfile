@@ -19,4 +19,5 @@ gem "byebug"
 unless ENV["RAILS_ENV"] == 'test'
   gem "github-pages", ">= 208"
   gem "yard"
+  gem "redcarpet"
 end

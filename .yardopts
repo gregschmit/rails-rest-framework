@@ -1,1 +1,6 @@
-lib/**/*.rb - LICENSE guide/*
+--private
+--protected
+lib/**/*.rb
+-
+LICENSE
+guide/*

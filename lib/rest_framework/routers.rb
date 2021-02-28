@@ -2,7 +2,7 @@ require 'action_dispatch/routing/mapper'
 
 module ActionDispatch::Routing
   class Mapper
-    # Helper to take extra_actions hash and convert to a consistent format.
+    # Internal helper to take extra_actions hash and convert to a consistent format.
     protected def _parse_extra_actions(extra_actions)
       return (extra_actions || {}).map do |k,v|
         kwargs = {}
@@ -37,7 +37,7 @@ module ActionDispatch::Routing
       end
     end
 
-    # Private interface to get the controller class from the name and current scope.
+    # Internal interface to get the controller class from the name and current scope.
     protected def _get_controller_class(name, pluralize: true, fallback_reverse_pluralization: true)
       # get class name
       name = name.to_s.camelize  # camelize to leave plural names plural
@@ -71,7 +71,7 @@ module ActionDispatch::Routing
       return controller
     end
 
-    # Core implementation of the `rest_resource(s)` router, both singular and plural.
+    # Internal core implementation of the `rest_resource(s)` router, both singular and plural.
     # @param default_singular [Boolean] the default plurality of the resource if the plurality is
     #   not otherwise defined by the controller
     # @param name [Symbol] the resource name, from which path and controller are deduced by default
@@ -166,7 +166,7 @@ module ActionDispatch::Routing
     end
 
     # Route a controller's `#root` to '/' in the current scope/namespace, along with other actions.
-    # @param label [Symbol] the snake_case name of the controller
+    # @param name [Symbol] the snake_case name of the controller
     def rest_root(name=nil, **kwargs, &block)
       # By default, use RootController#root.
       root_action = kwargs.delete(:action) || :root

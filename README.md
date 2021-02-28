@@ -12,9 +12,11 @@ filtering, and pagination can be tedious.
 **The Solution**: This framework implements browsable API responses, CRUD actions for your models,
 and features like ordering/filtering/pagination, so you can focus on building awesome APIs.
 
-Documentation: [https://rails-rest-framework.com](https://rails-rest-framework.com)
+Website/Guide: [https://rails-rest-framework.com](https://rails-rest-framework.com)
 
 Source: [https://github.com/gregschmit/rails-rest-framework](https://github.com/gregschmit/rails-rest-framework)
+
+YARD Docs: [https://rubydoc.info/gems/rest_framework](https://rubydoc.info/gems/rest_framework)
 
 ## Installation
 
