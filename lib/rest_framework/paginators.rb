@@ -19,8 +19,7 @@ module RESTFramework
 
       # Get from context, if allowed.
       if @controller.class.page_size_query_param
-        page_size = @controller.params[@controller.class.page_size_query_param].presence
-        if page_size
+        if page_size = @controller.params[@controller.class.page_size_query_param].presence
           page_size = page_size.to_i
         end
       end
@@ -29,9 +28,6 @@ module RESTFramework
       if !page_size && @controller.class.page_size
         page_size = @controller.class.page_size
       end
-
-      # Fallback to a page size of 15.
-      page_size = 15 unless page_size
 
       # Ensure we don't exceed the max page size.
       if @controller.class.max_page_size && page_size > @controller.class.max_page_size

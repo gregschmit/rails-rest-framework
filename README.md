@@ -11,7 +11,8 @@ logic, and routing them can be obnoxious.
 **The Solution**: This gem handles the common logic so you can focus on the parts of your API which
 make it unique.
 
-To see detailed documentation, visit https://rails-rest-framework.com.
+Website: https://rails-rest-framework.com
+Source: https://github.com/gregschmit/rails-rest-framework
 
 ## Installation
 

@@ -37,7 +37,7 @@ module RESTFramework
           extra_member_actions: nil,
           filter_backends: nil,
           paginator_class: nil,
-          page_size: nil,
+          page_size: 20,
           page_query_param: 'page',
           page_size_query_param: 'page_size',
           max_page_size: nil,
