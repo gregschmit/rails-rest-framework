@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "A framework for DRY RESTful APIs in Ruby on Rails."
   spec.description = "A framework for DRY RESTful APIs in Ruby on Rails."
-  spec.homepage = "https://github.com/gregschmit/rails-rest-framework"
+  spec.homepage = "https://rails-rest-framework.com"
   spec.license = "MIT"
 
   spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")

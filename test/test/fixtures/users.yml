@@ -1,0 +1,16 @@
+# t.string :login
+# t.boolean :is_admin, default: false
+# t.integer :age
+# t.decimal :balance, precision: 8, scale: 2
+# t.timestamps null: true
+
+first_normal:
+  login: first_normal
+  age: 23
+  balance: 20.34
+
+first_admin:
+  login: first_admin
+  is_admin: true
+  age: 34
+  balance: 230.34

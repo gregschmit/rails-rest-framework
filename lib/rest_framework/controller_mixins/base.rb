@@ -75,17 +75,12 @@ module RESTFramework
 
     # Helper to get filtering backends with a sane default.
     def get_filter_backends
-      if self.class.filter_backends
-        return self.class.filter_backends
-      end
-
-      # By default, return nil.
-      return nil
+      return self.class.filter_backends || []
     end
 
     # Filter the recordset over all configured filter backends.
     def get_filtered_data(data)
-      (self.get_filter_backends || []).each do |filter_class|
+      self.get_filter_backends.each do |filter_class|
         filter = filter_class.new(controller: self)
         data = filter.get_filtered_data(data)
       end

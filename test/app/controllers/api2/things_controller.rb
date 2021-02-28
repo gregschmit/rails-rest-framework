@@ -7,4 +7,5 @@ class Api2::ThingsController < Api2Controller
     update_fields: %w(name),
   }
   self.paginator_class = RESTFramework::PageNumberPaginator
+  self.page_size = 2
 end

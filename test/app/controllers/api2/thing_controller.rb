@@ -5,6 +5,6 @@ class Api2::ThingController < Api2Controller
   self.singleton_controller = true
 
   def get_record
-    return Thing.first!
+    return Thing.first
   end
 end

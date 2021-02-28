@@ -3,7 +3,7 @@ source "https://rubygems.org"
 # https://yehudakatz.com/2010/12/16/clarifying-the-roles-of-the-gemspec-and-gemfile/
 gemspec
 
-# Allow testing against multiple Rails versions.
+# Support testing against multiple Rails versions.
 rails_version = ENV["RAILS_VERSION"] || "6.0"
 rails_version_major = rails_version.split('.')[0].to_i
 gem "rails", "~> #{rails_version}"

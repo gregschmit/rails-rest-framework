@@ -5,6 +5,9 @@ require 'minitest/pride'
 require 'rails/test_help'
 
 class ActiveSupport::TestCase
+  # Load all fixtures.
+  fixtures :all
+
   # Run tests in parallel for Rails >=6.
   if Rails::VERSION::MAJOR >= 6
     parallelize(workers: :number_of_processors)

@@ -117,4 +117,5 @@ $ rake test
 ```
 
 To interact with the test app, `cd test` and operate it via the normal Rails interfaces. Ensure you
-run `rake db:schema:load` before running `rails server` or `rails console`.
+run `rake db:schema:load` before running `rails server` or `rails console`. You can also load the
+test fixtures with `rake db:fixtures:load`.

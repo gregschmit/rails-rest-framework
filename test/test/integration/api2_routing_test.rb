@@ -30,4 +30,20 @@ class Api2RoutingTest < ActionDispatch::IntegrationTest
     get '/api2/things.json'
     assert_response :success
   end
+
+  test "can get network test" do
+    get '/api2/network/test'
+    assert_response :success
+    get '/api2/network/test.json'
+    assert_response :success
+  end
+
+  test "can not get network resourceful routes" do
+    assert_raises ActionController::RoutingError do
+      get "/api1/network.json"
+    end
+    assert_raises ActionController::RoutingError do
+      get "/api1/network"
+    end
+  end
 end

@@ -1,0 +1,25 @@
+# t.string :name
+# t.string :shape
+# t.decimal :price, precision: 6, scale: 2
+# t.boolean :is_discounted, default: false
+# t.references :owner, index: true, foreign_key: { to_table: :users, on_delete: :cascade }
+# t.timestamps null: true
+
+thing_1:
+  name: Thing 1
+  shape: Square
+  price: 4
+  owner: first_normal
+
+thing_2:
+  name: Thing 2
+  shape: Circle
+  price: 9.23
+  owner: first_admin
+
+thing_3:
+  name: Thing 3
+  shape: Triangle
+  price: 149.23
+  is_discounted: true
+  owner: first_admin

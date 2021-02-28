@@ -11,7 +11,7 @@ module RESTFramework
       @page_size = self._page_size
 
       @total_pages = @count / @page_size
-      @total_pages += 1 if @count % @page_size
+      @total_pages += 1 if (@count % @page_size != 0)
     end
 
     def _page_size

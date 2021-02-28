@@ -50,7 +50,7 @@ module RESTFramework
 
     # Helper to get the configured serializer class, or `NativeModelSerializer` as a default.
     def get_serializer_class
-      return self.class.serializer_class || NativeModelSerializer
+      return self.class.serializer_class || RESTFramework::NativeModelSerializer
     end
 
     # Get a list of parameters allowed for the current action.
@@ -66,11 +66,9 @@ module RESTFramework
 
     # Get the list of filtering backends to use.
     def get_filter_backends
-      backends = super
-      return backends if backends
-
-      # By default, return the standard model filter backend.
-      return [RESTFramework::ModelFilter, RESTFramework::ModelOrderingFilter]
+      return self.class.filter_backends || [
+        RESTFramework::ModelFilter, RESTFramework::ModelOrderingFilter
+      ]
     end
 
     # Get a list of fields for the current action.

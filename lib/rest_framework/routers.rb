@@ -2,6 +2,41 @@ require 'action_dispatch/routing/mapper'
 
 module ActionDispatch::Routing
   class Mapper
+    # Helper to take extra_actions hash and convert to a consistent format.
+    protected def _parse_extra_actions(extra_actions)
+      return (extra_actions || {}).map do |k,v|
+        kwargs = {}
+        path = k
+
+        # Convert structure to path/methods/kwargs.
+        if v.is_a?(Hash)  # allow kwargs
+          v = v.symbolize_keys
+
+          # Ensure methods is an array.
+          if v[:methods].is_a?(String) || v[:methods].is_a?(Symbol)
+            methods = [v.delete(:methods)]
+          else
+            methods = v.delete(:methods)
+          end
+
+          # Override path if it's provided.
+          if v.key?(:path)
+            path = v.delete(:path)
+          end
+
+          # Pass any further kwargs to the underlying Rails interface.
+          kwargs = kwargs.merge(v)
+        elsif v.is_a?(Symbol) || v.is_a?(String)
+          methods = [v]
+        else
+          methods = v
+        end
+
+        # Return a hash with keys: :path, :methods, :kwargs.
+        {path: path, methods: methods, kwargs: kwargs}
+      end
+    end
+
     # Private interface to get the controller class from the name and current scope.
     protected def _get_controller_class(name, pluralize: true, fallback_reverse_pluralization: true)
       # get class name
@@ -40,16 +75,16 @@ module ActionDispatch::Routing
     # @param default_singular [Boolean] the default plurality of the resource if the plurality is
     #   not otherwise defined by the controller
     # @param name [Symbol] the resource name, from which path and controller are deduced by default
-    # @param skip_undefined [Boolean] whether we should skip routing undefined actions
+    # @param skip_undefined [Boolean] whether we should skip routing undefined resourceful actions
     protected def _rest_resources(default_singular, name, skip_undefined: true, **kwargs, &block)
-      controller = kwargs[:controller] || name
+      controller = kwargs.delete(:controller) || name
       if controller.is_a?(Class)
         controller_class = controller
       else
         controller_class = _get_controller_class(controller, pluralize: !default_singular)
       end
 
-      # set controller if it's not explicitly set
+      # Set controller if it's not explicitly set.
       kwargs[:controller] = name unless kwargs[:controller]
 
       # determine plural/singular resource
@@ -70,25 +105,20 @@ module ActionDispatch::Routing
       public_send(resource_method, name, except: skip, **kwargs) do
         if controller_class.respond_to?(:extra_member_actions)
           member do
-            actions = controller_class.extra_member_actions || {}
-            actions = actions.select { |k,v| controller_class.method_defined?(k) } if skip_undefined
-            actions.each do |action, methods|
-              methods = [methods] if methods.is_a?(Symbol) || methods.is_a?(String)
-              methods.each do |m|
-                public_send(m, action)
+            actions = self._parse_extra_actions(controller_class.extra_member_actions)
+            actions.each do |action_config|
+              action_config[:methods].each do |m|
+                public_send(m, action_config[:path], **action_config[:kwargs])
               end
             end
           end
         end
 
         collection do
-          actions = controller_class.extra_actions || {}
-          actions = actions.select { |k,v| controller_class.method_defined?(k) } if skip_undefined
-          actions.reject! { |k,v| skip.include? k }
-          actions.each do |action, methods|
-            methods = [methods] if methods.is_a?(Symbol) || methods.is_a?(String)
-            methods.each do |m|
-              public_send(m, action)
+          actions = self._parse_extra_actions(controller_class.extra_actions)
+          actions.each do |action_config|
+            action_config[:methods].each do |m|
+              public_send(m, action_config[:path], **action_config[:kwargs])
             end
           end
         end
@@ -112,42 +142,55 @@ module ActionDispatch::Routing
     end
 
     # Route a controller without the default resourceful paths.
-    def rest_route(path=nil, skip_undefined: true, **kwargs, &block)
-      controller = kwargs.delete(:controller) || path
-      path = path.to_s
+    def rest_route(name=nil, **kwargs, &block)
+      controller = kwargs.delete(:controller) || name
+      if controller.is_a?(Class)
+        controller_class = controller
+      else
+        controller_class = self._get_controller_class(controller, pluralize: false)
+      end
 
-      # route actions
-      controller_class = self._get_controller_class(controller, pluralize: false)
-      skip = controller_class.get_skip_actions(skip_undefined: skip_undefined)
-      actions = controller_class.extra_actions || {}
-      actions = actions.select { |k,v| controller_class.method_defined?(k) } if skip_undefined
-      actions.reject! { |k,v| skip.include? k }
-      actions.each do |action, methods|
-        methods = [methods] if methods.is_a?(Symbol) || methods.is_a?(String)
-        methods.each do |m|
-          public_send(m, File.join(path, action.to_s), controller: controller, action: action)
+      # Set controller if it's not explicitly set.
+      kwargs[:controller] = name unless kwargs[:controller]
+
+      # Route actions using the resourceful router, but skip all builtin actions.
+      actions = self._parse_extra_actions(controller_class.extra_actions)
+      public_send(:resource, name, only: [], **kwargs) do
+        actions.each do |action_config|
+          action_config[:methods].each do |m|
+            public_send(m, action_config[:path], **action_config[:kwargs])
+          end
+          yield if block_given?
         end
-        yield if block_given?
       end
     end
 
     # Route a controller's `#root` to '/' in the current scope/namespace, along with other actions.
     # @param label [Symbol] the snake_case name of the controller
-    def rest_root(path=nil, **kwargs, &block)
-      # by default, use RootController#root
+    def rest_root(name=nil, **kwargs, &block)
+      # By default, use RootController#root.
       root_action = kwargs.delete(:action) || :root
-      controller = kwargs.delete(:controller) || path || :root
-      path = path.to_s
+      controller = kwargs.delete(:controller) || name || :root
 
-      # route the root
-      get path, controller: controller, action: root_action
+      # Route the root.
+      get name.to_s, controller: controller, action: root_action
 
-      # route any additional actions
+      # Route any additional actions.
       controller_class = self._get_controller_class(controller, pluralize: false)
-      (controller_class.extra_actions || {}).each do |action, methods|
-        methods = [methods] if methods.is_a?(Symbol) || methods.is_a?(String)
-        methods.each do |m|
-          public_send(m, File.join(path, action.to_s), controller: controller, action: action)
+      actions = self._parse_extra_actions(controller_class.extra_actions)
+      actions.each do |action_config|
+        # Add :action unless kwargs defines it.
+        unless action_config[:kwargs].key?(:action)
+          action_config[:kwargs][:action] = action_config[:path]
+        end
+
+        action_config[:methods].each do |m|
+          public_send(
+            m,
+            File.join(name.to_s, action_config[:path].to_s),
+            controller: controller,
+            **action_config[:kwargs],
+          )
         end
         yield if block_given?
       end
