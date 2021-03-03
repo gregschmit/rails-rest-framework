@@ -9,12 +9,12 @@ slug: serializers
 Serializers allow complex objects to be converted to Ruby primitives (`Array` and `Hash` objects),
 which can then be converted to JSON or XML.
 
-## NativeModelSerializer
+## NativeSerializer
 
 This serializer uses Rails' native `ActiveModel::Serializers::JSON#as_json` method. Despite the
-name, this converts records/recordsets to Ruby primitives, not actual JSON.
+name, this converts records/recordsets to Ruby primitives (`Array` and `Hash`), not JSON.
 
-Because this is the default serializer, you can configure it using the controller parameters
+This is the default serializer, you can configure it using the controller class attributes
 `native_serializer_config` or `native_serializer_action_config`:
 
 ```ruby
@@ -37,12 +37,12 @@ recordsets using `singular_config` and `plural_config`, respectively.
 class Api::MoviesController < ApiController
   include RESTFramework::ModelControllerMixin
 
-  class CastMemberSerializer < RESTFramework::NativeModelSerializer
+  class CastMemberSerializer < RESTFramework::NativeSerializer
     self.config = { only: [:id, :name], methods: [:net_worth] }
     self.plural_config = { only: [:id, :name] }
   end
 
-  class MovieSerializer < RESTFramework::NativeModelSerializer
+  class MovieSerializer < RESTFramework::NativeSerializer
     self.config = {
       only: [:id, :name],
       include: {cast_members: CastMemberSerializer.new(many: true)},

@@ -11,7 +11,7 @@ end
 # This serializer uses `.as_json` to serialize objects. Despite the name, `.as_json` is an
 # `ActiveModel` method which converts objects to Ruby primitives (with the top-level being either
 # an array or a hash).
-class RESTFramework::NativeModelSerializer < RESTFramework::BaseSerializer
+class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   class_attribute :config
   class_attribute :singular_config
   class_attribute :plural_config
@@ -111,4 +111,8 @@ class RESTFramework::NativeModelSerializer < RESTFramework::BaseSerializer
     end
     return @_nested_config[key] = value
   end
+end
+
+# Alias NativeModelSerializer -> NativeSerializer.
+class RESTFramework::NativeModelSerializer < RESTFramework::NativeSerializer
 end

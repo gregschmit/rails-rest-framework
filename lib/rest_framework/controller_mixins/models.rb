@@ -50,7 +50,7 @@ module RESTFramework::BaseModelControllerMixin
   protected
 
   # Get a native serializer config for the current action.
-  # @return [RESTFramework::NativeModelSerializer]
+  # @return [RESTFramework::NativeSerializer]
   def get_native_serializer_config
     action_serializer_config = self.class.native_serializer_action_config || {}
     action = self.action_name.to_sym
@@ -64,10 +64,10 @@ module RESTFramework::BaseModelControllerMixin
     return (action_serializer_config[action] if action) || self.class.native_serializer_config
   end
 
-  # Helper to get the configured serializer class, or `NativeModelSerializer` as a default.
+  # Helper to get the configured serializer class, or `NativeSerializer` as a default.
   # @return [RESTFramework::BaseSerializer]
   def get_serializer_class
-    return self.class.serializer_class || RESTFramework::NativeModelSerializer
+    return self.class.serializer_class || RESTFramework::NativeSerializer
   end
 
   # Get a list of parameters allowed for the current action.
