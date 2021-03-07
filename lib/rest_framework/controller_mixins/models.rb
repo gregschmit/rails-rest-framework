@@ -113,7 +113,7 @@ module RESTFramework::BaseModelControllerMixin
   # Get a record by the primary key from the filtered recordset.
   def get_record
     records = self.get_filtered_data(self.get_recordset)
-    if pk = params[self.model.primary_key]
+    if pk = params[self.get_model.primary_key]
       return records.find(pk)
     end
     return nil
@@ -122,7 +122,7 @@ module RESTFramework::BaseModelControllerMixin
   # Internal interface for get_model, protecting against infinite recursion with get_recordset.
   def _get_model(from_internal_get_recordset: false)
     return @model if instance_variable_defined?(:@model) && @model
-    return self.class.model if self.class.model
+    return (@model = self.class.model) if self.class.model
     unless from_internal_get_recordset  # prevent infinite recursion
       recordset = self._get_recordset(from_internal_get_model: true)
       return (@model = recordset.klass) if recordset
@@ -137,7 +137,7 @@ module RESTFramework::BaseModelControllerMixin
   # Internal interface for get_recordset, protecting against infinite recursion with get_model.
   def _get_recordset(from_internal_get_model: false)
     return @recordset if instance_variable_defined?(:@recordset) && @recordset
-    return self.class.recordset if self.class.recordset
+    return (@recordset = self.class.recordset) if self.class.recordset
     unless from_internal_get_model  # prevent infinite recursion
       model = self._get_model(from_internal_get_recordset: true)
       return (@recordset = model.all) if model
