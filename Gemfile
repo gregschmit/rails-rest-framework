@@ -11,9 +11,11 @@ gem "rails", "~> #{rails_version}"
 # Testing
 gem "rake", ">= 12.0"
 gem "minitest", ">= 5.0"
-gem "minitest-proveit", ">= 1.0"
 gem "sqlite3", "~> #{rails_version_major <= 4 ? '1.3.0' : '1.4.0'}"
 gem "byebug"
+
+# Test Coverage
+gem 'coveralls', require: false
 
 # Documentation: Hard exclude from test environment because github-pages conflicts with Rails 6.1.
 unless ENV["RAILS_ENV"] == 'test'

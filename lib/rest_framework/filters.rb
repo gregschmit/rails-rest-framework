@@ -14,10 +14,10 @@ end
 class RESTFramework::ModelFilter < RESTFramework::BaseFilter
   # Filter params for keys allowed by the current action's filterset_fields/fields config.
   def _get_filter_params
-    fields = @controller.class.filterset_fields || @controller.send(:get_fields)
+    fields = @controller.class.filterset_fields&.map(&:to_s) || @controller.send(:get_fields)
     return @controller.request.query_parameters.select { |p|
-      fields.include?(p.to_sym) || fields.include?(p.to_s)
-    }.to_hash.symbolize_keys
+      fields.include?(p)
+    }.to_h.symbolize_keys  # convert from HashWithIndifferentAccess to Hash w/keys
   end
 
   # Filter data according to the request query parameters.

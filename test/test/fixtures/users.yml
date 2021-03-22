@@ -1,4 +1,4 @@
-# t.string :login
+# t.string :login, null: false, unique: true
 # t.boolean :is_admin, default: false
 # t.integer :age
 # t.decimal :balance, precision: 8, scale: 2

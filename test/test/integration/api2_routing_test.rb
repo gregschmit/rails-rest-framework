@@ -1,5 +1,6 @@
 require_relative '../test_helper'
 
+
 # The goal of this test is to ensure that the proper routes are defined for API2.
 class Api2RoutingTest < ActionDispatch::IntegrationTest
   test "can get root" do

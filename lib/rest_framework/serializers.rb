@@ -67,11 +67,12 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
     # If the config wasn't determined, build a serializer config from model fields.
     fields = @controller.try(:get_fields) if @controller
-    unless fields.blank?
-      columns, methods = fields.partition { |f| f.to_s.in?(@model.column_names) }
+    if fields
+      columns, methods = fields.partition { |f| f.in?(@model.column_names) }
       return {only: columns, methods: methods}
     end
 
+    # By default, pass an empty configuration, allowing the serialization of all columns.
     return {}
   end
 
@@ -112,6 +113,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return @_nested_config[key] = value
   end
 end
+
 
 # Alias NativeModelSerializer -> NativeSerializer.
 class RESTFramework::NativeModelSerializer < RESTFramework::NativeSerializer

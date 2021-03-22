@@ -16,13 +16,13 @@ module RESTFramework::BaseModelControllerMixin
         model: nil,
         recordset: nil,
 
-        # Attributes for create/update parameters.
-        allowed_parameters: nil,
-        allowed_action_parameters: nil,
-
         # Attributes for configuring record fields.
         fields: nil,
         action_fields: nil,
+
+        # Attributes for create/update parameters.
+        allowed_parameters: nil,
+        allowed_action_parameters: nil,
 
         # Attributes for the default native serializer.
         native_serializer_config: nil,
@@ -34,13 +34,13 @@ module RESTFramework::BaseModelControllerMixin
         ordering_query_param: 'ordering',
 
         # Other misc attributes.
-        disable_creation_from_recordset: nil,  # Option to disable `recordset.create` behavior.
+        disable_creation_from_recordset: false,  # Option to disable `recordset.create` behavior.
       }.each do |a, default|
         unless base.respond_to?(a)
           base.class_attribute(a)
 
-          # Set default manually so we can still support Rails 4. Maybe later we can use the
-          # default parameter on `class_attribute`.
+          # Set default manually so we can still support Rails 4. Maybe later we can use the default
+          # parameter on `class_attribute`.
           base.send(:"#{a}=", default)
         end
       end
@@ -49,36 +49,40 @@ module RESTFramework::BaseModelControllerMixin
 
   protected
 
+  def _get_specific_action_config(action_config_key, generic_config_key)
+    action_config = self.class.send(action_config_key) || {}
+    action = self.action_name&.to_sym
+
+    # Index action should use :list serializer if :index is not provided.
+    action = :list if action == :index && !action_config.key?(:index)
+
+    return (action_config[action] if action) || self.class.send(generic_config_key)
+  end
+
+  # Get a list of parameters allowed for the current action.
+  def get_allowed_parameters
+    return _get_specific_action_config(:allowed_action_parameters, :allowed_parameters)&.map(&:to_s)
+  end
+
+  # Get a list of fields for the current action.
+  def get_fields
+    return (
+      _get_specific_action_config(:action_fields, :fields)&.map(&:to_s) ||
+      self.get_model&.column_names ||
+      []
+    )
+  end
+
   # Get a native serializer config for the current action.
   # @return [RESTFramework::NativeSerializer]
   def get_native_serializer_config
-    action_serializer_config = self.class.native_serializer_action_config || {}
-    action = self.action_name.to_sym
-
-    # Handle case where :index action is not defined.
-    if action == :index && !action_serializer_config.key?(:index)
-      # Default is :show if `singleton_controller`, otherwise :list.
-      action = self.class.singleton_controller ? :show : :list
-    end
-
-    return (action_serializer_config[action] if action) || self.class.native_serializer_config
+    return _get_specific_action_config(:native_serializer_action_config, :native_serializer_config)
   end
 
   # Helper to get the configured serializer class, or `NativeSerializer` as a default.
   # @return [RESTFramework::BaseSerializer]
   def get_serializer_class
     return self.class.serializer_class || RESTFramework::NativeSerializer
-  end
-
-  # Get a list of parameters allowed for the current action.
-  def get_allowed_parameters
-    allowed_action_parameters = self.class.allowed_action_parameters || {}
-    action = self.action_name.to_sym
-
-    # index action should use :list allowed parameters if :index is not provided
-    action = :list if action == :index && !allowed_action_parameters.key?(:index)
-
-    return (allowed_action_parameters[action] if action) || self.class.allowed_parameters
   end
 
   # Get the list of filtering backends to use.
@@ -89,70 +93,81 @@ module RESTFramework::BaseModelControllerMixin
     ]
   end
 
-  # Get a list of fields for the current action.
-  def get_fields
-    action_fields = self.class.action_fields || {}
-    action = self.action_name.to_sym
-
-    # index action should use :list fields if :index is not provided
-    action = :list if action == :index && !action_fields.key?(:index)
-
-    return (action_fields[action] if action) || self.class.fields || []
-  end
-
   # Filter the request body for keys in current action's allowed_parameters/fields config.
   def get_body_params
-    fields = self.get_allowed_parameters || self.get_fields
-    return @get_body_params ||= (request.request_parameters.select { |p|
-      fields.include?(p.to_sym) || fields.include?(p.to_s)
-    })
+    return @_get_body_params ||= begin
+      fields = self.get_allowed_parameters || self.get_fields
+
+      # Filter the request body.
+      body_params = request.request_parameters.select { |p|
+        fields.include?(p)
+      }
+
+      # Add query params in place of missing body params, if configured.
+      if self.class.accept_generic_params_as_body_params
+        (fields - body_params.keys).each do |k|
+          if (value = params[k])
+            body_params[k] = value
+          end
+        end
+      end
+
+      # Filter primary key if configured.
+      if self.class.filter_pk_from_request_body
+        body_params.delete(self.get_model&.primary_key)
+      end
+
+      # Filter fields in exclude_body_fields.
+      (self.class.exclude_body_fields || []).each do |f|
+        body_params.delete(f.to_s)
+      end
+
+      body_params
+    end
   end
   alias :get_create_params :get_body_params
   alias :get_update_params :get_body_params
 
-  # Get a record by the primary key from the filtered recordset.
+  # Get a record by the primary key from the (non-filtered) recordset.
   def get_record
-    records = self.get_filtered_data(self.get_recordset)
     if pk = params[self.get_model.primary_key]
-      return records.find(pk)
-    end
-    return nil
-  end
-
-  # Internal interface for get_model, protecting against infinite recursion with get_recordset.
-  def _get_model(from_internal_get_recordset: false)
-    return @model if instance_variable_defined?(:@model) && @model
-    return (@model = self.class.model) if self.class.model
-    unless from_internal_get_recordset  # prevent infinite recursion
-      recordset = self._get_recordset(from_internal_get_model: true)
-      return (@model = recordset.klass) if recordset
-    end
-    begin
-      return (@model = self.class.name.demodulize.match(/(.*)Controller/)[1].singularize.constantize)
-    rescue NameError
-    end
-    return nil
-  end
-
-  # Internal interface for get_recordset, protecting against infinite recursion with get_model.
-  def _get_recordset(from_internal_get_model: false)
-    return @recordset if instance_variable_defined?(:@recordset) && @recordset
-    return (@recordset = self.class.recordset) if self.class.recordset
-    unless from_internal_get_model  # prevent infinite recursion
-      model = self._get_model(from_internal_get_recordset: true)
-      return (@recordset = model.all) if model
+      return self.get_recordset.find(pk)
     end
     return nil
   end
 
   # Get the model for this controller.
-  def get_model
-    return _get_model
+  def get_model(from_get_recordset: false)
+    return @model if instance_variable_defined?(:@model) && @model
+    return (@model = self.class.model) if self.class.model
+
+    # Delegate to the recordset's model, if it's defined.
+    unless from_get_recordset  # prevent infinite recursion
+      if (recordset = self.get_recordset)
+        return @model = recordset.klass
+      end
+    end
+
+    # Try to determine model from controller name.
+    begin
+      return (@model = self.class.name.demodulize.match(/(.*)Controller/)[1].singularize.constantize)
+    rescue NameError
+    end
+
+    return nil
   end
 
   # Get the set of records this controller has access to.
   def get_recordset
-    return _get_recordset
+    return @recordset if instance_variable_defined?(:@recordset) && @recordset
+    return (@recordset = self.class.recordset) if self.class.recordset
+
+    # If there is a model, return that model's default scope (all records by default).
+    if (model = self.get_model(from_get_recordset: true))
+      return @recordset = model.all
+    end
+
+    return nil
   end
 end
 

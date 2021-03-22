@@ -1,5 +1,6 @@
 require 'action_dispatch/routing/mapper'
 
+
 module ActionDispatch::Routing
   class Mapper
     # Internal helper to take extra_actions hash and convert to a consistent format.

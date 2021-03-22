@@ -2,6 +2,7 @@
 
 [![Gem Version](https://badge.fury.io/rb/rest_framework.svg)](https://badge.fury.io/rb/rest_framework)
 [![Build Status](https://travis-ci.org/gregschmit/rails-rest-framework.svg?branch=master)](https://travis-ci.org/gregschmit/rails-rest-framework)
+[![Coverage Status](https://coveralls.io/repos/github/gregschmit/rails-rest-framework/badge.svg?branch=master)](https://coveralls.io/github/gregschmit/rails-rest-framework?branch=master)
 
 A framework for DRY RESTful APIs in Ruby on Rails.
 
@@ -78,8 +79,8 @@ class Api::ReadOnlyMoviesController < ApiController
 end
 ```
 
-Note that you can also override `get_model` and `get_recordset` instance methods to override the API
-behavior dynamically per-request.
+Note that you can also override the `get_recordset` instance method to override the API behavior
+dynamically per-request.
 
 ### Routing
 

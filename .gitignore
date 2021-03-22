@@ -1,5 +1,6 @@
 Gemfile.lock
 VERSION_STAMP
+coverage
 
 # Created by https://www.toptal.com/developers/gitignore/api/ruby,rails,macos,windows,linux,vim,emacs
 # Edit at https://www.toptal.com/developers/gitignore?templates=ruby,rails,macos,windows,linux,vim,emacs

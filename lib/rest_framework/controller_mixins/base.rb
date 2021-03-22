@@ -33,6 +33,9 @@ module RESTFramework::BaseControllerMixin
 
       # Add class attributes (with defaults) unless they already exist.
       {
+        filter_pk_from_request_body: true,
+        exclude_body_fields: [:created_at, :created_by, :updated_at, :updated_by],
+        accept_generic_params_as_body_params: true,
         extra_actions: nil,
         extra_member_actions: nil,
         filter_backends: nil,
@@ -48,8 +51,8 @@ module RESTFramework::BaseControllerMixin
         unless base.respond_to?(a)
           base.class_attribute(a)
 
-          # Set default manually so we can still support Rails 4. Maybe later we can use the
-          # default parameter on `class_attribute`.
+          # Set default manually so we can still support Rails 4. Maybe later we can use the default
+          # parameter on `class_attribute`.
           base.send(:"#{a}=", default)
         end
       end
@@ -60,10 +63,10 @@ module RESTFramework::BaseControllerMixin
         base.alias_method(:extra_collection_actions=, :extra_actions=)
       end
 
-      # skip csrf since this is an API
+      # Skip csrf since this is an API.
       base.skip_before_action(:verify_authenticity_token) rescue nil
 
-      # handle some common exceptions
+      # Handle some common exceptions.
       base.rescue_from(ActiveRecord::RecordNotFound, with: :record_not_found)
       base.rescue_from(ActiveRecord::RecordInvalid, with: :record_invalid)
       base.rescue_from(ActiveRecord::RecordNotSaved, with: :record_not_saved)
