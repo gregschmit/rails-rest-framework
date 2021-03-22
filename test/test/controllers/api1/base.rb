@@ -24,7 +24,7 @@ module BaseApi1ControllerTests
 
   def test_create
     model = self._get_model
-    post :create, format: :json, params: self.class.create_params
+    post :create, format: :json, as: :json, params: self.class.create_params
     assert_response :success
     assert model.find_by(id: @response.parsed_body["id"])
   end
