@@ -4,28 +4,21 @@ ENV['RAILS_ENV'] ||= 'test'
 require 'simplecov'
 
 # Initialize Coveralls only for main Travis test.
-is_main_ruby = File.read(File.expand_path("../../.ruby-version", __dir__)).strip.match?(
+is_main_travis_ruby = File.read(File.expand_path("../../.ruby-version", __dir__)).strip.match?(
   RUBY_VERSION
 )
-is_main_rails = ENV['RAILS_VERSION']&.match?(
+is_main_travis_rails = ENV['RAILS_VERSION']&.match?(
   File.read(File.expand_path("../../.rails-version", __dir__)).strip
 )
-is_main_travis_test = is_main_ruby && is_main_rails
-puts "GNS: RUBY_VERSION: #{RUBY_VERSION}"
-puts "GNS: .ruby-version: #{File.read(File.expand_path("../../.ruby-version", __dir__))}"
-puts "GNS: ENV['RAILS_VERSION']: #{ENV['RAILS_VERSION']}"
-puts "GNS: .rails-version: #{File.read(File.expand_path("../../.rails-version", __dir__))}"
-puts "GNS: is_main_ruby: #{is_main_ruby}"
-puts "GNS: is_main_rails: #{is_main_rails}"
-puts "GNS: is_main_travis_test: #{is_main_travis_test}"
-require 'coveralls' if is_main_travis_test
+is_main_travis_env = is_main_travis_ruby && is_main_travis_rails
+require 'coveralls' if is_main_travis_env
 
 # Configure SimpleCov/Coveralls.
-SimpleCov.start do
+SimpleCov.start 'rails' do
   minimum_coverage 10
 
   # Only upload to Coveralls for primary Travis test; otherwise use HTML formatter.
-  if is_main_travis_test
+  if is_main_travis_env
     formatter Coveralls::SimpleCov::Formatter
   else
     formatter SimpleCov::Formatter::HTMLFormatter
