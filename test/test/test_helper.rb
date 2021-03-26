@@ -25,7 +25,7 @@ SimpleCov.start do
   minimum_coverage 10
 
   # Only upload to Coveralls for primary Travis test; otherwise use HTML formatter.
-  if is_default_travis_test
+  if is_main_travis_test
     formatter Coveralls::SimpleCov::Formatter
   else
     formatter SimpleCov::Formatter::HTMLFormatter
