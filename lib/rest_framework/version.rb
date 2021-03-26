@@ -2,19 +2,21 @@ module RESTFramework
   module Version
     @_version = nil
 
-    def self.get_version
+    def self.get_version(skip_git: false)
       # Return cached @_version, if available.
       return @_version if @_version
 
       # First, attempt to get the version from git.
-      begin
-        version = `git describe 2>/dev/null`.strip
-        raise "blank version" if version.nil? || version.match(/^\w*$/)
-        # Check for local changes.
-        changes = `git status --porcelain 2>/dev/null`
-        version << '.localchanges' if changes.strip.length > 0
-        return version
-      rescue
+      unless skip_git
+        begin
+          version = `git describe 2>/dev/null`.strip
+          raise "blank version" if version.nil? || version.match(/^\w*$/)
+          # Check for local changes.
+          changes = `git status --porcelain 2>/dev/null`
+          version << '.localchanges' if changes.strip.length > 0
+          return version
+        rescue
+        end
       end
 
       # Git failed, so try to find a VERSION_STAMP.

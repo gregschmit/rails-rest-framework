@@ -4,21 +4,22 @@ ENV['RAILS_ENV'] ||= 'test'
 require 'simplecov'
 
 # Initialize Coveralls only for main Travis test.
-is_main_travis_ruby = File.read(File.expand_path("../../.ruby-version", __dir__)).strip.match?(
+IS_MAIN_TRAVIS_RUBY = File.read(File.expand_path("../../.ruby-version", __dir__)).strip.match?(
   RUBY_VERSION
 )
-is_main_travis_rails = ENV['RAILS_VERSION']&.match?(
+IS_MAIN_TRAVIS_RAILS = ENV['RAILS_VERSION']&.match?(
   File.read(File.expand_path("../../.rails-version", __dir__)).strip
 )
-is_main_travis_env = is_main_travis_ruby && is_main_travis_rails
-require 'coveralls' if is_main_travis_env
+IS_MAIN_TRAVIS_ENV = IS_MAIN_TRAVIS_RUBY && IS_MAIN_TRAVIS_RAILS
+require 'coveralls' if IS_MAIN_TRAVIS_ENV
 
-# Configure SimpleCov/Coveralls.
-SimpleCov.start 'rails' do
+# Configure SimpleCov.
+SimpleCov.start do
   minimum_coverage 10
+  command_name 'tests'
 
   # Only upload to Coveralls for primary Travis test; otherwise use HTML formatter.
-  if is_main_travis_env
+  if IS_MAIN_TRAVIS_ENV
     formatter Coveralls::SimpleCov::Formatter
   else
     formatter SimpleCov::Formatter::HTMLFormatter
@@ -28,6 +29,12 @@ SimpleCov.start 'rails' do
   add_filter 'test/'
   add_filter 'doc/'
   add_filter 'docs/'
+  add_filter 'app/'
+
+  # Filter version module since it's loaded too early for SimpleCov.
+  add_filter 'lib/rest_framework/version'
+
+  add_group 'REST Framework', 'lib'
 end
 
 require_relative '../config/environment'
@@ -40,8 +47,8 @@ class ActiveSupport::TestCase
   # Load all fixtures.
   fixtures :all
 
-  # Run tests in parallel for Rails >=6.
-  if Rails::VERSION::MAJOR >= 6
+  # Run tests in parallel for Rails >=6, but not when we need code coverage.
+  if Rails::VERSION::MAJOR >= 6 && !IS_MAIN_TRAVIS_ENV
     parallelize(workers: :number_of_processors)
   end
 
