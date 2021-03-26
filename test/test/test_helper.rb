@@ -3,16 +3,21 @@ ENV['RAILS_ENV'] ||= 'test'
 # Initialize SimpleCov before including application code.
 require 'simplecov'
 
-# Initialize Coveralls only for primary Travis test.
-is_default_travis_test = (
-  File.read(File.expand_path("../../.ruby-version", __dir__)).match?(RUBY_VERSION) &&
-  ENV['RAILS_VERSION']&.match?(File.read(File.expand_path("../../.rails-version", __dir__)))
+# Initialize Coveralls only for main Travis test.
+is_main_ruby = File.read(File.expand_path("../../.ruby-version", __dir__)).strip.match?(
+  RUBY_VERSION
 )
+is_main_rails = ENV['RAILS_VERSION']&.match?(
+  File.read(File.expand_path("../../.rails-version", __dir__)).strip
+)
+is_main_travis_test = is_main_ruby && is_main_rails
 puts "GNS: RUBY_VERSION: #{RUBY_VERSION}"
 puts "GNS: .ruby-version: #{File.read(File.expand_path("../../.ruby-version", __dir__))}"
 puts "GNS: ENV['RAILS_VERSION']: #{ENV['RAILS_VERSION']}"
 puts "GNS: .rails-version: #{File.read(File.expand_path("../../.rails-version", __dir__))}"
-puts "GNS: is_default_travis_test: #{is_default_travis_test}"
+puts "GNS: is_main_ruby: #{is_main_ruby}"
+puts "GNS: is_main_rails: #{is_main_rails}"
+puts "GNS: is_main_travis_test: #{is_main_travis_test}"
 require 'coveralls' if is_default_travis_test
 
 # Configure SimpleCov/Coveralls.
