@@ -12,4 +12,4 @@ rvm:
 - 2.5.0
 - 2.6.5
 script:
-- bundle exec rake test
+- bundle exec rails test

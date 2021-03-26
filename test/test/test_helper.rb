@@ -1,12 +1,25 @@
 ENV['RAILS_ENV'] ||= 'test'
 
-# Initialize SimpleCov/Coveralls before including application code.
+# Initialize SimpleCov before including application code.
 require 'simplecov'
-require 'coveralls'
-SimpleCov.formatter = Coveralls::SimpleCov::Formatter
-#SimpleCov.formatter = SimpleCov::Formatter::HTMLFormatter  # for development
+
+# Initialize Coveralls only for primary Travis test.
+is_default_travis_test = (
+  File.read(File.expand_path("../../.ruby-version", __dir__)).match?(RUBY_VERSION) &&
+  ENV['RAILS_VERSION']&.match?(File.read(File.expand_path("../../.rails-version", __dir__)))
+)
+require 'coveralls' if is_default_travis_test
+
+# Configure SimpleCov/Coveralls.
 SimpleCov.start do
   minimum_coverage 10
+
+  # Only upload to Coveralls for primary Travis test; otherwise use HTML formatter.
+  if is_default_travis_test
+    formatter Coveralls::SimpleCov::Formatter
+  else
+    formatter SimpleCov::Formatter::HTMLFormatter
+  end
 
   # Filter test directory and documentation.
   add_filter 'test/'
@@ -27,5 +40,14 @@ class ActiveSupport::TestCase
   # Run tests in parallel for Rails >=6.
   if Rails::VERSION::MAJOR >= 6
     parallelize(workers: :number_of_processors)
+  end
+
+  # Helper to get parsed (json) body for both old and new Rails.
+  def _parsed_body
+    if Rails::VERSION::MAJOR >= 6
+      return @response.parsed_body
+    else
+      return JSON.parse(@response.parsed_body)
+    end
   end
 end

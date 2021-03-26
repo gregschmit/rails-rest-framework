@@ -26,7 +26,8 @@ module RESTFramework::BaseModelControllerMixin
 
         # Attributes for the default native serializer.
         native_serializer_config: nil,
-        native_serializer_action_config: nil,
+        native_serializer_singular_config: nil,
+        native_serializer_plural_config: nil,
 
         # Attributes for default model filtering (and ordering).
         filterset_fields: nil,
@@ -71,12 +72,6 @@ module RESTFramework::BaseModelControllerMixin
       self.get_model&.column_names ||
       []
     )
-  end
-
-  # Get a native serializer config for the current action.
-  # @return [RESTFramework::NativeSerializer]
-  def get_native_serializer_config
-    return _get_specific_action_config(:native_serializer_action_config, :native_serializer_config)
   end
 
   # Helper to get the configured serializer class, or `NativeSerializer` as a default.

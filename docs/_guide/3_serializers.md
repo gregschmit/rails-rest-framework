@@ -15,7 +15,8 @@ This serializer uses Rails' native `ActiveModel::Serializers::JSON#as_json` meth
 name, this converts records/recordsets to Ruby primitives (`Array` and `Hash`), not JSON.
 
 This is the default serializer, you can configure it using the controller class attributes
-`native_serializer_config` or `native_serializer_action_config`:
+`native_serializer_config` (or `native_serializer_singular_config` /
+`native_serializer_plural_config`):
 
 ```ruby
 class Api::MoviesController < ApiController

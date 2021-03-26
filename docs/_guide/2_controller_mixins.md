@@ -208,16 +208,40 @@ class Api::MoviesController < ApiController
 end
 ```
 
-#### native_serializer_config / native_serializer_action_config
+#### native_serializer_config
 
 These properties define the serializer configuration if you are using the native `ActiveModel`
-serializer, either globally or per-action.
+serializer. You can also specify serializers for singular/plural
 
 ```ruby
 class Api::MoviesController < ApiController
   include RESTFramework::ModelControllerMixin
 
   self.native_serializer_config = {
+    only: [:id, :name],
+    methods: [:active, :some_expensive_computed_property],
+    include: {cast_members: { only: [:id, :name], methods: [:net_worth] }},
+  }
+
+  # Or you could configure a default and a plural serializer:
+  self.native_serializer_plural_config = {
+    only: [:id, :name],
+    methods: [:active],
+    include: {cast_members: { only: [:id, :name], methods: [:net_worth] }},
+  }
+  self.native_serializer_config = {
+    only: [:id, :name],
+    methods: [:active, :some_expensive_computed_property],
+    include: {cast_members: { only: [:id, :name], methods: [:net_worth] }},
+  }
+
+  # Or you could configure a default and a singular serializer:
+  self.native_serializer_config = {
+    only: [:id, :name],
+    methods: [:active],
+    include: {cast_members: { only: [:id, :name], methods: [:net_worth] }},
+  }
+  self.native_serializer_singular_config = {
     only: [:id, :name],
     methods: [:active, :some_expensive_computed_property],
     include: {cast_members: { only: [:id, :name], methods: [:net_worth] }},
