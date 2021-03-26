@@ -18,7 +18,7 @@ puts "GNS: .rails-version: #{File.read(File.expand_path("../../.rails-version", 
 puts "GNS: is_main_ruby: #{is_main_ruby}"
 puts "GNS: is_main_rails: #{is_main_rails}"
 puts "GNS: is_main_travis_test: #{is_main_travis_test}"
-require 'coveralls' if is_default_travis_test
+require 'coveralls' if is_main_travis_test
 
 # Configure SimpleCov/Coveralls.
 SimpleCov.start do
