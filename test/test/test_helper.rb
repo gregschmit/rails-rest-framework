@@ -54,10 +54,12 @@ class ActiveSupport::TestCase
 
   # Helper to get parsed (json) body for both old and new Rails.
   def _parsed_body
-    if Rails::VERSION::MAJOR >= 6
-      return @response.parsed_body
-    else
-      return JSON.parse(@response.parsed_body)
+    return @_response ||= begin
+      if Rails::VERSION::MAJOR >= 6
+        @response.parsed_body
+      else
+        JSON.parse(@response.parsed_body)
+      end
     end
   end
 end

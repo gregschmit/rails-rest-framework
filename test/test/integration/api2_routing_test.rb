@@ -3,14 +3,14 @@ require_relative '../test_helper'
 
 # The goal of this test is to ensure that the proper routes are defined for API2.
 class Api2RoutingTest < ActionDispatch::IntegrationTest
-  test "can get root" do
+  def test_can_get_root
     get '/api2'
     assert_response :success
     get '/api2.json'
     assert_response :success
   end
 
-  test "can get nil/blank/truly_blank" do
+  def test_can_get_nil_blank_truly_blank
     get '/api2/nil'
     assert_response :success
     get '/api2/nil.json'
@@ -25,21 +25,21 @@ class Api2RoutingTest < ActionDispatch::IntegrationTest
     assert_response :no_content
   end
 
-  test "can get things" do
+  def test_can_get_things
     get '/api2/things'
     assert_response :success
     get '/api2/things.json'
     assert_response :success
   end
 
-  test "can get network test" do
+  def test_can_get_network_test
     get '/api2/network/test'
     assert_response :success
     get '/api2/network/test.json'
     assert_response :success
   end
 
-  test "can not get network resourceful routes" do
+  def test_can_not_get_network_resourceful_routes
     assert_raises ActionController::RoutingError do
       get "/api1/network.json"
     end

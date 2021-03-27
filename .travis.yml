@@ -10,5 +10,11 @@ install:
 rvm:
 - 2.5.0
 - 2.6.5
+- 2.7.2
+- 3.0.0
+jobs:
+  allow_failures:
+  - rvm: 2.7.2
+  - rvm: 3.0.0
 script:
 - bundle exec rake test
