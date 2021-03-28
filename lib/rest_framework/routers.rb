@@ -25,6 +25,11 @@ module ActionDispatch::Routing
             path = v.delete(:path)
           end
 
+          # Set the action to be the action key unless it's already defined.
+          if !kwargs[:action]
+            kwargs[:action] = k
+          end
+
           # Pass any further kwargs to the underlying Rails interface.
           kwargs = kwargs.merge(v)
         elsif v.is_a?(Symbol) || v.is_a?(String)

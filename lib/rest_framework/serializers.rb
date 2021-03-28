@@ -3,6 +3,10 @@ class RESTFramework::BaseSerializer
     @object = object
     @controller = controller
   end
+
+  def serialize
+    raise NotImplementedError
+  end
 end
 
 

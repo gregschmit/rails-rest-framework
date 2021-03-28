@@ -1,5 +1,5 @@
 class Api2::RootController < Api2Controller
-  self.extra_actions = {nil: :get, blank: :get}
+  self.extra_actions = {nil: :get, blank: :get, unserializable: :get}
 
   def root
     api_response({message: "Welcome to your custom API2 root!"})

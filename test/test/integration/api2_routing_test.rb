@@ -39,4 +39,18 @@ class Api2RoutingTest < ActionDispatch::IntegrationTest
       get "/api1/network"
     end
   end
+
+  def test_thing_changed_action
+    get '/api2/thing/changed'
+    assert_response :success
+    get '/api2/thing/changed.json'
+    assert_response :success
+  end
+
+  def test_thing_another_changed_action
+    get '/api2/thing/another_changed'
+    assert_response :success
+    get '/api2/thing/another_changed.json'
+    assert_response :success
+  end
 end
