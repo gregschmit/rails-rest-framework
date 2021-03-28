@@ -22,6 +22,14 @@ module BaseApi1ControllerTests
     end
   end
 
+  def test_index_with_filtering
+    filter_key = self.class.create_params.keys[0]
+    filter_value = _get_model.first.send(filter_key)
+    get :index, as: :json, params: {:"#{filter_key}" => filter_value}
+    assert_response :success
+    assert _parsed_body.all? { |r| r[filter_key.to_s] == filter_value }
+  end
+
   def test_create
     post :create, as: :json, params: self.class.create_params
     assert_response :success

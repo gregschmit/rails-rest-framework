@@ -22,5 +22,8 @@ class Api2::ThingsControllerTest < ActionController::TestCase
     assert_response :success
     assert _parsed_body['shape']
     assert_nil _parsed_body['price']
+    assert _parsed_body['owner']['login']
+    assert_not_nil _parsed_body['owner']['is_admin']
+    assert_nil _parsed_body['owner']['balance']
   end
 end

@@ -3,7 +3,10 @@ class Api2::ThingsController < Api2Controller
 
   class ThingsSerializer < RESTFramework::NativeSerializer
     self.action_config = {list: {only: [:id, :name, :price]}}
-    self.singular_config = {only: [:id, :name, :shape]}
+    self.singular_config = {
+      only: [:id, :name, :shape],
+      include: {owner: Api2::UserController::UsersSerializer.new(many: false)},
+    }
     self.plural_config = {only: [:id, :name]}
   end
 

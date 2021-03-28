@@ -31,7 +31,9 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     # Determine model either explicitly, or by inspecting @object or @controller.
     @model = model
     @model ||= @object.class if @object.is_a?(ActiveRecord::Base)
-    @model ||= @object[0].class if @many && @object[0].is_a?(ActiveRecord::Base)
+    @model ||= @object[0].class if (
+      @many && @object.is_a?(Enumerable) && @object.is_a?(ActiveRecord::Base)
+    )
     @model ||= @controller.send(:get_model) if @controller
   end
 

@@ -29,13 +29,13 @@ class RESTFrameworkTest < Minitest::Test
   end
 
   def test_base_filter_get_filtered_data_not_implemented
-    exception = assert_raises NotImplementedError do
+    assert_raises NotImplementedError do
       RESTFramework::BaseFilter.new(controller: nil).get_filtered_data([])
     end
   end
 
   def test_base_serializer_serialize_not_implemented
-    exception = assert_raises NotImplementedError do
+    assert_raises NotImplementedError do
       RESTFramework::BaseSerializer.new.serialize
     end
   end
