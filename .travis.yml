@@ -13,6 +13,9 @@ rvm:
 - 2.7.2
 - 3.0.0
 jobs:
+  exclude:
+  - rvm: 3.0.0
+    env: "RAILS_VERSION=5.2"
   allow_failures:
   - rvm: 3.0.0
 script:
