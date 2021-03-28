@@ -1,6 +1,4 @@
 class RESTFramework::BaseSerializer
-  attr_reader :errors
-
   def initialize(object: nil, controller: nil, **kwargs)
     @object = object
     @controller = controller
@@ -8,9 +6,8 @@ class RESTFramework::BaseSerializer
 end
 
 
-# This serializer uses `.as_json` to serialize objects. Despite the name, `.as_json` is an
-# `ActiveModel` method which converts objects to Ruby primitives (with the top-level being either
-# an array or a hash).
+# This serializer uses `.serializable_hash` to convert objects to Ruby primitives (with the
+# top-level being either an array or a hash).
 class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   class_attribute :config
   class_attribute :singular_config
@@ -22,12 +19,16 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
     if many.nil?
       # Determine if we are dealing with many objects or just one.
-      @many = @object.respond_to?(:count) && @object.respond_to?(:each)
+      @many = @object.is_a?(Enumerable)
     else
       @many = many
     end
 
-    @model = model || @controller.send(:get_model)
+    # Determine model either explicitly, or by inspecting @object or @controller.
+    @model = model
+    @model ||= @object.class if @object.is_a?(ActiveRecord::Base)
+    @model ||= @object[0].class if @many && @object[0].is_a?(ActiveRecord::Base)
+    @model ||= @controller.send(:get_model) if @controller
   end
 
   # Get controller action, if possible.
@@ -67,7 +68,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return controller_serializer || @controller.try(:native_serializer_config)
   end
 
-  # Get a configuration passable to `as_json` for the object.
+  # Get a configuration passable to `serializable_hash` for the object.
   def get_serializer_config
     # Return a locally defined serializer config if one is defined.
     if local_config = self.get_local_native_serializer_config
@@ -80,7 +81,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     end
 
     # If the config wasn't determined, build a serializer config from model fields.
-    fields = @controller.try(:get_fields) if @controller
+    fields = @controller.send(:get_fields) if @controller
     if fields
       if @model
         columns, methods = fields.partition { |f| f.in?(@model.column_names) }
@@ -99,9 +100,17 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   # Convert the object (record or recordset) to Ruby primitives.
   def serialize
     if @object
-      return @object.as_json(self.get_serializer_config)
+      begin
+        if @object.is_a?(Enumerable)
+          return @object.map { |r| r.serializable_hash(self.get_serializer_config) }
+        end
+        return @object.serializable_hash(self.get_serializer_config)
+      rescue NoMethodError
+      end
     end
-    return nil
+
+    # Raise an error if we cannot serialize the object.
+    raise RESTFramework::UnserializableError.new(@object)
   end
 
   # Allow a serializer instance to be used as a hash directly in a nested serializer config.
@@ -134,10 +143,17 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 end
 
 
+# :nocov:
 # Alias NativeModelSerializer -> NativeSerializer.
 class RESTFramework::NativeModelSerializer < RESTFramework::NativeSerializer
-  def initialize
+  def initialize(**kwargs)
     super
-    ActiveSupport::Deprecation.new('1.0', 'rest_framework')
+    ActiveSupport::Deprecation.warn(
+      <<~MSG.split("\n").join(' ')
+        RESTFramework::NativeModelSerializer is deprecated and will be removed in future versions of
+        REST Framework; you should use RESTFramework::NativeSerializer instead.
+      MSG
+    )
   end
 end
+# :nocov:

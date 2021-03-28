@@ -10,18 +10,10 @@ class Api2RoutingTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  def test_can_get_nil_blank_truly_blank
-    get '/api2/nil'
-    assert_response :success
-    get '/api2/nil.json'
-    assert_response :success
+  def test_can_get_blank
     get '/api2/blank'
     assert_response :success
     get '/api2/blank.json'
-    assert_response :success
-    get '/api2/truly_blank'
-    assert_response :success
-    get '/api2/truly_blank.json'
     assert_response :no_content
   end
 

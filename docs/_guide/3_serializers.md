@@ -11,8 +11,8 @@ which can then be converted to JSON or XML.
 
 ## NativeSerializer
 
-This serializer uses Rails' native `ActiveModel::Serializers::JSON#as_json` method. Despite the
-name, this converts records/recordsets to Ruby primitives (`Array` and `Hash`), not JSON.
+This serializer uses Rails' native `ActiveModel::Serializers.serializable_hash` method to convert
+records/recordsets to Ruby primitives (`Array` and `Hash`).
 
 This is the default serializer, you can configure it using the controller class attributes
 `native_serializer_config` (or `native_serializer_singular_config` /

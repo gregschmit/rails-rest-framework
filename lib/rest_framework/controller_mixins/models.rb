@@ -229,7 +229,7 @@ module RESTFramework::DestroyModelMixin
   def destroy
     @record = self.get_record
     @record.destroy!
-    api_response(nil)
+    api_response('')
   end
 end
 

@@ -1,3 +1,4 @@
+require_relative '../errors'
 require_relative '../serializers'
 
 
@@ -45,6 +46,8 @@ module RESTFramework::BaseControllerMixin
         page_size_query_param: 'page_size',
         max_page_size: nil,
         serializer_class: nil,
+        serialize_to_json: true,
+        serialize_to_xml: true,
         singleton_controller: nil,
         skip_actions: nil,
       }.each do |a, default|
@@ -132,39 +135,42 @@ module RESTFramework::BaseControllerMixin
 
   # Helper to render a browsable API for `html` format, along with basic `json`/`xml` formats, and
   # with support or passing custom `kwargs` to the underlying `render` calls.
-  def api_response(payload, html_kwargs: nil, json_kwargs: nil, xml_kwargs: nil, **kwargs)
+  def api_response(payload, html_kwargs: nil, **kwargs)
     html_kwargs ||= {}
-    json_kwargs ||= {}
-    xml_kwargs ||= {}
+    json_kwargs = kwargs.delete(:json_kwargs) || {}
+    xml_kwargs = kwargs.delete(:xml_kwargs) || {}
 
-    # allow blank (no-content) responses
-    @blank = kwargs[:blank]
+    # Raise helpful error if payload is nil. Usually this happens when a record is not found (e.g.,
+    # when passing something like `User.find_by(id: some_id)` to `api_response`). The caller should
+    # actually be calling `find_by!` to raise ActiveRecord::RecordNotFound and allowing the REST
+    # framework to catch this error and return an appropriate error response.
+    if payload.nil?
+      raise RESTFramework::NilPassedToAPIResponseError
+    end
 
     respond_to do |format|
-      if @blank
-        format.json {head :no_content}
-        format.xml {head :no_content}
+      if payload == ''
+        format.json {head :no_content} if self.serialize_to_json
+        format.xml {head :no_content} if self.serialize_to_xml
       else
-        if payload.respond_to?(:to_json)
-          format.json {
-            jkwargs = kwargs.merge(json_kwargs)
-            render(json: payload, layout: false, **jkwargs)
-          }
-        end
-        if payload.respond_to?(:to_xml)
-          format.xml {
-            xkwargs = kwargs.merge(xml_kwargs)
-            render(xml: payload, layout: false, **xkwargs)
-          }
-        end
+        format.json {
+          jkwargs = kwargs.merge(json_kwargs)
+          render(json: payload, layout: false, **jkwargs)
+        } if self.serialize_to_json
+        format.xml {
+          xkwargs = kwargs.merge(xml_kwargs)
+          render(xml: payload, layout: false, **xkwargs)
+        } if self.serialize_to_xml
+        # TODO: possibly support more formats here if supported?
       end
       format.html {
         @payload = payload
-        @json_payload = ''
-        @xml_payload = ''
-        unless @blank
-          @json_payload = payload.to_json if payload.respond_to?(:to_json)
-          @xml_payload = payload.to_xml if payload.respond_to?(:to_xml)
+        if payload == ''
+          @json_payload = '' if self.serialize_to_json
+          @xml_payload = '' if self.serialize_to_xml
+        else
+          @json_payload = payload.to_json if self.serialize_to_json
+          @xml_payload = payload.to_xml if self.serialize_to_xml
         end
         @template_logo_text ||= "Rails REST Framework"
         @title ||= self.controller_name.camelize

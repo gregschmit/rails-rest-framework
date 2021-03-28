@@ -47,10 +47,8 @@ class ActiveSupport::TestCase
   # Load all fixtures.
   fixtures :all
 
-  # Run tests in parallel for Rails >=6, but not when we need code coverage.
-  if Rails::VERSION::MAJOR >= 6 && !IS_MAIN_TRAVIS_ENV
-    parallelize(workers: :number_of_processors)
-  end
+  # Do not parallelize for now since Coveralls breaks with parallelization.
+  # parallelize(workers: :number_of_processors)
 
   # Helper to get parsed (json) body for both old and new Rails.
   def _parsed_body

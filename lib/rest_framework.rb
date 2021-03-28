@@ -4,6 +4,7 @@ end
 
 require_relative "rest_framework/controller_mixins"
 require_relative "rest_framework/engine"
+require_relative "rest_framework/errors"
 require_relative "rest_framework/filters"
 require_relative "rest_framework/paginators"
 require_relative "rest_framework/routers"
