@@ -124,7 +124,9 @@ module RESTFramework::BaseControllerMixin
     begin
       formatter = ActionDispatch::Routing::ConsoleFormatter::Sheet
     rescue NameError
+      # :nocov:
       formatter = ActionDispatch::Routing::ConsoleFormatter
+      # :nocov:
     end
     return ActionDispatch::Routing::RoutesInspector.new(Rails.application.routes.routes).format(
       formatter.new
