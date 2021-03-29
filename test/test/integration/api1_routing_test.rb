@@ -10,6 +10,13 @@ class Api1RoutingTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  def can_get_root_test
+    get '/api1/test'
+    assert_response :success
+    get '/api1/test.json'
+    assert_response :success
+  end
+
   def test_can_get_things
     get '/api1/things'
     assert_response :success
