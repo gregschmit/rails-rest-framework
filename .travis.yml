@@ -19,4 +19,4 @@ jobs:
   allow_failures:
   - rvm: 3.0.0
 script:
-- bundle exec rake test
+- BACKTRACE=1 bundle exec rake test
