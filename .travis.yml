@@ -11,12 +11,12 @@ rvm:
 - 2.5.0
 - 2.6.5
 - 2.7.2
-- 3.0.0
+- 3.0.1
 jobs:
   exclude:
-  - rvm: 3.0.0
+  - rvm: 3.0.1
     env: "RAILS_VERSION=5.2"
   allow_failures:
-  - rvm: 3.0.0
+  - rvm: 3.0.1
 script:
 - BACKTRACE=1 bundle exec rake test
