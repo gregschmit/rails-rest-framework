@@ -100,9 +100,9 @@ module RESTFramework::BaseControllerMixin
   end
 
   def record_invalid(e)
-    return api_response(
-      {message: "Record invalid.", exception: e, errors: e.record.errors}, status: 400
-    )
+    return api_response({
+      message: "Record invalid.", exception: e, errors: e.record&.errors
+    }, status: 400)
   end
 
   def record_not_found(e)
@@ -110,11 +110,15 @@ module RESTFramework::BaseControllerMixin
   end
 
   def record_not_saved(e)
-    return api_response({message: "Record not saved.", exception: e}, status: 406)
+    return api_response({
+      message: "Record not saved.", exception: e, errors: e.record&.errors
+    }, status: 406)
   end
 
   def record_not_destroyed(e)
-    return api_response({message: "Record not destroyed.", exception: e}, status: 406)
+    return api_response({
+      message: "Record not destroyed.", exception: e, errors: e.record&.errors
+    }, status: 406)
   end
 
   # Helper for showing routes under a controller action, used for the browsable API.

@@ -24,34 +24,56 @@ module BaseApi1ControllerTests
 
   def test_index_with_filtering
     filter_key = self.class.create_params.keys[0]
-    filter_value = _get_model.first.send(filter_key)
+    filter_value = self._get_model.first.send(filter_key)
     get :index, as: :json, params: {:"#{filter_key}" => filter_value}
     assert_response :success
-    assert _parsed_body.all? { |r| r[filter_key.to_s] == filter_value }
+    assert self._parsed_body.all? { |r| r[filter_key.to_s] == filter_value }
+  end
+
+  def test_show
+    id = self._get_model.first.id
+    get :show, params: {id: id}
+    assert_response :success
+
+    [:json, :xml].each do |fmt|
+      get :show, as: fmt, params: {id: id}
+      assert_response :success
+    end
+  end
+
+  def test_show_not_found
+    id = self._get_model.all.pluck(:id).max + 1
+    get :show, params: {id: id}
+    assert_response 404
+
+    [:json, :xml].each do |fmt|
+      get :show, as: fmt, params: {id: id}
+      assert_response 404
+    end
   end
 
   def test_create
     post :create, as: :json, params: self.class.create_params
     assert_response :success
-    assert self._get_model.find_by(id: _parsed_body["id"])
+    assert self._get_model.find_by(id: self._parsed_body["id"])
   end
 
   def test_cannot_create_with_specific_id
     try_id = self._get_model.first.id
     post :create, as: :json, params: {id: try_id, **self.class.create_params}
     assert_response :success
-    assert _parsed_body["id"] != try_id
-    assert self._get_model.find_by(id: _parsed_body["id"])
+    assert self._parsed_body["id"] != try_id
+    assert self._get_model.find_by(id: self._parsed_body["id"])
   end
 
   def test_cannot_create_with_specific_created_at
     try_created_at = Time.new(2000, 1, 1)
     post :create, as: :json, params: {created_at: try_created_at, **self.class.create_params}
     assert_response :success
-    created_at_year = Time.parse(_parsed_body["created_at"]).year
+    created_at_year = Time.parse(self._parsed_body["created_at"]).year
     assert created_at_year.nonzero?
     assert created_at_year != try_created_at.year
-    assert self._get_model.find_by(id: _parsed_body["id"])
+    assert self._get_model.find_by(id: self._parsed_body["id"])
   end
 
   def test_update

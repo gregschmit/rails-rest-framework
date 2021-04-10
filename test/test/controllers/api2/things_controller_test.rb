@@ -62,4 +62,8 @@ class Api2::ThingsControllerTest < ActionController::TestCase
     assert_not_nil _parsed_body['owner']['is_admin']
     assert_nil _parsed_body['owner']['balance']
   end
+
+  def test_get_model_before_recordset
+    assert @controller.send(:get_model)
+  end
 end

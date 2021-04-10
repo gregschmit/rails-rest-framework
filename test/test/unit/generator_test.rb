@@ -38,7 +38,14 @@ class GeneratorTest < Minitest::Test
       _suppress_stdout do
         Rails::Generators.invoke("rest_framework:controller", [path])
       end
-      assert File.read(filename)
+      file = File.read(filename)
+      expected = <<~END
+      class Api2::TestaController < ApplicationController
+        include RESTFramework::ModelControllerMixin
+      end
+      END
+      assert file
+      assert_equal file.strip, expected.strip
       File.delete(filename)
     end
   end
@@ -50,7 +57,14 @@ class GeneratorTest < Minitest::Test
       _suppress_stdout do
         Rails::Generators.invoke("rest_framework:controller", [path, "--include-base"])
       end
-      assert File.read(filename)
+      file = File.read(filename)
+      expected = <<~END
+      class Api2::TestbController < ApplicationController
+        include RESTFramework::BaseControllerMixin
+      end
+      END
+      assert file
+      assert_equal file.strip, expected.strip
       File.delete(filename)
     end
   end
@@ -62,7 +76,14 @@ class GeneratorTest < Minitest::Test
       _suppress_stdout do
         Rails::Generators.invoke("rest_framework:controller", [path, "--parent-class=Api2Controller"])
       end
-      assert File.read(filename)
+      file = File.read(filename)
+      expected = <<~END
+      class Api2::TestcController < Api2Controller
+        include RESTFramework::ModelControllerMixin
+      end
+      END
+      assert file
+      assert_equal file.strip, expected.strip
       File.delete(filename)
     end
   end

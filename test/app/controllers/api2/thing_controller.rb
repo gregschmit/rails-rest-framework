@@ -2,7 +2,6 @@ class Api2::ThingController < Api2Controller
   include RESTFramework::ReadOnlyModelControllerMixin
 
   self.fields = ['id', 'name']
-  self.singleton_controller = true
   self.extra_actions = {
     changed_action: {methods: [:get], path: :changed},
     another_changed: {methods: :get, action: :another_changed_action},

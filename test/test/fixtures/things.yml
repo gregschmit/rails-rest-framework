@@ -23,3 +23,15 @@ thing_3:
   price: 149.23
   is_discounted: true
   owner: first_admin
+
+undestroyable_thing:
+  name: undestroyable
+  shape: Mobius Strip
+  price: 44
+  is_discounted: false
+
+unsaveable_thing:
+  name: unsaveable
+  shape: Mobius Strip
+  price: 44
+  is_discounted: false

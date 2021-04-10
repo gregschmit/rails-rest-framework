@@ -179,7 +179,7 @@ module RESTFramework::BaseModelControllerMixin
 
     # Return the record.
     if find_by_value = params[:id]
-      return self.get_recordset.find_by(find_by_key => find_by_value)
+      return self.get_recordset.find_by!(find_by_key => find_by_value)
     end
     return nil
   end

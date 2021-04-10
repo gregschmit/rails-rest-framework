@@ -12,7 +12,8 @@ Rails.application.routes.draw do
     rest_resource :user
     rest_resources :things
     rest_resources :read_only_things
-    rest_resource :thing
+    rest_resources :things_with_bare_create, force_plural: true, only: [:create]
+    rest_resource :thing, force_singular: true
 
     rest_route :network
   end

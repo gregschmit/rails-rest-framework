@@ -99,9 +99,11 @@ module ActionDispatch::Routing
       kwargs[:controller] = name unless kwargs[:controller]
 
       # determine plural/singular resource
-      if kwargs.delete(:force_singular)
+      force_singular = kwargs.delete(:force_singular)
+      force_plural = kwargs.delete(:force_plural)
+      if force_singular
         singular = true
-      elsif kwargs.delete(:force_plural)
+      elsif force_plural
         singular = false
       elsif !controller_class.singleton_controller.nil?
         singular = controller_class.singleton_controller

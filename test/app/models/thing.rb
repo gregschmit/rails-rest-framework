@@ -5,10 +5,29 @@ class Thing < ActiveRecord::Base
     belongs_to :owner, class_name: 'User'
   end
 
+  before_destroy :check_undestroyable
+  before_save :check_unsaveable
+
   validates_numericality_of :price, greater_than: 0, allow_nil: true
 
-  # An example of a "cauculated" property method.
+  # An example of a "calculated" property method.
   def calculated_property
     return 9.234
+  end
+
+  protected
+
+  def check_undestroyable
+    if self.name == 'undestroyable'
+      errors.add(:base, "This record is undestroyable.")
+      throw(:abort)
+    end
+  end
+
+  def check_unsaveable
+    if self.name == 'unsaveable'
+      errors.add(:base, "This record is unsaveable.")
+      throw(:abort)
+    end
   end
 end
