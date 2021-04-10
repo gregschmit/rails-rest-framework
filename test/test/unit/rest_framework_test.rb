@@ -39,4 +39,16 @@ class RESTFrameworkTest < Minitest::Test
       RESTFramework::BaseSerializer.new.serialize
     end
   end
+
+  def test_base_paginator_get_page_not_implemented
+    assert_raises NotImplementedError do
+      RESTFramework::BasePaginator.new(data: [], controller: nil).get_page
+    end
+  end
+
+  def test_base_paginator_get_paginated_response_not_implemented
+    assert_raises NotImplementedError do
+      RESTFramework::BasePaginator.new(data: [], controller: nil).get_paginated_response(nil)
+    end
+  end
 end

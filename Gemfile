@@ -14,8 +14,6 @@ gem "minitest", ">= 5.0"
 gem "sqlite3", "~> #{rails_version_major <= 4 ? '1.3.0' : '1.4.0'}"
 gem "byebug"
 gem "pry-rails"
-
-# Test Coverage
 gem 'coveralls', require: false
 
 # Documentation: Hard exclude from test environment because github-pages conflicts with Rails 6.1.

@@ -79,8 +79,12 @@ module RESTFramework::BaseControllerMixin
 
   protected
 
-  # Helper to get filtering backends with a sane default.
-  # @return [RESTFramework::BaseFilter]
+  # Helper to get the configured serializer class.
+  def get_serializer_class
+    return self.class.serializer_class
+  end
+
+  # Helper to get filtering backends, defaulting to no backends.
   def get_filter_backends
     return self.class.filter_backends || []
   end
@@ -93,12 +97,6 @@ module RESTFramework::BaseControllerMixin
     end
 
     return data
-  end
-
-  # Helper to get the configured serializer class.
-  # @return [RESTFramework::BaseSerializer]
-  def get_serializer_class
-    return self.class.serializer_class
   end
 
   def record_invalid(e)

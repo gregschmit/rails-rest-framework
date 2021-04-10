@@ -263,12 +263,11 @@ class Api::MoviesController < ApiController
 end
 ```
 
-#### disable_creation_from_recordset
+#### create_from_recordset (default: `true`)
 
-The `disable_creation_from_recordset` is a boolean to disable the default behavior in the `create`
-action which calls `create()` from the `get_recordset()` method. That default behavior means that if
-you've hardcoded any filtering by overriding the `recordset` property or the `get_recordset()`
-method, those properties are set by default.
+The `create_from_recordset` attribute (`true` by default) is a boolean to control the behavior in
+the `create` action. If it is disabled, records will not be created from the filtered recordset, but
+rather will be created directly from the model interface.
 
 For example, if this is your controller:
 
@@ -283,10 +282,7 @@ end
 ```
 
 Then if you hit the `create` action with the payload `{name: "Superman"}`, it will also set `cool`
-to `true` because that inherits from the record set.
-
-If `disable_creation_from_recordset` is `true`, then this behavior changes and the `model` will be
-used when creating the record.
+to `true` on the new record, because that property is inherited from the recordset.
 
 ## ReadOnlyModelControllerMixin
 

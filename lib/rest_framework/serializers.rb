@@ -121,29 +121,21 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
   # Allow a serializer instance to be used as a hash directly in a nested serializer config.
   def [](key)
-    unless instance_variable_defined?(:@_nested_config)
-      @_nested_config = self.get_serializer_config
-    end
+    @_nested_config ||= self.get_serializer_config
     return @_nested_config[key]
   end
   def []=(key, value)
-    unless instance_variable_defined?(:@_nested_config)
-      @_nested_config = self.get_serializer_config
-    end
+    @_nested_config ||= self.get_serializer_config
     return @_nested_config[key] = value
   end
 
   # Allow a serializer class to be used as a hash directly in a nested serializer config.
   def self.[](key)
-    unless instance_variable_defined?(:@_nested_config)
-      @_nested_config = self.new.get_serializer_config
-    end
+    @_nested_config ||= self.new.get_serializer_config
     return @_nested_config[key]
   end
   def self.[]=(key, value)
-    unless instance_variable_defined?(:@_nested_config)
-      @_nested_config = self.new.get_serializer_config
-    end
+    @_nested_config ||= self.new.get_serializer_config
     return @_nested_config[key] = value
   end
 end

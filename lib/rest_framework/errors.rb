@@ -2,6 +2,7 @@
 class RESTFramework::Error < StandardError
 end
 
+
 class RESTFramework::NilPassedToAPIResponseError < RESTFramework::Error
   def message
     return <<~MSG.split("\n").join(' ')
@@ -13,6 +14,7 @@ class RESTFramework::NilPassedToAPIResponseError < RESTFramework::Error
     MSG
   end
 end
+
 
 class RESTFramework::UnserializableError < RESTFramework::Error
   def initialize(object)

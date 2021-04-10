@@ -20,6 +20,10 @@ module RESTFramework::BaseModelControllerMixin
         fields: nil,
         action_fields: nil,
 
+        # Attributes for finding records.
+        find_by_fields: nil,
+        find_by_query_param: 'find_by',
+
         # Attributes for create/update parameters.
         allowed_parameters: nil,
         allowed_action_parameters: nil,
@@ -35,7 +39,8 @@ module RESTFramework::BaseModelControllerMixin
         ordering_query_param: 'ordering',
 
         # Other misc attributes.
-        disable_creation_from_recordset: false,  # Option to disable `recordset.create` behavior.
+        create_from_recordset: true,  # Option for `recordset.create` vs `Model.create` behavior.
+        filter_recordset_before_find: true,  # Option to control if filtering is done before find.
       }.each do |a, default|
         unless base.respond_to?(a)
           base.class_attribute(a)
@@ -60,11 +65,6 @@ module RESTFramework::BaseModelControllerMixin
     return (action_config[action] if action) || self.class.send(generic_config_key)
   end
 
-  # Get a list of parameters allowed for the current action.
-  def get_allowed_parameters
-    return _get_specific_action_config(:allowed_action_parameters, :allowed_parameters)&.map(&:to_s)
-  end
-
   # Get a list of fields for the current action.
   def get_fields
     return (
@@ -74,14 +74,22 @@ module RESTFramework::BaseModelControllerMixin
     )
   end
 
+  # Get a list of parameters allowed for the current action.
+  def get_allowed_parameters
+    return _get_specific_action_config(:allowed_action_parameters, :allowed_parameters)&.map(&:to_s)
+  end
+
+  # Get a list of allowed find_by fields.
+  def get_find_by_fields
+    return self.find_by_fields&.map(&:to_s)
+  end
+
   # Helper to get the configured serializer class, or `NativeSerializer` as a default.
-  # @return [RESTFramework::BaseSerializer]
   def get_serializer_class
     return self.class.serializer_class || RESTFramework::NativeSerializer
   end
 
-  # Get the list of filtering backends to use.
-  # @return [RESTFramework::BaseFilter]
+  # Helper to get filtering backends, defaulting to using `ModelFilter` and `ModelOrderingFilter`.
   def get_filter_backends
     return self.class.filter_backends || [
       RESTFramework::ModelFilter, RESTFramework::ModelOrderingFilter
@@ -94,9 +102,7 @@ module RESTFramework::BaseModelControllerMixin
       fields = self.get_allowed_parameters || self.get_fields
 
       # Filter the request body.
-      body_params = request.request_parameters.select { |p|
-        fields.include?(p)
-      }
+      body_params = request.request_parameters.select { |p| fields.include?(p) }
 
       # Add query params in place of missing body params, if configured.
       if self.class.accept_generic_params_as_body_params
@@ -113,23 +119,13 @@ module RESTFramework::BaseModelControllerMixin
       end
 
       # Filter fields in exclude_body_fields.
-      (self.class.exclude_body_fields || []).each do |f|
-        body_params.delete(f.to_s)
-      end
+      (self.class.exclude_body_fields || []).each { |f| body_params.delete(f.to_s) }
 
       body_params
     end
   end
   alias :get_create_params :get_body_params
   alias :get_update_params :get_body_params
-
-  # Get a record by the primary key from the (non-filtered) recordset.
-  def get_record
-    if pk = params[self.get_model.primary_key]
-      return self.get_recordset.find(pk)
-    end
-    return nil
-  end
 
   # Get the model for this controller.
   def get_model(from_get_recordset: false)
@@ -162,6 +158,29 @@ module RESTFramework::BaseModelControllerMixin
       return @recordset = model.all
     end
 
+    return nil
+  end
+
+  # Get a single record by primary key or another column, if allowed.
+  def get_record
+    recordset = self.get_recordset
+    find_by_fields = self.get_find_by_fields || self.get_fields
+    find_by_key = self.get_model.primary_key
+
+    # Find by another column if it's permitted.
+    if find_by_query_param && params[find_by_query_param].in?(find_by_fields)
+      find_by_key = params[find_by_query_param]
+    end
+
+    # Filter recordset, if configured.
+    if self.filter_recordset_before_find
+      recordset = self.get_filtered_data(recordset)
+    end
+
+    # Return the record.
+    if find_by_value = params[:id]
+      return self.get_recordset.find_by(find_by_key => find_by_value)
+    end
     return nil
   end
 end
@@ -200,8 +219,8 @@ end
 # Mixin for creating records.
 module RESTFramework::CreateModelMixin
   def create
-    if self.get_recordset.respond_to?(:create!) && !self.disable_creation_from_recordset
-      # Create with any properties inherited from the recordset (like associations).
+    if self.get_recordset.respond_to?(:create!) && self.create_from_recordset
+      # Create with any properties inherited from the recordset.
       @record = self.get_recordset.create!(self.get_create_params)
     else
       # Otherwise, perform a "bare" create.

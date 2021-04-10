@@ -1,34 +1,24 @@
 module RESTFramework
   module Version
-    @_version = nil
-
     def self.get_version(skip_git: false)
-      # Return cached @_version, if available.
-      return @_version if @_version
-
       # First, attempt to get the version from git.
       unless skip_git
         begin
-          version = `git describe 2>/dev/null`.strip
-          raise "blank version" if version.nil? || version.match(/^\w*$/)
-          # Check for local changes.
-          changes = `git status --porcelain 2>/dev/null`
-          version << '.localchanges' if changes.strip.length > 0
-          return version
+          version = `git describe --dirty --broken 2>/dev/null`.strip
+          raise "blank version" if version.blank?
+          return version unless version.blank?
         rescue
         end
       end
 
-      # Git failed, so try to find a VERSION_STAMP.
+      # Git failed or was skipped, so try to find a VERSION file.
       begin
-        version = File.read(File.expand_path("VERSION_STAMP", __dir__))
-        unless version.nil? || version.match(/^\w*$/)
-          return (@_version = version)  # cache VERSION_STAMP content
-        end
+        version = File.read(File.expand_path("../../VERSION", __dir__))
+        return version unless version.blank?
       rescue
       end
 
-      # No VERSION_STAMP, so version is unknown.
+      # No VERSION file, so version is unknown.
       return '0.unknown'
     end
   end

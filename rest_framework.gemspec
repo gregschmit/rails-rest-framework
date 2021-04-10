@@ -1,7 +1,8 @@
 require_relative 'lib/rest_framework/version'
 
+
 # Stamp version before packaging.
-File.write(File.expand_path("lib/rest_framework/VERSION_STAMP", __dir__), RESTFramework::VERSION)
+File.write(File.expand_path("VERSION", __dir__), RESTFramework::VERSION)
 
 Gem::Specification.new do |spec|
   spec.name = "rest_framework"
@@ -24,7 +25,7 @@ Gem::Specification.new do |spec|
   spec.files = [
     "README.md",
     "LICENSE",
-    "lib/rest_framework/VERSION_STAMP",
+    "VERSION",
     *Dir['lib/**/*.rb'],
     *Dir['app/**/*'],
   ]
