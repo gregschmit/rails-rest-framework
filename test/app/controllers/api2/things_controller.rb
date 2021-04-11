@@ -11,6 +11,7 @@ class Api2::ThingsController < Api2Controller
   end
 
   self.fields = %w(id name)
+  self.ordering_fields = %w(id name price)
   self.action_fields = {create: %w(name), update: %w(name)}
   self.paginator_class = RESTFramework::PageNumberPaginator
   self.page_size = 2

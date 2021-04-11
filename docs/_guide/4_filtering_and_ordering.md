@@ -18,8 +18,7 @@ This filter provides basic user-controllable filtering of the recordset using qu
 example, a request to `/api/movies?cool=true` could return movies where `cool` is `true`.
 
 If you include `ModelControllerMixin` into your controller, `ModelFilter` is included in the filter
-backends by default, but it is disabled. To enable, adjust the `filterset_fields` controller
-attribute.
+backends by default.
 
 ## ModelOrderingFilter
 
@@ -29,6 +28,6 @@ example, a request to `/api/movies?ordering=name` could order the movies by `nam
 separated list, like: `ordering=director,-name`.
 
 If you include `ModelControllerMixin` into your controller, `ModelOrderingFilter` is included in the
-filter backends by default, but it is disabled. To enable, adjust the `ordering_fields` controller
-attribute. To adjust the parameter that the user passes, adjust `ordering_query_param`. The default
-is 'ordering'.
+filter backends by default. You can use `ordering_fields` to controller which fields are allowed to
+be ordered by. To adjust the parameter that the user passes, adjust `ordering_query_param`; the
+default is 'ordering'.

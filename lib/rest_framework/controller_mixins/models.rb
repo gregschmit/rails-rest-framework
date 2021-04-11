@@ -74,14 +74,24 @@ module RESTFramework::BaseModelControllerMixin
     )
   end
 
+  # Get a list of find_by fields for the current action.
+  def get_find_by_fields
+    return self.class.find_by_fields&.map(&:to_s) || self.get_fields
+  end
+
+  # Get a list of find_by fields for the current action.
+  def get_filterset_fields
+    return self.class.filterset_fields&.map(&:to_s) || self.get_fields
+  end
+
+  # Get a list of ordering fields for the current action.
+  def get_ordering_fields
+    return self.class.ordering_fields&.map(&:to_s) || self.get_fields
+  end
+
   # Get a list of parameters allowed for the current action.
   def get_allowed_parameters
     return _get_specific_action_config(:allowed_action_parameters, :allowed_parameters)&.map(&:to_s)
-  end
-
-  # Get a list of allowed find_by fields.
-  def get_find_by_fields
-    return self.find_by_fields&.map(&:to_s)
   end
 
   # Helper to get the configured serializer class, or `NativeSerializer` as a default.
@@ -164,7 +174,7 @@ module RESTFramework::BaseModelControllerMixin
   # Get a single record by primary key or another column, if allowed.
   def get_record
     recordset = self.get_recordset
-    find_by_fields = self.get_find_by_fields || self.get_fields
+    find_by_fields = self.get_find_by_fields
     find_by_key = self.get_model.primary_key
 
     # Find by another column if it's permitted.
@@ -178,7 +188,7 @@ module RESTFramework::BaseModelControllerMixin
     end
 
     # Return the record.
-    if find_by_value = params[:id]
+    if find_by_value = params[:id]  # Route key is always :id by Rails convention.
       return self.get_recordset.find_by!(find_by_key => find_by_value)
     end
     return nil
