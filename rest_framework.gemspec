@@ -2,7 +2,7 @@ require_relative 'lib/rest_framework/version'
 
 
 # Stamp version before packaging.
-File.write(File.expand_path("VERSION", __dir__), RESTFramework::VERSION)
+RESTFramework::Version.stamp_version
 
 Gem::Specification.new do |spec|
   spec.name = "rest_framework"

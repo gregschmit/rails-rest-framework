@@ -11,13 +11,19 @@ end
 
 
 class RESTFrameworkTest < Minitest::Test
-  def test_version_number
+  def test_version_number_not_nil
     refute_nil RESTFramework::VERSION
   end
 
-  def test_get_version
-    assert RESTFramework::Version.get_version
-    assert RESTFramework::Version.get_version(skip_git: true)
+  def test_get_version_git
+    assert RESTFramework::Version.get_version != 'unknown'
+  end
+
+  def test_get_version_stamp
+    RESTFramework::Version.unstamp_version
+    assert RESTFramework::Version.get_version(skip_git: true) == 'unknown'
+    RESTFramework::Version.stamp_version
+    assert RESTFramework::Version.get_version(skip_git: true) != 'unknown'
   end
 
   def test_unserializable_serializer
