@@ -4,7 +4,7 @@ source "https://rubygems.org"
 gemspec
 
 # Support testing against multiple Rails versions.
-rails_version = ENV["RAILS_VERSION"] || File.read(File.expand_path(".rails-version", __dir__))
+rails_version = ENV["RAILS_VERSION"] || File.read(File.expand_path(".rails-version", __dir__)).strip
 rails_version_major = rails_version.split('.')[0].to_i
 gem "rails", "~> #{rails_version}"
 
@@ -16,8 +16,8 @@ gem "byebug"
 gem "pry-rails"
 gem 'coveralls', require: false
 
-# Documentation: Hard exclude from test environment because github-pages conflicts with Rails 6.1.
-unless ENV["RAILS_ENV"] == 'test'
+# Documentation: Only use if requested via environment variable `RRF_DOCS`.
+if ENV["RRF_DOCS"]
   gem "github-pages", ">= 208"
   gem "yard"
   gem "redcarpet"

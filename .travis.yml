@@ -1,9 +1,9 @@
 ---
 language: ruby
 env:
-- "RAILS_VERSION=5.2"
-- "RAILS_VERSION=6.0"
-- "RAILS_VERSION=6.1"
+- "RAILS_VERSION=5.2.0"
+- "RAILS_VERSION=6.0.0"
+- "RAILS_VERSION=6.1.0"
 install:
 - gem install -N bundler:1.17.3
 - bundle _1.17.3_ install
@@ -15,7 +15,7 @@ rvm:
 jobs:
   exclude:
   - rvm: 3.0.0
-    env: "RAILS_VERSION=5.2"
+    env: "RAILS_VERSION=5.2.0"
   allow_failures:
   - rvm: 3.0.0
 script:
