@@ -84,7 +84,7 @@ class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
     # Ensure we use array conditions to prevent SQL injection.
     unless search.blank?
       return data.where(fields.map { |f|
-        "CAST(#{f} AS text) #{@controller.send(:search_ilike) ? "ILIKE" : "LIKE"} ?"
+        "CAST(#{f} AS CHAR) #{@controller.send(:search_ilike) ? "ILIKE" : "LIKE"} ?"
       }.join(' OR '), *(["%#{search}%"] * fields.length))
     end
 
