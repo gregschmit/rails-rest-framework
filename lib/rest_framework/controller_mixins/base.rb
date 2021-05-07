@@ -182,9 +182,9 @@ module RESTFramework::BaseControllerMixin
         hkwargs = kwargs.merge(html_kwargs)
         begin
           render(**hkwargs)
-        rescue ActionView::MissingTemplate  # fallback to rest_framework layout/view
+        rescue ActionView::MissingTemplate  # fallback to rest_framework layout
           hkwargs[:layout] = "rest_framework"
-          hkwargs[:template] = "rest_framework/default"
+          hkwargs[:html] = ''
           render(**hkwargs)
         end
       }
