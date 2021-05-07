@@ -83,6 +83,7 @@ class RESTFramework::PageNumberPaginator < RESTFramework::BasePaginator
     return {
       count: @count,
       page: @page_number,
+      page_size: @page_size,
       total_pages: @total_pages,
       results: serialized_page,
     }

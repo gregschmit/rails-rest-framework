@@ -15,7 +15,7 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
   # Filter params for keys allowed by the current action's filterset_fields/fields config.
   def _get_filter_params
     fields = @controller.send(:get_filterset_fields)
-    return @controller.request.query_parameters.select { |p|
+    return @controller.request.query_parameters.select { |p, _|
       fields.include?(p)
     }.to_h.symbolize_keys  # convert from HashWithIndifferentAccess to Hash w/keys
   end
@@ -71,6 +71,20 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
 end
 
 
-# TODO: implement searching within fields rather than exact match filtering (ModelFilter)
-# class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
-# end
+# Multi-field text searching on models.
+class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
+  # Filter data according to the request query parameters.
+  def get_filtered_data(data)
+    fields = @controller.send(:get_search_fields)
+    search = @controller.request.query_parameters[@controller.send(:search_query_param)]
+
+    # Ensure we use array conditions to prevent SQL injection.
+    unless search.blank?
+      return data.where(fields.map { |f|
+        "CAST(#{f} AS text) #{@controller.send(:search_case_sensitive) ? "LIKE" : "ILIKE"} ?"
+      }.join(' OR '), *(["%#{search}%"] * fields.length))
+    end
+
+    return data
+  end
+end

@@ -17,8 +17,17 @@ class Api2::ThingsController < Api2Controller
   self.page_size = 2
   self.serializer_class = ThingsSerializer
   self.extra_actions = {alternate_list: :get}
+  self.extra_member_actions = {description: :get}
+  self.filter_backends = [
+    RESTFramework::ModelFilter, RESTFramework::ModelOrderingFilter, RESTFramework::ModelSearchFilter
+  ]
 
   def alternate_list
     return self.index
+  end
+
+  def description
+    record = self.get_record
+    return api_response({message: "This is record #{record.id} (#{record.name})"})
   end
 end

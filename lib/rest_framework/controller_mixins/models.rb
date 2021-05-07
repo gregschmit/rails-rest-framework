@@ -37,6 +37,9 @@ module RESTFramework::BaseModelControllerMixin
         filterset_fields: nil,
         ordering_fields: nil,
         ordering_query_param: 'ordering',
+        search_fields: nil,
+        search_query_param: 'search',
+        search_case_sensitive: false,
 
         # Other misc attributes.
         create_from_recordset: true,  # Option for `recordset.create` vs `Model.create` behavior.
@@ -87,6 +90,11 @@ module RESTFramework::BaseModelControllerMixin
   # Get a list of ordering fields for the current action.
   def get_ordering_fields
     return self.class.ordering_fields&.map(&:to_s) || self.get_fields
+  end
+
+  # Get a list of search fields for the current action.
+  def get_search_fields
+    return self.class.search_fields&.map(&:to_s) || self.get_fields
   end
 
   # Get a list of parameters allowed for the current action.
