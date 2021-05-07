@@ -40,7 +40,7 @@ module RESTFramework::BaseModelControllerMixin
         ordering_no_reorder: false,
         search_fields: nil,
         search_query_param: 'search',
-        search_case_sensitive: false,
+        search_ilike: false,
 
         # Other misc attributes.
         create_from_recordset: true,  # Option for `recordset.create` vs `Model.create` behavior.
