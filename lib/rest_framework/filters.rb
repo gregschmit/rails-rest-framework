@@ -38,8 +38,8 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
   def _get_ordering
     return nil if @controller.class.ordering_query_param.blank?
     ordering_fields = @controller.send(:get_ordering_fields)
-
     order_string = @controller.params[@controller.class.ordering_query_param]
+
     unless order_string.blank?
       ordering = {}
       order_string.split(',').each do |field|
@@ -63,9 +63,12 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
   # Order data according to the request query parameters.
   def get_filtered_data(data)
     ordering = self._get_ordering
+    reorder = !@controller.send(:ordering_no_reorder)
+
     if ordering && !ordering.empty?
-      return data.order(_get_ordering)
+      return data.send(reorder ? :reorder : :order, _get_ordering)
     end
+
     return data
   end
 end

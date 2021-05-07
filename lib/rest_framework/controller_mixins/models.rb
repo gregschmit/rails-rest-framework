@@ -37,6 +37,7 @@ module RESTFramework::BaseModelControllerMixin
         filterset_fields: nil,
         ordering_fields: nil,
         ordering_query_param: 'ordering',
+        ordering_no_reorder: false,
         search_fields: nil,
         search_query_param: 'search',
         search_case_sensitive: false,
