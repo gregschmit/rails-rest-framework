@@ -105,18 +105,12 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
   # Convert the object (record or recordset) to Ruby primitives.
   def serialize
-    if @object
-      begin
-        if @object.is_a?(Enumerable)
-          return @object.map { |r| r.serializable_hash(self.get_serializer_config) }
-        end
-        return @object.serializable_hash(self.get_serializer_config)
-      rescue NoMethodError
-      end
-    end
+    raise "No object available to serialize!" unless @object
 
-    # Raise an error if we cannot serialize the object.
-    raise RESTFramework::UnserializableError.new(@object)
+    if @object.is_a?(Enumerable)
+      return @object.map { |r| r.serializable_hash(self.get_serializer_config) }
+    end
+    return @object.serializable_hash(self.get_serializer_config)
   end
 
   # Allow a serializer instance to be used as a hash directly in a nested serializer config.

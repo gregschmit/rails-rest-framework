@@ -14,15 +14,3 @@ class RESTFramework::NilPassedToAPIResponseError < RESTFramework::Error
     MSG
   end
 end
-
-
-class RESTFramework::UnserializableError < RESTFramework::Error
-  def initialize(object)
-    @object = object
-    return super
-  end
-
-  def message
-    return "Unable to serialize `#{@object.inspect}` (of type `#{@object.class}`)."
-  end
-end

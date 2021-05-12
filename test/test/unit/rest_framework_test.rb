@@ -28,7 +28,7 @@ class RESTFrameworkTest < Minitest::Test
 
   def test_unserializable_serializer
     unserializable_object = UnserializableThing.new
-    exception = assert_raises RESTFramework::UnserializableError do
+    exception = assert_raises NoMethodError do
       UnserializableSerializer.new(object: unserializable_object).serialize
     end
     assert exception.message
