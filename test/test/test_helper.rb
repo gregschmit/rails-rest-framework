@@ -49,15 +49,22 @@ class ActiveSupport::TestCase
 
   # Do not parallelize for now since Coveralls breaks with parallelization.
   # parallelize(workers: :number_of_processors)
+end
 
-  # Helper to get parsed (json) body for both old and new Rails.
-  def _parsed_body
-    return @_response ||= begin
-      if Rails::VERSION::MAJOR >= 6
-        @response.parsed_body
-      else
-        JSON.parse(@response.parsed_body)
+
+class ActionController::TestCase
+  # Expose parsed_body method on all controller tests.
+  def parsed_body(reload: false)
+    if reload || !defined?(@_parsed_body) || !@_parsed_body
+      return @_parsed_body = begin
+        if Rails::VERSION::MAJOR >= 6
+          @response.parsed_body
+        else
+          JSON.parse(@response.parsed_body)
+        end
       end
     end
+
+    return @_parsed_body
   end
 end

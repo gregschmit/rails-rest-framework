@@ -8,6 +8,6 @@ class Api1ControllerTest < ActionController::TestCase
     message = "Welcome to your custom API1 root!"
     get :root, as: :json
     assert_response :success
-    assert _parsed_body['message'] == message
+    assert parsed_body['message'] == message
   end
 end

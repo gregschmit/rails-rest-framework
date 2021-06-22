@@ -33,5 +33,5 @@ undestroyable_thing:
 unsaveable_thing:
   name: unsaveable
   shape: Mobius Strip
-  price: 44
-  is_discounted: false
+  price: 48
+  is_discounted: true
