@@ -1,22 +1,40 @@
 ---
 language: ruby
+os: linux
+dist: xenial
+
+# Default test matrix.
 env:
-- "RAILS_VERSION=5.2.0"
-- "RAILS_VERSION=6.0.0"
-- "RAILS_VERSION=6.1.0"
+- RAILS_VERSION=5.2.0
+- RAILS_VERSION=6.0.0
+- RAILS_VERSION=6.1.0
 rvm:
 - 2.5.0
 - 2.6.5
 - 2.7.2
 - 3.0.0
+
+# Default test stage.
 install:
 - gem install -N bundler:1.17.3
 - bundle _1.17.3_ install
+script:
+- BACKTRACE=1 bundle exec rake test
+
 jobs:
+  allow_failures:
+  - rvm: 3.0.0
   exclude:
   - rvm: 3.0.0
     env: "RAILS_VERSION=5.2.0"
-  allow_failures:
-  - rvm: 3.0.0
-script:
-- BACKTRACE=1 bundle exec rake test
+  include:
+  # Add a stage to publish to RubyGems.
+  - stage: publish
+    on: branch = master AND tag IS present
+    rvm: 2.7.2
+    install:
+    - gem install -N bundler:1.17.3
+    - bundle _1.17.3_ install
+    script:
+    - "filename=`gem build rest_framework.gemspec 2>&1 | sed -e 's/.*File: \\(.*\\)/\\1/p;d'`"
+    - gem push $filename
