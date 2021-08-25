@@ -30,7 +30,7 @@ jobs:
   include:
   # Add a stage to publish to RubyGems.
   - stage: publish
-    on: branch = master AND tag IS present
+    if: tag IS present
     rvm: 2.7.2
     install:
     - gem install -N bundler:1.17.3
