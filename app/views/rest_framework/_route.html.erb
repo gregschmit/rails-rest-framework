@@ -1,0 +1,9 @@
+<tr>
+  <td><%= route[:path] %></td>
+  <td><%= route[:verb] %></td>
+  <% if route[:controller] && route[:action] %>
+    <td><%= route[:controller] %>#<%= route[:action] %></td>
+  <% else %>
+    <td><%= route[:route_app] %></td>
+  <% end %>
+</tr>

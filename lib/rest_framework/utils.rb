@@ -52,9 +52,10 @@ module RESTFramework::Utils
       {
         verb: r.verb,
         path: r.path.spec.to_s,
-        action: r.defaults[:action],
-        controller: r.defaults[:controller],
-        subdomain: r.defaults[:subdomain],
+        action: r.defaults[:action].presence,
+        controller: r.defaults[:controller].presence,
+        subdomain: r.defaults[:subdomain].presence,
+        route_app: r.app&.app&.inspect&.presence,
       }
     }.select { |r|
       r[:subdomain] == current_subdomain && r[:path].start_with?(current_pattern)

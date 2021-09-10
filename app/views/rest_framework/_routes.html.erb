@@ -10,11 +10,7 @@
     <%# Render first group of routes directly. %>
     <tbody>
       <% @route_groups.values[0].each do |route| %>
-        <tr>
-          <td><%= route[:path] %></td>
-          <td><%= route[:verb] %></td>
-          <td><%= route[:controller] %>#<%= route[:action] %></td>
-        </tr>
+        <%= render partial: "rest_framework/route", locals: {route: route} %>
       <% end %>
     </tbody>
     <%# Render any other groups under dropdowns. %>
@@ -22,13 +18,9 @@
       <tr data-bs-toggle="collapse" data-bs-target="#route-group-<%= index %>" class="rrf-route-group-header">
         <td colspan="3" class="text-center user-select-none"><%= name %></td>
       </tr>
-      <tbody id="route-group-<%= index %>" class="collapse" style="padding: 0">
+      <tbody id="route-group-<%= index %>" class="collapse">
         <% route_group.each do |route| %>
-          <tr>
-            <td><%= route[:path] %></td>
-            <td><%= route[:verb] %></td>
-            <td><%= route[:controller] %>#<%= route[:action] %></td>
-          </tr>
+          <%= render partial: "rest_framework/route", locals: {route: route} %>
         <% end %>
       </tbody>
     <% end %>
