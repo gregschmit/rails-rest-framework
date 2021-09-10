@@ -29,14 +29,14 @@
               <ul class="nav nav-tabs">
                 <% if @json_payload %>
                   <li class="nav-item">
-                    <a class="nav-link active" href="#tab-json" data-toggle="tab" role="tab">
+                    <a class="nav-link active" href="#tab-json" data-bs-toggle="tab" role="tab">
                       .json
                     </a>
                   </li>
                 <% end %>
                 <% if @xml_payload %>
                   <li class="nav-item">
-                    <a class="nav-link" href="#tab-xml" data-toggle="tab" role="tab">
+                    <a class="nav-link" href="#tab-xml" data-bs-toggle="tab" role="tab">
                       .xml
                     </a>
                   </li>
@@ -57,7 +57,7 @@
             </div>
           </div>
         <% end %>
-        <% unless @routes.blank? %>
+        <% unless @route_groups.blank? %>
           <div class="row">
             <h2>Routes</h2>
             <%= render partial: 'rest_framework/routes' %>

@@ -7,7 +7,7 @@ usage() {
   printf "  -M   bump major (e.g., 1.1.4 -> 2.0.0)\n" 1>&2
 }
 
-# parse opts
+# Parse options.
 p=""
 m=""
 M=""
@@ -34,10 +34,10 @@ while getopts 'hpmM' 'OPTION'; do
 done
 shift "$(($OPTIND -1))"
 
-# get most recent tag, in parts
+# Get most recent tag, in parts/
 read -r major minor patch <<<`git describe --abbrev=0 | tr '.' ' '`;
 
-# bump
+# Bump.
 if [ "$M" == "true" ]; then
   major=`expr $major + 1`
   minor="0"

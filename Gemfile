@@ -13,6 +13,7 @@ gem "rake", ">= 12.0"
 gem "minitest", ">= 5.0"
 gem "sqlite3", "~> #{rails_version_major <= 4 ? '1.3.0' : '1.4.0'}"
 gem "byebug"
+gem "web-console", require: false
 gem "pry-rails"
 gem 'coveralls', require: false
 

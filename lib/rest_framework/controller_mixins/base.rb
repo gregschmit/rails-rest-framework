@@ -1,5 +1,6 @@
 require_relative '../errors'
 require_relative '../serializers'
+require_relative '../utils'
 
 
 # This module provides the common functionality for any controller mixins, a `root` action, and
@@ -121,22 +122,6 @@ module RESTFramework::BaseControllerMixin
     }, status: 406)
   end
 
-  # Helper for showing routes under a controller action, used for the browsable API.
-  def _get_routes
-    begin
-      formatter = ActionDispatch::Routing::ConsoleFormatter::Sheet
-    rescue NameError
-      # :nocov:
-      formatter = ActionDispatch::Routing::ConsoleFormatter
-      # :nocov:
-    end
-    return ActionDispatch::Routing::RoutesInspector.new(Rails.application.routes.routes).format(
-      formatter.new
-    ).lines.drop(1).map { |r| r.split.last(3) }.map { |r|
-      {verb: r[0], path: r[1], action: r[2]}
-    }.select { |r| r[:path].start_with?(request.path) }
-  end
-
   # Helper to render a browsable API for `html` format, along with basic `json`/`xml` formats, and
   # with support or passing custom `kwargs` to the underlying `render` calls.
   def api_response(payload, html_kwargs: nil, **kwargs)
@@ -178,7 +163,7 @@ module RESTFramework::BaseControllerMixin
         end
         @template_logo_text ||= "Rails REST Framework"
         @title ||= self.controller_name.camelize
-        @routes ||= self._get_routes
+        @route_groups ||= RESTFramework::Utils::get_routes(Rails.application.routes, request)
         hkwargs = kwargs.merge(html_kwargs)
         begin
           render(**hkwargs)

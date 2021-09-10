@@ -1,43 +1,8 @@
 require 'action_dispatch/routing/mapper'
-
+require_relative 'utils'
 
 module ActionDispatch::Routing
   class Mapper
-    # Internal helper to take extra_actions hash and convert to a consistent format.
-    protected def _parse_extra_actions(extra_actions)
-      return (extra_actions || {}).map do |k,v|
-        kwargs = {action: k}
-        path = k
-
-        # Convert structure to path/methods/kwargs.
-        if v.is_a?(Hash)  # allow kwargs
-          v = v.symbolize_keys
-
-          # Ensure methods is an array.
-          if v[:methods].is_a?(String) || v[:methods].is_a?(Symbol)
-            methods = [v.delete(:methods)]
-          else
-            methods = v.delete(:methods)
-          end
-
-          # Override path if it's provided.
-          if v.key?(:path)
-            path = v.delete(:path)
-          end
-
-          # Pass any further kwargs to the underlying Rails interface.
-          kwargs = kwargs.merge(v)
-        elsif v.is_a?(Symbol) || v.is_a?(String)
-          methods = [v]
-        else
-          methods = v
-        end
-
-        # Return a hash with keys: :path, :methods, :kwargs.
-        {path: path, methods: methods, kwargs: kwargs}
-      end
-    end
-
     # Internal interface to get the controller class from the name and current scope.
     protected def _get_controller_class(name, pluralize: true, fallback_reverse_pluralization: true)
       # get class name
@@ -92,13 +57,13 @@ module ActionDispatch::Routing
       if controller.is_a?(Class)
         controller_class = controller
       else
-        controller_class = _get_controller_class(controller, pluralize: !default_singular)
+        controller_class = self._get_controller_class(controller, pluralize: !default_singular)
       end
 
       # Set controller if it's not explicitly set.
       kwargs[:controller] = name unless kwargs[:controller]
 
-      # determine plural/singular resource
+      # Determine plural/singular resource.
       force_singular = kwargs.delete(:force_singular)
       force_plural = kwargs.delete(:force_plural)
       if force_singular
@@ -118,14 +83,16 @@ module ActionDispatch::Routing
       public_send(resource_method, name, except: skip, **kwargs) do
         if controller_class.respond_to?(:extra_member_actions)
           member do
-            actions = self._parse_extra_actions(controller_class.extra_member_actions)
-            _route_extra_actions(actions)
+            actions = RESTFramework::Utils::parse_extra_actions(
+              controller_class.extra_member_actions
+            )
+            self._route_extra_actions(actions)
           end
         end
 
         collection do
-          actions = self._parse_extra_actions(controller_class.extra_actions)
-          _route_extra_actions(actions)
+          actions = RESTFramework::Utils::parse_extra_actions(controller_class.extra_actions)
+          self._route_extra_actions(actions)
         end
 
         yield if block_given?
@@ -160,14 +127,14 @@ module ActionDispatch::Routing
       kwargs[:controller] = name unless kwargs[:controller]
 
       # Route actions using the resourceful router, but skip all builtin actions.
-      actions = self._parse_extra_actions(controller_class.extra_actions)
+      actions = RESTFramework::Utils::parse_extra_actions(controller_class.extra_actions)
       public_send(:resource, name, only: [], **kwargs) do
         # Route a root for this resource.
         if route_root_to
           get '', action: route_root_to
         end
 
-        _route_extra_actions(actions, &block)
+        self._route_extra_actions(actions, &block)
       end
     end
 

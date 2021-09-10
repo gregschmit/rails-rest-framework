@@ -8,7 +8,6 @@ $(function() {
   $('h2, h3, h4').each(function(index, header) {
     let h = $(header);
     hlevel = parseInt(h.prop('tagName')[1]);
-    console.log(`index: ${index} -- header: ${header}`);
     if (hlevel > hprevlevel) {
       table += '<ul>';
     } else if (hlevel < hprevlevel) {
