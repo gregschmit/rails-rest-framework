@@ -19,8 +19,7 @@ require "rails"
   require railtie
 end
 
-# Require the gems listed in Gemfile, including any gems
-# you've limited to :test, :development, or :production.
+# Require the gems listed in Gemfile.
 Bundler.require(*Rails.groups)
 
 class Application < Rails::Application
