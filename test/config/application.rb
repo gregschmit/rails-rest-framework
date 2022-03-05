@@ -1,22 +1,25 @@
-require_relative 'boot'
-require 'uri'
+require_relative "boot"
+require "uri"
 
-# require 'rails/all'
+RAILS_VERSION = Gem::Version.new(
+  ENV["RAILS_VERSION"] || File.read(File.expand_path("../../.rails-version", __dir__)).strip,
+)
+
+# Rather than `require 'rails/all'`, only require things we absolutely need.
 require "rails"
 [
-  'active_record/railtie',
-  #'active_storage/engine',
-  'action_controller/railtie',
-  'action_view/railtie',
-  #'action_mailer/railtie',
-  'active_job/railtie',
-  #'action_cable/engine',
-  #'action_mailbox/engine',
-  #'action_text/engine',
-  'rails/test_unit/railtie',
-  'sprockets/railtie',
+  "active_record/railtie",
+  "action_controller/railtie",
+  "action_view/railtie",
+  "active_job/railtie",
+  "rails/test_unit/railtie",
 ].each do |railtie|
   require railtie
+end
+
+# Sprockets was removed in Rails 7.
+if USE_SPROCKETS = (RAILS_VERSION < Gem::Version.new("7.0.0"))
+  require "sprockets/railtie"
 end
 
 # Require the gems listed in Gemfile.
@@ -33,12 +36,14 @@ class Application < Rails::Application
   config.cache_classes = false
   config.action_controller.perform_caching = false
 
-  config.assets.debug = false
-  config.assets.check_precompiled_asset = false
+  if USE_SPROCKETS
+    config.assets.debug = false
+    config.assets.check_precompiled_asset = false
+  end
 
-  config.session_store :cookie_store, :key => '_session'
-  config.secret_token = 'a_test_token'
-  config.secret_key_base = 'a_test_secret'
+  config.session_store(:cookie_store, key: "_session")
+  config.secret_token = "a_test_token"
+  config.secret_key_base = "a_test_secret"
 
   config.logger = Logger.new($stdout)
   config.log_level = :warn

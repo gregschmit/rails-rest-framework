@@ -1,12 +1,10 @@
 Rails.application.routes.draw do
-  # API1
   rest_root :demo_api
   namespace :demo_api do
     rest_resources :things
     rest_resources :users
   end
 
-  # API2
   namespace :test_api do
     rest_root
     rest_resource :user
@@ -17,8 +15,10 @@ Rails.application.routes.draw do
 
     rest_route :network
 
-    namespace :active_model_serializer do
-      rest_resources :things
+    if defined?(ActiveModel::Serializer)
+      namespace :active_model_serializer do
+        rest_resources :things
+      end
     end
   end
 end
