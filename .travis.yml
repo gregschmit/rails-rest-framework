@@ -15,9 +15,9 @@ env:
 - RAILS_VERSION=6.1.4
 - RAILS_VERSION=7.0.2
 rvm:
-- 2.6.9
+- 2.6.8
 - 2.7.5
-- 3.0.3
+- 3.0.2
 install:
 - bundle install
 script:
@@ -25,19 +25,19 @@ script:
 
 jobs:
   exclude:
-  - rvm: 3.0.3
+  - rvm: 3.0.2
     env: "RAILS_VERSION=5.2.6"
-  - rvm: 2.6.9
+  - rvm: 2.6.8
     env: "RAILS_VERSION=7.0.2"
   include:
   - stage: check
-    rvm: 3.0.3
+    rvm: 3.0.2
     env: []
     script:
     - rubocop
   - stage: publish
     if: tag IS present
-    rvm: 3.0.3
+    rvm: 3.0.2
     env: []
     install: []
     script:
