@@ -32,15 +32,14 @@ jobs:
   include:
   - stage: check
     rvm: 3.0.3
-    install:
-    - bundle install
+    env: []
     script:
     - rubocop
   - stage: publish
     if: tag IS present
     rvm: 3.0.3
-    install:
-    - bundle install
+    env: []
+    install: []
     script:
     - "filename=`gem build rest_framework.gemspec 2>&1 | sed -e 's/.*File: \\(.*\\)/\\1/p;d'`"
     - gem push $filename

@@ -11,7 +11,7 @@ end
 # :nocov:
 
 class RESTFramework::Generators::ControllerGenerator < Rails::Generators::Base
-  PATH_REGEX = /^[a-z0-9][a-z0-9_]+$/
+  PATH_REGEX = %r{^[a-z0-9][a-z0-9_/]+$}
 
   desc <<~END
     Description:
