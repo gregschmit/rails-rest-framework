@@ -1,4 +1,4 @@
-require_relative 'lib/rest_framework/version'
+require_relative "lib/rest_framework/version"
 
 # Stamp version before packaging.
 RESTFramework::Version.stamp_version
@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
 
-  spec.add_dependency 'rails', ">= 4.0"
+  spec.add_dependency("rails", ">= 4.0")
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/gregschmit/rails-rest-framework"
@@ -25,8 +25,8 @@ Gem::Specification.new do |spec|
     "README.md",
     "LICENSE",
     "VERSION",
-    *Dir['lib/**/*.rb'],
-    *Dir['app/**/*'],
+    *Dir["lib/**/*.rb"],
+    *Dir["app/**/*"],
   ]
   spec.require_paths = ["lib", "app"]
 end

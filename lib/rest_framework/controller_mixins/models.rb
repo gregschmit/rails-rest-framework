@@ -1,12 +1,12 @@
-require_relative 'base'
-require_relative '../filters'
+require_relative "base"
+require_relative "../filters"
 
 # This module provides the core functionality for controllers based on models.
 module RESTFramework::BaseModelControllerMixin
   include RESTFramework::BaseControllerMixin
 
   def self.included(base)
-    if base.is_a? Class
+    if base.is_a?(Class)
       RESTFramework::BaseControllerMixin.included(base)
 
       # Add class attributes (with defaults) unless they already exist.
@@ -21,7 +21,7 @@ module RESTFramework::BaseModelControllerMixin
 
         # Attributes for finding records.
         find_by_fields: nil,
-        find_by_query_param: 'find_by',
+        find_by_query_param: "find_by",
 
         # Attributes for create/update parameters.
         allowed_parameters: nil,
@@ -31,28 +31,28 @@ module RESTFramework::BaseModelControllerMixin
         native_serializer_config: nil,
         native_serializer_singular_config: nil,
         native_serializer_plural_config: nil,
-        native_serializer_except_query_param: 'except',
+        native_serializer_except_query_param: "except",
 
         # Attributes for default model filtering (and ordering).
         filterset_fields: nil,
         ordering_fields: nil,
-        ordering_query_param: 'ordering',
+        ordering_query_param: "ordering",
         ordering_no_reorder: false,
         search_fields: nil,
-        search_query_param: 'search',
+        search_query_param: "search",
         search_ilike: false,
 
         # Other misc attributes.
         create_from_recordset: true,  # Option for `recordset.create` vs `Model.create` behavior.
         filter_recordset_before_find: true,  # Option to control if filtering is done before find.
       }.each do |a, default|
-        unless base.respond_to?(a)
-          base.class_attribute(a)
+        next if base.respond_to?(a)
 
-          # Set default manually so we can still support Rails 4. Maybe later we can use the default
-          # parameter on `class_attribute`.
-          base.send(:"#{a}=", default)
-        end
+        base.class_attribute(a)
+
+        # Set default manually so we can still support Rails 4. Maybe later we can use the default
+        # parameter on `class_attribute`.
+        base.send(:"#{a}=", default)
       end
     end
   end
@@ -143,8 +143,8 @@ module RESTFramework::BaseModelControllerMixin
       body_params
     end
   end
-  alias :get_create_params :get_body_params
-  alias :get_update_params :get_body_params
+  alias_method :get_create_params, :get_body_params
+  alias_method :get_update_params, :get_body_params
 
   # Get the model for this controller.
   def get_model(from_get_recordset: false)
@@ -160,7 +160,7 @@ module RESTFramework::BaseModelControllerMixin
 
     # Try to determine model from controller name.
     begin
-      return (@model = self.class.name.demodulize.match(/(.*)Controller/)[1].singularize.constantize)
+      return @model = self.class.name.demodulize.match(/(.*)Controller/)[1].singularize.constantize
     rescue NameError
     end
 
@@ -196,11 +196,8 @@ module RESTFramework::BaseModelControllerMixin
       recordset = self.get_filtered_data(recordset)
     end
 
-    # Return the record.
-    if find_by_value = params[:id]  # Route key is always :id by Rails convention.
-      return self.get_recordset.find_by!(find_by_key => find_by_value)
-    end
-    return nil
+    # Return the record. Route key is always :id by Rails convention.
+    return recordset.find_by!(find_by_key => params[:id])
   end
 end
 
@@ -273,7 +270,7 @@ end
 module RESTFramework::DestroyModelMixin
   def destroy
     self._destroy
-    api_response('')
+    api_response("")
   end
 
   def _destroy
@@ -287,7 +284,7 @@ module RESTFramework::ReadOnlyModelControllerMixin
   include RESTFramework::BaseModelControllerMixin
 
   def self.included(base)
-    if base.is_a? Class
+    if base.is_a?(Class)
       RESTFramework::BaseModelControllerMixin.included(base)
     end
   end
@@ -301,7 +298,7 @@ module RESTFramework::ModelControllerMixin
   include RESTFramework::BaseModelControllerMixin
 
   def self.included(base)
-    if base.is_a? Class
+    if base.is_a?(Class)
       RESTFramework::BaseModelControllerMixin.included(base)
     end
   end

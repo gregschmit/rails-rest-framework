@@ -1,4 +1,4 @@
-require_relative '../test_helper'
+require_relative "../test_helper"
 
 # Common tests for all models.
 module BaseModelTests
@@ -12,29 +12,29 @@ module BaseModelTests
   end
 
   def test_fixtures_are_valid
-    @model.all.each { |r| assert r.valid? }
+    @model.all.each { |r| assert(r.valid?) }
   end
 
   def test_record_exists_from_fixture
-    assert @model.exists?
+    assert(@model.exists?)
   end
 
   def test_can_create_record
     if @title_field
-      @model.create!(@title_field => 'test_create')
-      assert @model.where(@title_field => 'test_create').exists?
+      @model.create!(@title_field => "test_create")
+      assert(@model.where(@title_field => "test_create").exists?)
     else
-      raise StandardError.new("#{@model} doesn't contain any of these fields: #{TITLE_FIELDS}")
+      raise StandardError, "#{@model} doesn't contain any of these fields: #{TITLE_FIELDS}"
     end
   end
 
   def test_can_update_record
     if @title_field
-      t = @model.create!(@title_field => 'test_update')
-      t.update!(@title_field => 'test_updated')
-      assert @model.where(@title_field => 'test_updated').exists?
+      t = @model.create!(@title_field => "test_update")
+      t.update!(@title_field => "test_updated")
+      assert(@model.where(@title_field => "test_updated").exists?)
     else
-      raise StandardError.new("#{@model} doesn't contain any of these fields: #{TITLE_FIELDS}")
+      raise StandardError, "#{@model} doesn't contain any of these fields: #{TITLE_FIELDS}"
     end
   end
 

@@ -1,6 +1,6 @@
-require_relative '../errors'
-require_relative '../serializers'
-require_relative '../utils'
+require_relative "../errors"
+require_relative "../serializers"
+require_relative "../utils"
 
 # This module provides the common functionality for any controller mixins, a `root` action, and
 # the ability to route arbitrary actions with `extra_actions`. This is also where `api_response`
@@ -29,8 +29,8 @@ module RESTFramework::BaseControllerMixin
   end
 
   def self.included(base)
-    if base.is_a? Class
-      base.extend ClassMethods
+    if base.is_a?(Class)
+      base.extend(ClassMethods)
 
       # Add class attributes (with defaults) unless they already exist.
       {
@@ -42,8 +42,8 @@ module RESTFramework::BaseControllerMixin
         filter_backends: nil,
         paginator_class: nil,
         page_size: 20,
-        page_query_param: 'page',
-        page_size_query_param: 'page_size',
+        page_query_param: "page",
+        page_size_query_param: "page_size",
         max_page_size: nil,
         serializer_class: nil,
         serialize_to_json: true,
@@ -51,13 +51,13 @@ module RESTFramework::BaseControllerMixin
         singleton_controller: nil,
         skip_actions: nil,
       }.each do |a, default|
-        unless base.respond_to?(a)
-          base.class_attribute(a)
+        next if base.respond_to?(a)
 
-          # Set default manually so we can still support Rails 4. Maybe later we can use the default
-          # parameter on `class_attribute`.
-          base.send(:"#{a}=", default)
-        end
+        base.class_attribute(a)
+
+        # Set default manually so we can still support Rails 4. Maybe later we can use the default
+        # parameter on `class_attribute`.
+        base.send(:"#{a}=", default)
       end
 
       # Alias `extra_actions` to `extra_collection_actions`.
@@ -67,7 +67,11 @@ module RESTFramework::BaseControllerMixin
       end
 
       # Skip csrf since this is an API.
-      base.skip_before_action(:verify_authenticity_token) rescue nil
+      begin
+        base.skip_before_action(:verify_authenticity_token)
+      rescue
+        nil
+      end
 
       # Handle some common exceptions.
       base.rescue_from(ActiveRecord::RecordNotFound, with: :record_not_found)
@@ -107,9 +111,9 @@ module RESTFramework::BaseControllerMixin
   end
 
   def record_invalid(e)
-    return api_response({
-      message: "Record invalid.", exception: e, errors: e.record&.errors
-    }, status: 400)
+    return api_response(
+      {message: "Record invalid.", exception: e, errors: e.record&.errors}, status: 400
+    )
   end
 
   def record_not_found(e)
@@ -117,15 +121,15 @@ module RESTFramework::BaseControllerMixin
   end
 
   def record_not_saved(e)
-    return api_response({
-      message: "Record not saved.", exception: e, errors: e.record&.errors
-    }, status: 406)
+    return api_response(
+      {message: "Record not saved.", exception: e, errors: e.record&.errors}, status: 406
+    )
   end
 
   def record_not_destroyed(e)
-    return api_response({
-      message: "Record not destroyed.", exception: e, errors: e.record&.errors
-    }, status: 406)
+    return api_response(
+      {message: "Record not destroyed.", exception: e, errors: e.record&.errors}, status: 406
+    )
   end
 
   # Helper to render a browsable API for `html` format, along with basic `json`/`xml` formats, and
@@ -144,9 +148,9 @@ module RESTFramework::BaseControllerMixin
     end
 
     respond_to do |format|
-      if payload == ''
-        format.json {head :no_content} if self.class.serialize_to_json
-        format.xml {head :no_content} if self.class.serialize_to_xml
+      if payload == ""
+        format.json { head(:no_content) } if self.class.serialize_to_json
+        format.xml { head(:no_content) } if self.class.serialize_to_xml
       else
         format.json {
           jkwargs = kwargs.merge(json_kwargs)
@@ -160,22 +164,22 @@ module RESTFramework::BaseControllerMixin
       end
       format.html {
         @payload = payload
-        if payload == ''
-          @json_payload = '' if self.class.serialize_to_json
-          @xml_payload = '' if self.class.serialize_to_xml
+        if payload == ""
+          @json_payload = "" if self.class.serialize_to_json
+          @xml_payload = "" if self.class.serialize_to_xml
         else
           @json_payload = payload.to_json if self.class.serialize_to_json
           @xml_payload = payload.to_xml if self.class.serialize_to_xml
         end
         @template_logo_text ||= "Rails REST Framework"
         @title ||= self.controller_name.camelize
-        @route_groups ||= RESTFramework::Utils::get_routes(Rails.application.routes, request)
+        @route_groups ||= RESTFramework::Utils.get_routes(Rails.application.routes, request)
         hkwargs = kwargs.merge(html_kwargs)
         begin
           render(**hkwargs)
         rescue ActionView::MissingTemplate  # fallback to rest_framework layout
           hkwargs[:layout] = "rest_framework"
-          hkwargs[:html] = ''
+          hkwargs[:html] = ""
           render(**hkwargs)
         end
       }

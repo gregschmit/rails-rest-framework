@@ -1,4 +1,4 @@
-require_relative 'base'
+require_relative "base"
 
 class UserTest < ActiveSupport::TestCase
   include BaseModelTests

@@ -6,6 +6,6 @@ class TestApi::RootController < TestApiController
   end
 
   def blank
-    api_response('')
+    api_response("")
   end
 end

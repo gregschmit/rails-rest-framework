@@ -1,5 +1,5 @@
-require 'action_dispatch/routing/mapper'
-require_relative 'utils'
+require "action_dispatch/routing/mapper"
+require_relative "utils"
 
 module ActionDispatch::Routing
   class Mapper
@@ -83,15 +83,15 @@ module ActionDispatch::Routing
       public_send(resource_method, name, except: skip, **kwargs) do
         if controller_class.respond_to?(:extra_member_actions)
           member do
-            actions = RESTFramework::Utils::parse_extra_actions(
-              controller_class.extra_member_actions
+            actions = RESTFramework::Utils.parse_extra_actions(
+              controller_class.extra_member_actions,
             )
             self._route_extra_actions(actions)
           end
         end
 
         collection do
-          actions = RESTFramework::Utils::parse_extra_actions(controller_class.extra_actions)
+          actions = RESTFramework::Utils.parse_extra_actions(controller_class.extra_actions)
           self._route_extra_actions(actions)
         end
 
@@ -127,11 +127,11 @@ module ActionDispatch::Routing
       kwargs[:controller] = name unless kwargs[:controller]
 
       # Route actions using the resourceful router, but skip all builtin actions.
-      actions = RESTFramework::Utils::parse_extra_actions(controller_class.extra_actions)
+      actions = RESTFramework::Utils.parse_extra_actions(controller_class.extra_actions)
       public_send(:resource, name, only: [], **kwargs) do
         # Route a root for this resource.
         if route_root_to
-          get '', action: route_root_to
+          get("", action: route_root_to)
         end
 
         self._route_extra_actions(actions, &block)
@@ -146,7 +146,7 @@ module ActionDispatch::Routing
 
       # Remove path if name is nil (routing to the root of current namespace).
       unless name
-        kwargs[:path] = ''
+        kwargs[:path] = ""
       end
 
       return rest_route(controller, route_root_to: root_action, **kwargs) do

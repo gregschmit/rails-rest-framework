@@ -1,8 +1,8 @@
 class Thing < ActiveRecord::Base
   if Rails::VERSION::MAJOR >= 5
-    belongs_to :owner, class_name: 'User', optional: true
+    belongs_to :owner, class_name: "User", optional: true
   else
-    belongs_to :owner, class_name: 'User'
+    belongs_to :owner, class_name: "User"
   end
 
   before_destroy :check_undestroyable
@@ -18,14 +18,14 @@ class Thing < ActiveRecord::Base
   protected
 
   def check_undestroyable
-    if self.name == 'An Undestroyable Thing'
+    if self.name == "An Undestroyable Thing"
       errors.add(:base, "This record is undestroyable.")
       throw(:abort)
     end
   end
 
   def check_unsaveable
-    if self.name == 'An Unsaveable Thing'
+    if self.name == "An Unsaveable Thing"
       errors.add(:base, "This record is unsaveable.")
       throw(:abort)
     end

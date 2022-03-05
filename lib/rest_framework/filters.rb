@@ -35,13 +35,14 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
   # Convert ordering string to an ordering configuration.
   def _get_ordering
     return nil if @controller.class.ordering_query_param.blank?
+
     ordering_fields = @controller.send(:get_ordering_fields)
     order_string = @controller.params[@controller.class.ordering_query_param]
 
     unless order_string.blank?
       ordering = {}
-      order_string.split(',').each do |field|
-        if field[0] == '-'
+      order_string.split(",").each do |field|
+        if field[0] == "-"
           column = field[1..-1]
           direction = :desc
         else
@@ -61,7 +62,7 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
   # Order data according to the request query parameters.
   def get_filtered_data(data)
     ordering = self._get_ordering
-    reorder = !@controller.send(:ordering_no_reorder)
+    reorder = !@controller.class.ordering_no_reorder
 
     if ordering && !ordering.empty?
       return data.send(reorder ? :reorder : :order, _get_ordering)
@@ -76,13 +77,16 @@ class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
   # Filter data according to the request query parameters.
   def get_filtered_data(data)
     fields = @controller.send(:get_search_fields)
-    search = @controller.request.query_parameters[@controller.send(:search_query_param)]
+    search = @controller.request.query_parameters[@controller.class.search_query_param]
 
     # Ensure we use array conditions to prevent SQL injection.
     unless search.blank?
-      return data.where(fields.map { |f|
-        "CAST(#{f} AS CHAR) #{@controller.send(:search_ilike) ? "ILIKE" : "LIKE"} ?"
-      }.join(' OR '), *(["%#{search}%"] * fields.length))
+      return data.where(
+        fields.map { |f|
+          "CAST(#{f} AS CHAR) #{@controller.class.search_ilike ? "ILIKE" : "LIKE"} ?"
+        }.join(" OR "),
+        *(["%#{search}%"] * fields.length),
+      )
     end
 
     return data

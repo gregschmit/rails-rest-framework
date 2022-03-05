@@ -25,7 +25,7 @@ class RESTFramework::PageNumberPaginator < RESTFramework::BasePaginator
     @page_size = self._page_size
 
     @total_pages = @count / @page_size
-    @total_pages += 1 if (@count % @page_size != 0)
+    @total_pages += 1 if @count % @page_size != 0
   end
 
   def _page_size
@@ -59,7 +59,7 @@ class RESTFramework::PageNumberPaginator < RESTFramework::BasePaginator
   # Get the page and return it so the caller can serialize it.
   def get_page(page_number=nil)
     # If page number isn't provided, infer from the params or use 1 as a fallback value.
-    if !page_number
+    unless page_number
       page_number = @controller&.params&.[](self._page_query_param)
       if page_number.blank?
         page_number = 1

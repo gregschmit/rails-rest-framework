@@ -18,7 +18,7 @@ module RESTFramework
       end
 
       # No VERSION file, so version is unknown.
-      return 'unknown'
+      return "unknown"
     end
 
     def self.stamp_version
@@ -30,5 +30,5 @@ module RESTFramework
     end
   end
 
-  VERSION = Version.get_version()
+  VERSION = Version.get_version
 end

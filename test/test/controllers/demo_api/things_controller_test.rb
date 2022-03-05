@@ -1,4 +1,4 @@
-require_relative 'base'
+require_relative "base"
 
 class DemoApi::ThingsControllerTest < ActionController::TestCase
   include BaseDemoApiControllerTests
@@ -7,13 +7,13 @@ class DemoApi::ThingsControllerTest < ActionController::TestCase
 
   def test_destroy_failed
     id = things(:undestroyable_thing).id
-    delete :destroy, as: :json, params: {id: id}
-    assert_response 406
+    delete(:destroy, as: :json, params: {id: id})
+    assert_response(406)
   end
 
   def test_save_failed
     id = things(:unsaveable_thing).id
-    patch :update, as: :json, params: {id: id, body: {price: 99}.to_json}
-    assert_response 406
+    patch(:update, as: :json, params: {id: id, body: {price: 99}.to_json})
+    assert_response(406)
   end
 end

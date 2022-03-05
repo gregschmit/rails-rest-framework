@@ -40,9 +40,9 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     # Determine model either explicitly, or by inspecting @object or @controller.
     @model = model
     @model ||= @object.class if @object.is_a?(ActiveRecord::Base)
-    @model ||= @object[0].class if (
+    @model ||= @object[0].class if
       @many && @object.is_a?(Enumerable) && @object.is_a?(ActiveRecord::Base)
-    )
+
     @model ||= @controller.send(:get_model) if @controller
   end
 
@@ -97,7 +97,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
       end
     elsif subconfig.is_a?(Hash)
       subconfig.symbolize_keys!
-      subconfig.reject! { |k,_v| k.in?(except) }
+      subconfig.reject! { |k, _v| k.in?(except) }
     end
 
     return subconfig
@@ -173,6 +173,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     @_nested_config ||= self.get_serializer_config
     return @_nested_config[key]
   end
+
   def []=(key, value)
     @_nested_config ||= self.get_serializer_config
     return @_nested_config[key] = value
@@ -183,6 +184,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     @_nested_config ||= self.new.get_serializer_config
     return @_nested_config[key]
   end
+
   def self.[]=(key, value)
     @_nested_config ||= self.new.get_serializer_config
     return @_nested_config[key] = value
@@ -195,7 +197,7 @@ class RESTFramework::NativeModelSerializer < RESTFramework::NativeSerializer
   def initialize(**kwargs)
     super
     ActiveSupport::Deprecation.warn(
-      <<~MSG.split("\n").join(' ')
+      <<~MSG.split("\n").join(" "),
         RESTFramework::NativeModelSerializer is deprecated and will be removed in future versions of
         REST Framework; you should use RESTFramework::NativeSerializer instead.
       MSG

@@ -2,7 +2,7 @@ module RESTFramework::Utils
   # Helper to take extra_actions hash and convert to a consistent format:
   # `{paths:, methods:, kwargs:}`.
   def self.parse_extra_actions(extra_actions)
-    return (extra_actions || {}).map do |k,v|
+    return (extra_actions || {}).map do |k, v|
       kwargs = {action: k}
       path = k
 
@@ -38,7 +38,7 @@ module RESTFramework::Utils
   # Helper to get the current route pattern, stripped of the `(:format)` segment.
   def self.get_route_pattern(application_routes, request)
     application_routes.router.recognize(request) do |route, _, _|
-      return route.path.spec.to_s.gsub(/\(\.:format\)$/, '')
+      return route.path.spec.to_s.gsub(/\(\.:format\)$/, "")
     end
   end
 

@@ -1,4 +1,4 @@
-require_relative 'base'
+require_relative "base"
 
 class ThingTest < ActiveSupport::TestCase
   include BaseModelTests

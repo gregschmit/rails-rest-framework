@@ -1,5 +1,5 @@
 class User < ActiveRecord::Base
-  has_many :things, foreign_key: 'owner_id'
+  has_many :things, foreign_key: "owner_id"
 
   validates_numericality_of :balance, greater_than: 0, allow_nil: true
 

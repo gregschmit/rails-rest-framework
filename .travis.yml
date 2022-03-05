@@ -3,7 +3,12 @@ language: ruby
 os: linux
 dist: xenial
 
-# Default test matrix.
+stages:
+- check
+- test
+- publish
+
+# Default test job matrix.
 env:
 - RAILS_VERSION=5.2.6
 - RAILS_VERSION=6.0.4
@@ -13,8 +18,6 @@ rvm:
 - 2.6.9
 - 2.7.5
 - 3.0.3
-
-# Default test stage.
 install:
 - bundle install
 script:
@@ -27,7 +30,12 @@ jobs:
   - rvm: 2.6.9
     env: "RAILS_VERSION=7.0.2"
   include:
-  # Add a stage to publish to RubyGems.
+  - stage: check
+    rvm: 3.0.3
+    install:
+    - bundle install
+    script:
+    - rubocop
   - stage: publish
     if: tag IS present
     rvm: 3.0.3

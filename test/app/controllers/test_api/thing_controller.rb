@@ -1,7 +1,7 @@
 class TestApi::ThingController < TestApiController
   include RESTFramework::ReadOnlyModelControllerMixin
 
-  self.fields = ['id', 'name']
+  self.fields = ["id", "name"]
   self.extra_actions = {
     changed_action: {methods: [:get], path: :changed},
     another_changed: {methods: :get, action: :another_changed_action},
