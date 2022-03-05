@@ -5,7 +5,7 @@ module ActionDispatch::Routing
   class Mapper
     # Internal interface to get the controller class from the name and current scope.
     protected def _get_controller_class(name, pluralize: true, fallback_reverse_pluralization: true)
-      # get class name
+      # Get class name.
       name = name.to_s.camelize  # camelize to leave plural names plural
       name = name.pluralize if pluralize
       if name == name.pluralize
@@ -16,14 +16,14 @@ module ActionDispatch::Routing
       name += "Controller"
       name_reverse += "Controller"
 
-      # get scope for the class
+      # Get scope for the class.
       if @scope[:module]
         mod = @scope[:module].to_s.classify.constantize
       else
         mod = Object
       end
 
-      # convert class name to class
+      # Convert class name to class.
       begin
         controller = mod.const_get(name)
       rescue NameError
@@ -153,6 +153,5 @@ module ActionDispatch::Routing
         yield if block_given?
       end
     end
-
   end
 end

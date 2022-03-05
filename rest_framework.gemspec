@@ -1,6 +1,5 @@
 require_relative 'lib/rest_framework/version'
 
-
 # Stamp version before packaging.
 RESTFramework::Version.stamp_version
 

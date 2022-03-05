@@ -18,14 +18,14 @@ class Thing < ActiveRecord::Base
   protected
 
   def check_undestroyable
-    if self.name == 'undestroyable'
+    if self.name == 'An Undestroyable Thing'
       errors.add(:base, "This record is undestroyable.")
       throw(:abort)
     end
   end
 
   def check_unsaveable
-    if self.name == 'unsaveable'
+    if self.name == 'An Unsaveable Thing'
       errors.add(:base, "This record is unsaveable.")
       throw(:abort)
     end

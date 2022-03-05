@@ -1,7 +1,6 @@
 require_relative '../test_helper'
 require 'fileutils'
 
-
 class GeneratorTest < Minitest::Test
   APP_ROOT = File.expand_path('../..', __dir__)
 
@@ -33,14 +32,14 @@ class GeneratorTest < Minitest::Test
 
   def test_controller
     FileUtils.chdir APP_ROOT do
-      path = "api2/testa"
+      path = "test_api/testa"
       filename = "app/controllers/#{path}_controller.rb"
       _suppress_stdout do
         Rails::Generators.invoke("rest_framework:controller", [path])
       end
       file = File.read(filename)
       expected = <<~END
-      class Api2::TestaController < ApplicationController
+      class TestApi::TestaController < ApplicationController
         include RESTFramework::ModelControllerMixin
       end
       END
@@ -52,14 +51,14 @@ class GeneratorTest < Minitest::Test
 
   def test_controller_with_include_base
     FileUtils.chdir APP_ROOT do
-      path = "api2/testb"
+      path = "test_api/testb"
       filename = "app/controllers/#{path}_controller.rb"
       _suppress_stdout do
         Rails::Generators.invoke("rest_framework:controller", [path, "--include-base"])
       end
       file = File.read(filename)
       expected = <<~END
-      class Api2::TestbController < ApplicationController
+      class TestApi::TestbController < ApplicationController
         include RESTFramework::BaseControllerMixin
       end
       END
@@ -71,14 +70,14 @@ class GeneratorTest < Minitest::Test
 
   def test_controller_with_parent_class
     FileUtils.chdir APP_ROOT do
-      path = "api2/testc"
+      path = "test_api/testc"
       filename = "app/controllers/#{path}_controller.rb"
       _suppress_stdout do
-        Rails::Generators.invoke("rest_framework:controller", [path, "--parent-class=Api2Controller"])
+        Rails::Generators.invoke("rest_framework:controller", [path, "--parent-class=TestApiController"])
       end
       file = File.read(filename)
       expected = <<~END
-      class Api2::TestcController < Api2Controller
+      class TestApi::TestcController < TestApiController
         include RESTFramework::ModelControllerMixin
       end
       END

@@ -1,7 +1,6 @@
 require_relative 'base'
 require_relative '../filters'
 
-
 # This module provides the core functionality for controllers based on models.
 module RESTFramework::BaseModelControllerMixin
   include RESTFramework::BaseControllerMixin
@@ -32,6 +31,7 @@ module RESTFramework::BaseModelControllerMixin
         native_serializer_config: nil,
         native_serializer_singular_config: nil,
         native_serializer_plural_config: nil,
+        native_serializer_except_query_param: 'except',
 
         # Attributes for default model filtering (and ordering).
         filterset_fields: nil,
@@ -105,7 +105,7 @@ module RESTFramework::BaseModelControllerMixin
 
   # Helper to get the configured serializer class, or `NativeSerializer` as a default.
   def get_serializer_class
-    return self.class.serializer_class || RESTFramework::NativeSerializer
+    return super || RESTFramework::NativeSerializer
   end
 
   # Helper to get filtering backends, defaulting to using `ModelFilter` and `ModelOrderingFilter`.
@@ -204,40 +204,46 @@ module RESTFramework::BaseModelControllerMixin
   end
 end
 
-
 # Mixin for listing records.
 module RESTFramework::ListModelMixin
   def index
+    api_response(self._index)
+  end
+
+  def _index
     @records = self.get_filtered_data(self.get_recordset)
 
     # Handle pagination, if enabled.
     if self.class.paginator_class
       paginator = self.class.paginator_class.new(data: @records, controller: self)
       page = paginator.get_page
-      serialized_page = self.get_serializer_class.new(object: page, controller: self).serialize
-      data = paginator.get_paginated_response(serialized_page)
+      serialized_page = self.get_serializer_class.new(page, controller: self).serialize
+      return paginator.get_paginated_response(serialized_page)
     else
-      data = self.get_serializer_class.new(object: @records, controller: self).serialize
+      return self.get_serializer_class.new(@records, controller: self).serialize
     end
-
-    return api_response(data)
   end
 end
-
 
 # Mixin for showing records.
 module RESTFramework::ShowModelMixin
   def show
+    api_response(self._show)
+  end
+
+  def _show
     @record = self.get_record
-    serialized_record = self.get_serializer_class.new(object: @record, controller: self).serialize
-    return api_response(serialized_record)
+    return self.get_serializer_class.new(@record, controller: self).serialize
   end
 end
-
 
 # Mixin for creating records.
 module RESTFramework::CreateModelMixin
   def create
+    api_response(self._create)
+  end
+
+  def _create
     if self.get_recordset.respond_to?(:create!) && self.create_from_recordset
       # Create with any properties inherited from the recordset.
       @record = self.get_recordset.create!(self.get_create_params)
@@ -245,32 +251,36 @@ module RESTFramework::CreateModelMixin
       # Otherwise, perform a "bare" create.
       @record = self.get_model.create!(self.get_create_params)
     end
-    serialized_record = self.get_serializer_class.new(object: @record, controller: self).serialize
-    return api_response(serialized_record)
+
+    return self.get_serializer_class.new(@record, controller: self).serialize
   end
 end
-
 
 # Mixin for updating records.
 module RESTFramework::UpdateModelMixin
   def update
+    api_response(self._update)
+  end
+
+  def _update
     @record = self.get_record
     @record.update!(self.get_update_params)
-    serialized_record = self.get_serializer_class.new(object: @record, controller: self).serialize
-    return api_response(serialized_record)
+    return self.get_serializer_class.new(@record, controller: self).serialize
   end
 end
-
 
 # Mixin for destroying records.
 module RESTFramework::DestroyModelMixin
   def destroy
-    @record = self.get_record
-    @record.destroy!
+    self._destroy
     api_response('')
   end
-end
 
+  def _destroy
+    @record = self.get_record
+    @record.destroy!
+  end
+end
 
 # Mixin that includes show/list mixins.
 module RESTFramework::ReadOnlyModelControllerMixin
@@ -285,7 +295,6 @@ module RESTFramework::ReadOnlyModelControllerMixin
   include RESTFramework::ListModelMixin
   include RESTFramework::ShowModelMixin
 end
-
 
 # Mixin that includes all the CRUD mixins.
 module RESTFramework::ModelControllerMixin

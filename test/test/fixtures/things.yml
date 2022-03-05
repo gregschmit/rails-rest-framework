@@ -9,29 +9,29 @@ thing_1:
   name: Thing 1
   shape: Square
   price: 4
-  owner: first_normal
+  owner: example
 
 thing_2:
   name: Thing 2
   shape: Circle
   price: 9.23
-  owner: first_admin
+  owner: admin
 
 thing_3:
   name: Thing 3
   shape: Triangle
   price: 149.23
   is_discounted: true
-  owner: first_admin
+  owner: admin
 
 undestroyable_thing:
-  name: undestroyable
+  name: An Undestroyable Thing
   shape: Mobius Strip
-  price: 44
+  price: 4000
   is_discounted: false
 
 unsaveable_thing:
-  name: unsaveable
-  shape: Mobius Strip
-  price: 48
+  name: An Unsaveable Thing
+  shape: Umbilic Torus
+  price: 5000
   is_discounted: true

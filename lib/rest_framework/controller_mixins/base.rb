@@ -2,7 +2,6 @@ require_relative '../errors'
 require_relative '../serializers'
 require_relative '../utils'
 
-
 # This module provides the common functionality for any controller mixins, a `root` action, and
 # the ability to route arbitrary actions with `extra_actions`. This is also where `api_response`
 # is defined.
@@ -82,7 +81,14 @@ module RESTFramework::BaseControllerMixin
 
   # Helper to get the configured serializer class.
   def get_serializer_class
-    return self.class.serializer_class
+    return nil unless serializer_class = self.class.serializer_class
+
+    # Wrap it with an adapter if it's an active_model_serializer.
+    if defined?(ActiveModel::Serializer) && (serializer_class < ActiveModel::Serializer)
+      serializer_class = RESTFramework::ActiveModelSerializerAdapterFactory.for(serializer_class)
+    end
+
+    return serializer_class
   end
 
   # Helper to get filtering backends, defaulting to no backends.
@@ -139,27 +145,27 @@ module RESTFramework::BaseControllerMixin
 
     respond_to do |format|
       if payload == ''
-        format.json {head :no_content} if self.serialize_to_json
-        format.xml {head :no_content} if self.serialize_to_xml
+        format.json {head :no_content} if self.class.serialize_to_json
+        format.xml {head :no_content} if self.class.serialize_to_xml
       else
         format.json {
           jkwargs = kwargs.merge(json_kwargs)
           render(json: payload, layout: false, **jkwargs)
-        } if self.serialize_to_json
+        } if self.class.serialize_to_json
         format.xml {
           xkwargs = kwargs.merge(xml_kwargs)
           render(xml: payload, layout: false, **xkwargs)
-        } if self.serialize_to_xml
+        } if self.class.serialize_to_xml
         # TODO: possibly support more formats here if supported?
       end
       format.html {
         @payload = payload
         if payload == ''
-          @json_payload = '' if self.serialize_to_json
-          @xml_payload = '' if self.serialize_to_xml
+          @json_payload = '' if self.class.serialize_to_json
+          @xml_payload = '' if self.class.serialize_to_xml
         else
-          @json_payload = payload.to_json if self.serialize_to_json
-          @xml_payload = payload.to_xml if self.serialize_to_xml
+          @json_payload = payload.to_json if self.class.serialize_to_json
+          @xml_payload = payload.to_xml if self.class.serialize_to_xml
         end
         @template_logo_text ||= "Rails REST Framework"
         @title ||= self.controller_name.camelize

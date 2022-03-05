@@ -1,14 +1,23 @@
+# The base serializer defines the interface for all REST Framework serializers.
 class RESTFramework::BaseSerializer
-  def initialize(object: nil, controller: nil, **kwargs)
+  attr_accessor :object
+
+  def initialize(object=nil, controller: nil, **kwargs)
     @object = object
     @controller = controller
   end
 
-  def serialize
+  # The primary interface for extracting a native Ruby types. This works both for records and
+  # collections.
+  def serialize(**kwargs)
     raise NotImplementedError
   end
-end
 
+  # Synonym for `serializable_hash` or compatibility with ActiveModelSerializers.
+  def serializable_hash(**kwargs)
+    return self.serialize(**kwargs)
+  end
+end
 
 # This serializer uses `.serializable_hash` to convert objects to Ruby primitives (with the
 # top-level being either an array or a hash).
@@ -18,8 +27,8 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   class_attribute :plural_config
   class_attribute :action_config
 
-  def initialize(many: nil, model: nil, **kwargs)
-    super(**kwargs)
+  def initialize(object=nil, many: nil, model: nil, **kwargs)
+    super(object, **kwargs)
 
     if many.nil?
       # Determine if we are dealing with many objects or just one.
@@ -66,23 +75,66 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return nil unless @controller
 
     if @many == true
-      controller_serializer = @controller.try(:native_serializer_plural_config)
+      controller_serializer = @controller.class.try(:native_serializer_plural_config)
     elsif @many == false
-      controller_serializer = @controller.try(:native_serializer_singular_config)
+      controller_serializer = @controller.class.try(:native_serializer_singular_config)
     end
 
-    return controller_serializer || @controller.try(:native_serializer_config)
+    return controller_serializer || @controller.class.try(:native_serializer_config)
   end
 
-  # Get a configuration passable to `serializable_hash` for the object.
-  def get_serializer_config
+  # Helper to filter (mutate) a single subconfig for specific keys.
+  def self.filter_subconfig(subconfig, except, additive: false)
+    return subconfig unless subconfig
+
+    if subconfig.is_a?(Array)
+      subconfig = subconfig.map(&:to_sym)
+      if additive
+        # Only add fields which are not already included.
+        subconfig += except - subconfig
+      else
+        subconfig -= except
+      end
+    elsif subconfig.is_a?(Hash)
+      subconfig.symbolize_keys!
+      subconfig.reject! { |k,_v| k.in?(except) }
+    end
+
+    return subconfig
+  end
+
+  # Helper to filter out configuration properties based on the :except query parameter.
+  def filter_except(config)
+    return config unless @controller
+
+    except_query_param = @controller.class.try(:native_serializer_except_query_param)
+    if except = @controller.request.query_parameters[except_query_param]
+      except = except.split(",").map(&:strip).map(&:to_sym)
+
+      unless except.empty?
+        # Duplicate the config to avoid mutating class state.
+        config = config.deep_dup
+
+        # Filter `only`, `except` (additive), `include`, and `methods`.
+        self.class.filter_subconfig(config[:only], except)
+        self.class.filter_subconfig(config[:except], except, additive: true)
+        self.class.filter_subconfig(config[:include], except)
+        self.class.filter_subconfig(config[:methods], except)
+      end
+    end
+
+    return config
+  end
+
+  # Get the raw serializer config.
+  def _get_raw_serializer_config
     # Return a locally defined serializer config if one is defined.
     if local_config = self.get_local_native_serializer_config
       return local_config
     end
 
     # Return a serializer config if one is defined on the controller.
-    if serializer_config = get_controller_native_serializer_config
+    if serializer_config = self.get_controller_native_serializer_config
       return serializer_config
     end
 
@@ -103,13 +155,16 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return {}
   end
 
-  # Convert the object (record or recordset) to Ruby primitives.
-  def serialize
-    raise "No object available to serialize!" unless @object
+  # Get a configuration passable to `serializable_hash` for the object, filtered if required.
+  def get_serializer_config
+    return filter_except(self._get_raw_serializer_config)
+  end
 
-    if @object.is_a?(Enumerable)
+  def serialize(**kwargs)
+    if @object.respond_to?(:to_ary)
       return @object.map { |r| r.serializable_hash(self.get_serializer_config) }
     end
+
     return @object.serializable_hash(self.get_serializer_config)
   end
 
@@ -134,7 +189,6 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   end
 end
 
-
 # :nocov:
 # Alias NativeModelSerializer -> NativeSerializer.
 class RESTFramework::NativeModelSerializer < RESTFramework::NativeSerializer
@@ -149,3 +203,19 @@ class RESTFramework::NativeModelSerializer < RESTFramework::NativeSerializer
   end
 end
 # :nocov:
+
+# This is a helper factory to wrap an ActiveModelSerializer to provide a `serialize` method which
+# accepts both collections and individual records. Use `.for` to build adapters.
+class RESTFramework::ActiveModelSerializerAdapterFactory
+  def self.for(active_model_serializer)
+    return Class.new(active_model_serializer) do
+      def serialize
+        if self.object.respond_to?(:to_ary)
+          return self.object.map { |r| self.class.superclass.new(r).serializable_hash }
+        end
+
+        return self.serializable_hash
+      end
+    end
+  end
+end

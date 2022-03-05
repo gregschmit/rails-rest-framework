@@ -1,6 +1,5 @@
 require_relative '../test_helper'
 
-
 # Common tests for all models.
 module BaseModelTests
   TITLE_FIELDS = [:name, :login]

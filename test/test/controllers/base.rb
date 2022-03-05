@@ -1,6 +1,5 @@
 require_relative '../test_helper'
 
-
 # Common tests for Api controllers.
 module BaseApiControllerTests
   def test_can_hit_root

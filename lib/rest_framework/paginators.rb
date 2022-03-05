@@ -15,7 +15,6 @@ class RESTFramework::BasePaginator
   end
 end
 
-
 # A simple paginator based on page numbers.
 #
 # Example: http://example.com/api/users/?page=3&page_size=50
@@ -89,7 +88,6 @@ class RESTFramework::PageNumberPaginator < RESTFramework::BasePaginator
     }
   end
 end
-
 
 # TODO: implement this
 # class RESTFramework::CountOffsetPaginator

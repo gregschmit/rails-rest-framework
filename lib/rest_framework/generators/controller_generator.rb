@@ -1,6 +1,5 @@
 require 'rails/generators'
 
-
 # Some projects don't have the inflection "REST" as an acronym, so this is a helper class to prevent
 # this generator from being namespaced under `r_e_s_t_framework`.
 # :nocov:
@@ -10,7 +9,6 @@ class RESTFrameworkCustomGeneratorControllerNamespace < String
   end
 end
 # :nocov:
-
 
 class RESTFramework::Generators::ControllerGenerator < Rails::Generators::Base
   PATH_REGEX = /^\/*([a-z0-9_\/]*[a-z0-9_])(?:[\.a-z\/]*)$/

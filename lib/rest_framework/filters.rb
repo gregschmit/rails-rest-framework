@@ -8,7 +8,6 @@ class RESTFramework::BaseFilter
   end
 end
 
-
 # A simple filtering backend that supports filtering a recordset based on fields defined on the
 # controller class.
 class RESTFramework::ModelFilter < RESTFramework::BaseFilter
@@ -30,7 +29,6 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
     return data
   end
 end
-
 
 # A filter backend which handles ordering of the recordset.
 class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
@@ -72,7 +70,6 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
     return data
   end
 end
-
 
 # Multi-field text searching on models.
 class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter

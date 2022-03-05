@@ -42,7 +42,6 @@ require_relative '../config/environment'
 require 'minitest/pride'
 require 'rails/test_help'
 
-
 class ActiveSupport::TestCase
   # Load all fixtures.
   fixtures :all
@@ -50,7 +49,6 @@ class ActiveSupport::TestCase
   # Do not parallelize for now since Coveralls breaks with parallelization.
   # parallelize(workers: :number_of_processors)
 end
-
 
 class ActionController::TestCase
   # Expose parsed_body method on all controller tests.

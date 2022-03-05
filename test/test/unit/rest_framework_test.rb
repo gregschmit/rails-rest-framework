@@ -1,14 +1,11 @@
 require_relative '../test_helper'
 
-
 class UnserializableThing
 end
-
 
 class UnserializableSerializer < RESTFramework::NativeSerializer
   self.config = {only: [:id, :name]}
 end
-
 
 class RESTFrameworkTest < Minitest::Test
   def test_version_number_not_nil

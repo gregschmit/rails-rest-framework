@@ -1,13 +1,13 @@
 Rails.application.routes.draw do
   # API1
-  rest_root :api1
-  namespace :api1 do
+  rest_root :demo_api
+  namespace :demo_api do
     rest_resources :things
     rest_resources :users
   end
 
   # API2
-  namespace :api2 do
+  namespace :test_api do
     rest_root
     rest_resource :user
     rest_resources :things
@@ -16,5 +16,9 @@ Rails.application.routes.draw do
     rest_resource :thing, force_singular: true
 
     rest_route :network
+
+    namespace :active_model_serializer do
+      rest_resources :things
+    end
   end
 end
