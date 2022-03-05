@@ -13,7 +13,6 @@ rvm:
 - 2.6.9
 - 2.7.5
 - 3.0.3
-- 3.1.1
 
 # Default test stage.
 install:
@@ -25,13 +24,13 @@ jobs:
   exclude:
   - rvm: 3.0.3
     env: "RAILS_VERSION=5.2.6"
-  - rvm: 3.1.1
-    env: "RAILS_VERSION=5.2.6"
+  - rvm: 2.6.9
+    env: "RAILS_VERSION=7.0.2"
   include:
   # Add a stage to publish to RubyGems.
   - stage: publish
     if: tag IS present
-    rvm: 3.1.1
+    rvm: 3.0.3
     install:
     - bundle install
     script:
