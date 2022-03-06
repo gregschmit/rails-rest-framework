@@ -19,7 +19,12 @@ gem "rubocop-shopify", require: false
 gem "sqlite3", "~> 1.4.0"
 gem "web-console", require: false
 
-# Include gem active_model_serializers so we can test against their interface (rails 6 only).
+# Ruby 3 removed webrick, so we need to install it manually.
+if Gem::Version.new(RUBY_VERSION) > Gem::Version.new("3")
+  gem "webrick"
+end
+
+# Include gem active_model_serializers so we can test against their interface (Rails 6 only).
 if RAILS_VERSION < Gem::Version.new("7") && RAILS_VERSION >= Gem::Version.new("6")
   gem "active_model_serializers", "0.10.13"
 end

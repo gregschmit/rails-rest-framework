@@ -1,10 +1,6 @@
 require_relative "boot"
 require "uri"
 
-RAILS_VERSION = Gem::Version.new(
-  ENV["RAILS_VERSION"] || File.read(File.expand_path("../../.rails-version", __dir__)).strip,
-)
-
 # Rather than `require 'rails/all'`, only require things we absolutely need.
 require "rails"
 [
@@ -18,7 +14,7 @@ require "rails"
 end
 
 # Sprockets was removed in Rails 7.
-if USE_SPROCKETS = (RAILS_VERSION < Gem::Version.new("7.0.0"))
+if USE_SPROCKETS = (Rails::VERSION::MAJOR < 7)
   require "sprockets/railtie"
 end
 

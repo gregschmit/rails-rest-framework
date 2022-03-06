@@ -6,7 +6,7 @@ class DemoApiController < ApplicationController
   self.extra_actions = {test: :get}
 
   def root
-    api_response({message: "Welcome to the Demo API!"})
+    api_response({message: "Welcome to the Rails REST Framework Demo API!"})
   end
 
   def test

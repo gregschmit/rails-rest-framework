@@ -85,7 +85,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
   # Helper to filter (mutate) a single subconfig for specific keys.
   def self.filter_subconfig(subconfig, except, additive: false)
-    return subconfig unless subconfig
+    return subconfig if !subconfig && !additive
 
     if subconfig.is_a?(Array)
       subconfig = subconfig.map(&:to_sym)
@@ -96,8 +96,19 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
         subconfig -= except
       end
     elsif subconfig.is_a?(Hash)
-      subconfig.symbolize_keys!
-      subconfig.reject! { |k, _v| k.in?(except) }
+      # Additive doesn't make sense in a hash context since we wouldn't know the values.
+      unless additive
+        subconfig.symbolize_keys!
+        subconfig.reject! { |k, _v| k.in?(except) }
+      end
+    elsif !subconfig
+    else  # Subconfig is a single element (assume string/symbol).
+      subconfig = subconfig.to_sym
+      if subconfig.in?(except)
+        subconfig = [] unless additive
+      elsif additive
+        subconfig = [subconfig, *except]
+      end
     end
 
     return subconfig
@@ -108,7 +119,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return config unless @controller
 
     except_query_param = @controller.class.try(:native_serializer_except_query_param)
-    if except = @controller.request.query_parameters[except_query_param]
+    if except = @controller.request.query_parameters[except_query_param].presence
       except = except.split(",").map(&:strip).map(&:to_sym)
 
       unless except.empty?
@@ -116,10 +127,10 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
         config = config.deep_dup
 
         # Filter `only`, `except` (additive), `include`, and `methods`.
-        self.class.filter_subconfig(config[:only], except)
-        self.class.filter_subconfig(config[:except], except, additive: true)
-        self.class.filter_subconfig(config[:include], except)
-        self.class.filter_subconfig(config[:methods], except)
+        config[:only] = self.class.filter_subconfig(config[:only], except)
+        config[:except] = self.class.filter_subconfig(config[:except], except, additive: true)
+        config[:include] = self.class.filter_subconfig(config[:include], except)
+        config[:methods] = self.class.filter_subconfig(config[:methods], except)
       end
     end
 
