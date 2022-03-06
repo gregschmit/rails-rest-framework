@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# Don't run on any branch other than `master`.
+if [ `git symbolic-ref --short HEAD` != "master" ]; then
+  printf "ERROR: only run on master branch!\n" 1>&2
+  exit 3
+fi
+
 usage() {
   printf "Usage: ./bump_version.sh [-p|-m|-M]\n" 1>&2
   printf "  -p   bump patch (e.g., 1.1.4 -> 1.1.5)\n" 1>&2
