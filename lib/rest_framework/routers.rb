@@ -18,7 +18,7 @@ module ActionDispatch::Routing
 
       # Get scope for the class.
       if @scope[:module]
-        mod = @scope[:module].to_s.classify.constantize
+        mod = @scope[:module].to_s.camelize.constantize
       else
         mod = Object
       end
