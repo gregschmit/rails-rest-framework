@@ -17,7 +17,6 @@ gem "minitest", ">= 5.0"
 gem "pry-rails"
 gem "rake", ">= 12.0"
 gem "rubocop-shopify", require: false
-gem "sqlite3", "~> 1.4.0"
 gem "web-console", require: false
 
 # Ruby 3 removed webrick, so we need to install it manually.
@@ -34,4 +33,11 @@ end
 if ENV["RRF_DOCS"]
   gem "github-pages", ">= 208"
   gem "yard"
+end
+
+group :development, :test do
+  gem "sqlite3", "~> 1.4.0"
+end
+group :production do
+  gem "pg"
 end

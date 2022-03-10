@@ -4,6 +4,12 @@ default: &sqlite
   timeout: 5000
   database: db/development.sqlite3
 
+postgres:
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  database: rrf_demo
+
 development:
   <<: *sqlite
 
@@ -12,4 +18,4 @@ test:
   database: db/test.sqlite3
 
 production:
-  <<: *sqlite
+  <<: *postgres
