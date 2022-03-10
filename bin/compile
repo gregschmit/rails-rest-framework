@@ -2,4 +2,4 @@
 
 # bin/compile <build-dir> <cache-dir> <env-dir>
 
-mv $BUILD_DIR/Gemfile.lock.heroku $BUILD_DIR/Gemfile.lock
+mv $1/Gemfile.lock.heroku $1/Gemfile.lock
