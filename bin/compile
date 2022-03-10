@@ -5,4 +5,4 @@
 mv $1/Gemfile.lock.heroku $1/Gemfile.lock
 git status
 git fetch --tags
-git describe
+git describe --dirty --broken --always
