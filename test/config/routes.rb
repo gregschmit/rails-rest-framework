@@ -7,7 +7,11 @@ Rails.application.routes.draw do
 
   namespace :test_api do
     rest_root
-    rest_resource :user
+    rest_resource :user do
+      scope module: :user, as: :user do
+        rest_resources :things
+      end
+    end
     rest_resources :things
     rest_resources :read_only_things
     rest_resources :things_with_bare_create, force_plural: true, only: [:create]

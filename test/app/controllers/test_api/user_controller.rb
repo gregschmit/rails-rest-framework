@@ -17,7 +17,7 @@ class TestApi::UserController < TestApiController
   self.serializer_class = UsersSerializer
 
   def with_things
-    return self.show
+    self.show
   end
 
   def get_record

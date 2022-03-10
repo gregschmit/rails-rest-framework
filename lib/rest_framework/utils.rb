@@ -1,4 +1,6 @@
 module RESTFramework::Utils
+  HTTP_METHOD_ORDERING = %w(GET POST PUT PATCH DELETE)
+
   # Helper to take extra_actions hash and convert to a consistent format:
   # `{paths:, methods:, kwargs:}`.
   def self.parse_extra_actions(extra_actions)
@@ -49,16 +51,20 @@ module RESTFramework::Utils
 
     # Return routes that match our current route subdomain/pattern, grouped by controller.
     return application_routes.routes.map { |r|
+      path = r.path.spec.to_s
       {
         verb: r.verb,
-        path: r.path.spec.to_s,
+        path: path,
         action: r.defaults[:action].presence,
         controller: r.defaults[:controller].presence,
         subdomain: r.defaults[:subdomain].presence,
         route_app: r.app&.app&.inspect&.presence,
+        _levels: path.count("/"),
       }
     }.select { |r|
       r[:subdomain] == current_subdomain && r[:path].start_with?(current_pattern)
+    }.sort_by { |r|
+      [r[:_levels], r[:path], HTTP_METHOD_ORDERING.index(r[:verb]) || 99]
     }.group_by { |r| r[:controller] }
   end
 end
