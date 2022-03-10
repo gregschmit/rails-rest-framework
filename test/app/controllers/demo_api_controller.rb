@@ -5,6 +5,10 @@ class DemoApiController < ApplicationController
 
   self.extra_actions = {test: :get}
 
+  before_action do
+    @template_logo_text = "Rails REST Framework Demo API (#{RESTFramework::VERSION})"
+  end
+
   def root
     api_response({message: "Welcome to the Rails REST Framework Demo API!"})
   end
