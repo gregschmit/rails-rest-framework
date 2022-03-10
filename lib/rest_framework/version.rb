@@ -6,7 +6,7 @@ module RESTFramework
     def self.get_version(skip_git: false)
       # First, attempt to get the version from git.
       unless skip_git
-        version = `git describe --dirty --broken 2>/dev/null`&.strip
+        version = `git describe --dirty 2>/dev/null`&.strip
         return version unless !version || version.empty?
       end
 
@@ -17,8 +17,14 @@ module RESTFramework
       rescue SystemCallError
       end
 
+      # If that fails, then try to get a plain commit SHA from git.
+      unless skip_git
+        version = `git describe --dirty --always`&.strip
+        return "0.#{version}" unless !version || version.empty?
+      end
+
       # No VERSION file, so version is unknown.
-      return "unknown"
+      return "0.unknown"
     end
 
     def self.stamp_version
