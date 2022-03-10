@@ -123,6 +123,6 @@ To run the test suite:
 $ rake test
 ```
 
-To interact with the test app, `cd test` and operate it via the normal Rails interfaces. Ensure you
-run `rake db:schema:load` before running `rails server` or `rails console`. You can also load the
-test fixtures with `rake db:fixtures:load`.
+The top-level `bin/rails` and `Rakefile` both proxy all Rails/Rake commands to the test project, so
+you can operate it via the usual commands. Ensure you run `rake db:schema:load` before running
+`rails server` or `rails console`. You can also load the test fixtures with `rake db:fixtures:load`.

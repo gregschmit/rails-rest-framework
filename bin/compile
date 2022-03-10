@@ -3,3 +3,4 @@
 # bin/compile <build-dir> <cache-dir> <env-dir>
 
 mv $1/Gemfile.lock.heroku $1/Gemfile.lock
+git status

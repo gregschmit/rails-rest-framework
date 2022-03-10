@@ -13,7 +13,7 @@ module RESTFramework
       # Git failed or was skipped, so try to find a VERSION file.
       begin
         version = File.read(VERSION_FILEPATH)&.strip
-        return version unless !version || version.blank?
+        return version unless !version || version.empty?
       rescue SystemCallError
       end
 

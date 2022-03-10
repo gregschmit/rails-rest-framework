@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  root to: redirect("/demo_api")
+
   rest_root :demo_api
   namespace :demo_api do
     rest_resources :things
