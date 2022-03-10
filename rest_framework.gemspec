@@ -5,7 +5,7 @@ RESTFramework::Version.stamp_version
 
 Gem::Specification.new do |spec|
   spec.name = "rest_framework"
-  spec.version = RESTFramework::VERSION
+  spec.version = ENV["RRF_OVERRIDE_VERSION"] || RESTFramework::VERSION
   spec.authors = ["Gregory N. Schmit"]
   spec.email = ["schmitgreg@gmail.com"]
 

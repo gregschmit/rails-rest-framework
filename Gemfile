@@ -1,6 +1,7 @@
 source "https://rubygems.org"
 
-# https://yehudakatz.com/2010/12/16/clarifying-the-roles-of-the-gemspec-and-gemfile/
+# We force the Gem version to "0.dev" so it doesn't keep changing inside the `Gemfile.lock`.
+ENV["RRF_OVERRIDE_VERSION"] = "0.dev"
 gemspec
 
 # Support testing against multiple Rails versions.
