@@ -1,4 +1,0 @@
-#!/bin/sh
-
-# Return an empty YAML dictionary.
-echo "--- {}"
