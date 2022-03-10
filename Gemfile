@@ -33,5 +33,4 @@ end
 if ENV["RRF_DOCS"]
   gem "github-pages", ">= 208"
   gem "yard"
-  gem "redcarpet"
 end
