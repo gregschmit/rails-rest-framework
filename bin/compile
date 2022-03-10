@@ -4,3 +4,4 @@
 
 mv $1/Gemfile.lock.heroku $1/Gemfile.lock
 git status
+git describe
