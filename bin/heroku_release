@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Helper to initialize Heroku environment.
+
+rails db:drop:all
+rails db:schema:load
+rails db:fixtures:load
