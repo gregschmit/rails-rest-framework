@@ -1,6 +1,8 @@
-require_relative "../base"
+require_relative "base"
 
 class TestApi::ThingsControllerTest < ActionController::TestCase
+  include BaseTestApiControllerTests
+
   def test_list
     get(:index, as: :json)
     assert_response(:success)
@@ -43,25 +45,25 @@ class TestApi::ThingsControllerTest < ActionController::TestCase
   end
 
   def test_show
-    get(:show, as: :json, params: {id: things(:thing_1).id})
+    t = Thing.create!(
+      name: "test", shape: "test", price: 5, owner_attributes: {login: "test", is_admin: true},
+    )
+    get(:show, as: :json, params: {id: t.id})
     assert_response(:success)
     assert(parsed_body["shape"])
-    assert_nil(parsed_body["price"])
+    refute(parsed_body["price"])
     assert(parsed_body["owner"]["login"])
-    assert_not_nil(parsed_body["owner"]["is_admin"])
-    assert_nil(parsed_body["owner"]["balance"])
+    assert(parsed_body["owner"]["is_admin"])
+    refute(parsed_body["owner"]["balance"])
   end
 
   def test_show_find_by_name
-    thing = things(:thing_1)
-    get(:show, as: :json, params: {id: thing.name, find_by: "name"})
+    t = Thing.create!(name: "some weird name", shape: "something", price: 5)
+    get(:show, as: :json, params: {id: t.name, find_by: "name"})
     assert_response(:success)
-    assert_equal(thing.id, parsed_body["id"])
+    assert_equal(t.id, parsed_body["id"])
     assert(parsed_body["shape"])
-    assert_nil(parsed_body["price"])
-    assert(parsed_body["owner"]["login"])
-    assert_not_nil(parsed_body["owner"]["is_admin"])
-    assert_nil(parsed_body["owner"]["balance"])
+    refute(parsed_body["price"])
   end
 
   def test_get_model_before_recordset

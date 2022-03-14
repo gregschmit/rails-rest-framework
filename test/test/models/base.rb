@@ -1,4 +1,4 @@
-require_relative "../test_helper"
+require "test_helper"
 
 # Common tests for all models.
 module BaseModelTests
@@ -8,11 +8,9 @@ module BaseModelTests
     base.setup do
       @model ||= self.class.name.match(/(.*)Test$/)[1].constantize
       @title_field ||= TITLE_FIELDS.select { |f| f.to_s.in?(@model.column_names) }[0]
-    end
-  end
 
-  def test_fixtures_are_valid
-    @model.all.each { |r| assert(r.valid?) }
+      Rails.application.load_seed
+    end
   end
 
   def test_record_exists_from_fixture

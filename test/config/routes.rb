@@ -4,7 +4,11 @@ Rails.application.routes.draw do
   rest_root :demo_api
   namespace :demo_api do
     rest_resources :things
-    rest_resources :users
+    rest_resources :users do
+      scope module: :users, as: :users do
+        rest_resources :things
+      end
+    end
   end
 
   namespace :test_api do

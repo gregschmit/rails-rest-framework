@@ -1,6 +1,8 @@
-require_relative "../base"
+require_relative "base"
 
 class TestApi::NetworkControllerTest < ActionController::TestCase
+  include BaseTestApiControllerTests
+
   def test_cannot_list
     assert_raises(ActionController::UrlGenerationError) do
       get(:index)

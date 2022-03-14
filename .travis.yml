@@ -22,7 +22,7 @@ install:
 - rm Gemfile.lock
 - bundle install
 script:
-- BACKTRACE=1 bundle exec rake test
+- BACKTRACE=1 bin/rails test
 
 jobs:
   exclude:
