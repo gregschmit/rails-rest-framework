@@ -16,8 +16,6 @@ class Thing < ActiveRecord::Base
     return 9.234
   end
 
-  protected
-
   def check_undestroyable
     if self.name == "Undestroyable"
       errors.add(:base, "This record is undestroyable.")

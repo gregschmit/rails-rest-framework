@@ -4,7 +4,7 @@ require_relative "utils"
 module ActionDispatch::Routing
   class Mapper
     # Internal interface to get the controller class from the name and current scope.
-    protected def _get_controller_class(name, pluralize: true, fallback_reverse_pluralization: true)
+    def _get_controller_class(name, pluralize: true, fallback_reverse_pluralization: true)
       # Get class name.
       name = name.to_s.camelize  # camelize to leave plural names plural
       name = name.pluralize if pluralize
@@ -38,7 +38,7 @@ module ActionDispatch::Routing
     end
 
     # Interal interface for routing extra actions.
-    protected def _route_extra_actions(actions, &block)
+    def _route_extra_actions(actions, &block)
       actions.each do |action_config|
         action_config[:methods].each do |m|
           public_send(m, action_config[:path], **action_config[:kwargs])
@@ -52,7 +52,7 @@ module ActionDispatch::Routing
     #   not otherwise defined by the controller
     # @param name [Symbol] the resource name, from which path and controller are deduced by default
     # @param skip_undefined [Boolean] whether we should skip routing undefined resourceful actions
-    protected def _rest_resources(default_singular, name, skip_undefined: true, **kwargs, &block)
+    def _rest_resources(default_singular, name, skip_undefined: true, **kwargs, &block)
       controller = kwargs.delete(:controller) || name
       if controller.is_a?(Class)
         controller_class = controller

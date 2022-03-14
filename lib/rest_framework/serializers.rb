@@ -43,7 +43,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     @model ||= @object[0].class if
       @many && @object.is_a?(Enumerable) && @object.is_a?(ActiveRecord::Base)
 
-    @model ||= @controller.send(:get_model) if @controller
+    @model ||= @controller.get_model if @controller
   end
 
   # Get controller action, if possible.
@@ -84,30 +84,52 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   end
 
   # Helper to filter (mutate) a single subconfig for specific keys.
-  def self.filter_subconfig(subconfig, except, additive: false)
-    return subconfig if !subconfig && !additive
+  def self.filter_subconfig(subconfig, except: nil, only: nil, additive: false)
+    return subconfig unless except || only
+    return subconfig unless subconfig || additive
+    raise "Cannot pass `only` and `additive` to filter_subconfig." if only && additive
 
     if subconfig.is_a?(Array)
       subconfig = subconfig.map(&:to_sym)
-      if additive
-        # Only add fields which are not already included.
-        subconfig += except - subconfig
-      else
-        subconfig -= except
+      if except
+        if additive
+          # Only add fields which are not already included.
+          subconfig += except - subconfig
+        else
+          subconfig -= except
+        end
+      elsif only
+        # Ignore `additive` in an `only` context, since it could causing data leaking.
+        unless additive
+          subconfig.select! { |c| c.in?(only) }
+        end
       end
     elsif subconfig.is_a?(Hash)
       # Additive doesn't make sense in a hash context since we wouldn't know the values.
       unless additive
-        subconfig.symbolize_keys!
-        subconfig.reject! { |k, _v| k.in?(except) }
+        if except
+          subconfig.symbolize_keys!
+          subconfig.reject! { |k, _v| k.in?(except) }
+        elsif only
+          subconfig.symbolize_keys!
+          subconfig.select! { |k, _v| k.in?(only) }
+        end
       end
     elsif !subconfig
+      if additive && except
+        subconfig = except
+      end
     else  # Subconfig is a single element (assume string/symbol).
       subconfig = subconfig.to_sym
-      if subconfig.in?(except)
-        subconfig = [] unless additive
-      elsif additive
-        subconfig = [subconfig, *except]
+
+      if except
+        if subconfig.in?(except)
+          subconfig = [] unless additive
+        elsif additive
+          subconfig = [subconfig, *except]
+        end
+      elsif only && !additive && !subconfig.in?(only)  # Protect only/additive data-leaking.
+        subconfig = []
       end
     end
 
@@ -118,8 +140,9 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   def filter_except(config)
     return config unless @controller
 
-    except_query_param = @controller.class.try(:native_serializer_except_query_param)
-    if except = @controller.request.query_parameters[except_query_param].presence
+    except_param = @controller.class.try(:native_serializer_except_query_param)
+    only_param = @controller.class.try(:native_serializer_only_query_param)
+    if except_param && except = @controller.request.query_parameters[except_param].presence
       except = except.split(",").map(&:strip).map(&:to_sym)
 
       unless except.empty?
@@ -127,10 +150,31 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
         config = config.deep_dup
 
         # Filter `only`, `except` (additive), `include`, and `methods`.
-        config[:only] = self.class.filter_subconfig(config[:only], except)
-        config[:except] = self.class.filter_subconfig(config[:except], except, additive: true)
-        config[:include] = self.class.filter_subconfig(config[:include], except)
-        config[:methods] = self.class.filter_subconfig(config[:methods], except)
+        config[:only] = self.class.filter_subconfig(config[:only], except: except)
+        config[:except] = self.class.filter_subconfig(
+          config[:except], except: except, additive: true
+        )
+        config[:include] = self.class.filter_subconfig(config[:include], except: except)
+        config[:methods] = self.class.filter_subconfig(config[:methods], except: except)
+      end
+    elsif only_param && only = @controller.request.query_parameters[only_param].presence
+      only = only.split(",").map(&:strip).map(&:to_sym)
+
+      unless only.empty?
+        # Duplicate the config to avoid mutating class state.
+        config = config.deep_dup
+
+        # For the `except` part of the serializer, we need to append any columns not in `only`.
+        model = @controller.get_model
+        except_columns = model&.column_names&.map(&:to_sym)&.reject { |c| c.in?(only) }
+
+        # Filter `only`, `except` (additive), `include`, and `methods`.
+        config[:only] = self.class.filter_subconfig(config[:only], only: only)
+        config[:except] = self.class.filter_subconfig(
+          config[:except], except: except_columns, additive: true
+        )
+        config[:include] = self.class.filter_subconfig(config[:include], only: only)
+        config[:methods] = self.class.filter_subconfig(config[:methods], only: only)
       end
     end
 
@@ -150,7 +194,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     end
 
     # If the config wasn't determined, build a serializer config from model fields.
-    fields = @controller.send(:get_fields) if @controller
+    fields = @controller.get_fields if @controller
     if fields
       if @model
         columns, methods = fields.partition { |f| f.in?(@model.column_names) }

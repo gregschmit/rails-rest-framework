@@ -31,6 +31,7 @@ module RESTFramework::BaseModelControllerMixin
         native_serializer_config: nil,
         native_serializer_singular_config: nil,
         native_serializer_plural_config: nil,
+        native_serializer_only_query_param: "only",
         native_serializer_except_query_param: "except",
 
         # Attributes for default model filtering (and ordering).
@@ -56,8 +57,6 @@ module RESTFramework::BaseModelControllerMixin
       end
     end
   end
-
-  protected
 
   def _get_specific_action_config(action_config_key, generic_config_key)
     action_config = self.class.send(action_config_key) || {}

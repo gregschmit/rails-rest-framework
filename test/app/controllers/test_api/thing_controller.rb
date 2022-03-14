@@ -19,8 +19,6 @@ class TestApi::ThingController < TestApiController
     api_response({another_changed: record.updated_at})
   end
 
-  protected
-
   def get_record
     return Thing.first
   end

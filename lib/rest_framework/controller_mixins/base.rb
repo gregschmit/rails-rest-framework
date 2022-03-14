@@ -81,8 +81,6 @@ module RESTFramework::BaseControllerMixin
     end
   end
 
-  protected
-
   # Helper to get the configured serializer class.
   def get_serializer_class
     return nil unless serializer_class = self.class.serializer_class

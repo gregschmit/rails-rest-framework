@@ -13,7 +13,7 @@ end
 class RESTFramework::ModelFilter < RESTFramework::BaseFilter
   # Filter params for keys allowed by the current action's filterset_fields/fields config.
   def _get_filter_params
-    fields = @controller.send(:get_filterset_fields)
+    fields = @controller.get_filterset_fields
     return @controller.request.query_parameters.select { |p, _|
       fields.include?(p)
     }.to_h.symbolize_keys  # convert from HashWithIndifferentAccess to Hash w/keys
@@ -36,7 +36,7 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
   def _get_ordering
     return nil if @controller.class.ordering_query_param.blank?
 
-    ordering_fields = @controller.send(:get_ordering_fields)
+    ordering_fields = @controller.get_ordering_fields
     order_string = @controller.params[@controller.class.ordering_query_param]
 
     unless order_string.blank?
@@ -76,7 +76,7 @@ end
 class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
   # Filter data according to the request query parameters.
   def get_filtered_data(data)
-    fields = @controller.send(:get_search_fields)
+    fields = @controller.get_search_fields
     search = @controller.request.query_parameters[@controller.class.search_query_param]
 
     # Ensure we use array conditions to prevent SQL injection.
