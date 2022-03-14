@@ -38,22 +38,3 @@ require_relative "../config/environment"
 
 require "minitest/pride"
 require "rails/test_help"
-
-class ActionController::TestCase
-  # Expose parsed_body method on all controller tests.
-  def parsed_body(reload: false)
-    if reload || !defined?(@_parsed_body) || !@_parsed_body
-      return @_parsed_body = begin
-        if Rails::VERSION::MAJOR >= 6
-          @response.parsed_body
-        else
-          JSON.parse(@response.parsed_body)
-        end
-      rescue
-      end
-
-    end
-
-    return @_parsed_body
-  end
-end

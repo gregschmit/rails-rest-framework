@@ -40,7 +40,4 @@ class Application < Rails::Application
   config.session_store(:cookie_store, key: "_session")
   config.secret_token = "a_test_token"
   config.secret_key_base = "a_test_secret"
-
-  config.logger = Logger.new($stdout)
-  config.log_level = :warn
 end

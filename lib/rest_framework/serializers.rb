@@ -84,61 +84,61 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   end
 
   # Helper to filter (mutate) a single subconfig for specific keys.
-  def self.filter_subconfig(subconfig, except: nil, only: nil, additive: false)
-    return subconfig unless except || only
-    return subconfig unless subconfig || additive
-    raise "Cannot pass `only` and `additive` to filter_subconfig." if only && additive
+  def self.filter_subcfg(subcfg, except: nil, only: nil, additive: false)
+    return subcfg unless except || only
+    return subcfg unless subcfg || additive
+    raise "Cannot pass `only` and `additive` to filter_subcfg." if only && additive
 
-    if subconfig.is_a?(Array)
-      subconfig = subconfig.map(&:to_sym)
+    if subcfg.is_a?(Array)
+      subcfg = subcfg.map(&:to_sym)
       if except
         if additive
           # Only add fields which are not already included.
-          subconfig += except - subconfig
+          subcfg += except - subcfg
         else
-          subconfig -= except
+          subcfg -= except
         end
       elsif only
         # Ignore `additive` in an `only` context, since it could causing data leaking.
         unless additive
-          subconfig.select! { |c| c.in?(only) }
+          subcfg.select! { |c| c.in?(only) }
         end
       end
-    elsif subconfig.is_a?(Hash)
+    elsif subcfg.is_a?(Hash)
       # Additive doesn't make sense in a hash context since we wouldn't know the values.
       unless additive
         if except
-          subconfig.symbolize_keys!
-          subconfig.reject! { |k, _v| k.in?(except) }
+          subcfg.symbolize_keys!
+          subcfg.reject! { |k, _v| k.in?(except) }
         elsif only
-          subconfig.symbolize_keys!
-          subconfig.select! { |k, _v| k.in?(only) }
+          subcfg.symbolize_keys!
+          subcfg.select! { |k, _v| k.in?(only) }
         end
       end
-    elsif !subconfig
+    elsif !subcfg
       if additive && except
-        subconfig = except
+        subcfg = except
       end
-    else  # Subconfig is a single element (assume string/symbol).
-      subconfig = subconfig.to_sym
+    else  # Subcfg is a single element (assume string/symbol).
+      subcfg = subcfg.to_sym
 
       if except
-        if subconfig.in?(except)
-          subconfig = [] unless additive
+        if subcfg.in?(except)
+          subcfg = [] unless additive
         elsif additive
-          subconfig = [subconfig, *except]
+          subcfg = [subcfg, *except]
         end
-      elsif only && !additive && !subconfig.in?(only)  # Protect only/additive data-leaking.
-        subconfig = []
+      elsif only && !additive && !subcfg.in?(only)  # Protect only/additive data-leaking.
+        subcfg = []
       end
     end
 
-    return subconfig
+    return subcfg
   end
 
   # Helper to filter out configuration properties based on the :except query parameter.
-  def filter_except(config)
-    return config unless @controller
+  def filter_except(cfg)
+    return cfg unless @controller
 
     except_param = @controller.class.try(:native_serializer_except_query_param)
     only_param = @controller.class.try(:native_serializer_only_query_param)
@@ -146,39 +146,41 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
       except = except.split(",").map(&:strip).map(&:to_sym)
 
       unless except.empty?
-        # Duplicate the config to avoid mutating class state.
-        config = config.deep_dup
+        # Duplicate the cfg to avoid mutating class state.
+        cfg = cfg.deep_dup
 
         # Filter `only`, `except` (additive), `include`, and `methods`.
-        config[:only] = self.class.filter_subconfig(config[:only], except: except)
-        config[:except] = self.class.filter_subconfig(
-          config[:except], except: except, additive: true
-        )
-        config[:include] = self.class.filter_subconfig(config[:include], except: except)
-        config[:methods] = self.class.filter_subconfig(config[:methods], except: except)
+        if cfg[:only]
+          cfg[:only] = self.class.filter_subcfg(cfg[:only], except: except)
+        else
+          cfg[:except] = self.class.filter_subcfg(cfg[:except], except: except, additive: true)
+        end
+        cfg[:include] = self.class.filter_subcfg(cfg[:include], except: except)
+        cfg[:methods] = self.class.filter_subcfg(cfg[:methods], except: except)
       end
     elsif only_param && only = @controller.request.query_parameters[only_param].presence
       only = only.split(",").map(&:strip).map(&:to_sym)
 
       unless only.empty?
-        # Duplicate the config to avoid mutating class state.
-        config = config.deep_dup
+        # Duplicate the cfg to avoid mutating class state.
+        cfg = cfg.deep_dup
 
         # For the `except` part of the serializer, we need to append any columns not in `only`.
         model = @controller.get_model
-        except_columns = model&.column_names&.map(&:to_sym)&.reject { |c| c.in?(only) }
+        except_cols = model&.column_names&.map(&:to_sym)&.reject { |c| c.in?(only) }
 
         # Filter `only`, `except` (additive), `include`, and `methods`.
-        config[:only] = self.class.filter_subconfig(config[:only], only: only)
-        config[:except] = self.class.filter_subconfig(
-          config[:except], except: except_columns, additive: true
-        )
-        config[:include] = self.class.filter_subconfig(config[:include], only: only)
-        config[:methods] = self.class.filter_subconfig(config[:methods], only: only)
+        if cfg[:only]
+          cfg[:only] = self.class.filter_subcfg(cfg[:only], only: only)
+        else
+          cfg[:except] = self.class.filter_subcfg(cfg[:except], except: except_cols, additive: true)
+        end
+        cfg[:include] = self.class.filter_subcfg(cfg[:include], only: only)
+        cfg[:methods] = self.class.filter_subcfg(cfg[:methods], only: only)
       end
     end
 
-    return config
+    return cfg
   end
 
   # Get the raw serializer config.
@@ -212,7 +214,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
   # Get a configuration passable to `serializable_hash` for the object, filtered if required.
   def get_serializer_config
-    return filter_except(self._get_raw_serializer_config)
+    return @_serializer_config ||= filter_except(self._get_raw_serializer_config)
   end
 
   def serialize(**kwargs)

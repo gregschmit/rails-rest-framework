@@ -28,7 +28,7 @@ module BaseDemoApiControllerTests
     filter_value = self._get_model.first.send(filter_key)
     get(:index, as: :json, params: {"#{filter_key}": filter_value})
     assert_response(:success)
-    assert(parsed_body.all? { |r| r[filter_key.to_s] == filter_value })
+    assert(@response.parsed_body.all? { |r| r[filter_key.to_s] == filter_value })
   end
 
   def test_show
@@ -56,15 +56,15 @@ module BaseDemoApiControllerTests
   def test_create
     post(:create, as: :json, params: self.class.create_params)
     assert_response(:success)
-    assert(self._get_model.find_by(id: parsed_body["id"]))
+    assert(self._get_model.find_by(id: @response.parsed_body["id"]))
   end
 
   def test_cannot_create_with_specific_id
     try_id = self._get_model.first.id
     post(:create, as: :json, params: {id: try_id, **self.class.create_params})
     assert_response(:success)
-    assert(parsed_body["id"] != try_id)
-    assert(self._get_model.find_by(id: parsed_body["id"]))
+    assert(@response.parsed_body["id"] != try_id)
+    assert(self._get_model.find_by(id: @response.parsed_body["id"]))
   end
 
   def test_cannot_create_with_specific_created_at
@@ -73,11 +73,11 @@ module BaseDemoApiControllerTests
 
     assert_response(:success)
 
-    created_at_year = Time.parse(parsed_body["created_at"]).year
+    created_at_year = Time.parse(@response.parsed_body["created_at"]).year
     assert_equal(Time.now.year, created_at_year)
     refute_equal(try_created_at.year, created_at_year)
 
-    assert(self._get_model.find_by(id: parsed_body["id"]))
+    assert(self._get_model.find_by(id: @response.parsed_body["id"]))
   end
 
   def test_update
