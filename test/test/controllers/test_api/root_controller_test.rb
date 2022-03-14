@@ -1,6 +1,8 @@
-require_relative "../base"
+require_relative "base"
 
 class TestApi::RootControllerTest < ActionController::TestCase
+  include BaseTestApiControllerTests
+
   def test_nil_fails
     assert_raises(RESTFramework::NilPassedToAPIResponseError) do
       get(:nil)

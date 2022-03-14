@@ -1,4 +1,4 @@
-require_relative "../test_helper"
+require "test_helper"
 
 class UnserializableThing
 end
@@ -13,14 +13,14 @@ class RESTFrameworkTest < Minitest::Test
   end
 
   def test_get_version_git
-    assert(RESTFramework::Version.get_version != "unknown")
+    assert(RESTFramework::Version.get_version != "0.unknown")
   end
 
   def test_get_version_stamp
     RESTFramework::Version.unstamp_version
-    assert(RESTFramework::Version.get_version(skip_git: true) == "unknown")
+    assert(RESTFramework::Version.get_version(skip_git: true) == "0.unknown")
     RESTFramework::Version.stamp_version
-    assert(RESTFramework::Version.get_version(skip_git: true) != "unknown")
+    assert(RESTFramework::Version.get_version(skip_git: true) != "0.unknown")
   end
 
   def test_unserializable_serializer

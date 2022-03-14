@@ -16,7 +16,15 @@ require "coveralls" if IS_MAIN_TRAVIS_ENV
 # Configure SimpleCov.
 SimpleCov.start do
   minimum_coverage 10
-  command_name "tests"
+
+  # The `rest_framework` project directory should be the root for coverage purposes.
+  root ".."
+
+  # Filter out everything but the lib directory.
+  add_filter "app/"
+  add_filter "bin/"
+  add_filter "docs/"
+  add_filter "test/"
 
   # Only upload to Coveralls for primary Travis test; otherwise use HTML formatter.
   if IS_MAIN_TRAVIS_ENV
@@ -24,31 +32,12 @@ SimpleCov.start do
   else
     formatter SimpleCov::Formatter::HTMLFormatter
   end
-
-  # Filter test directory and documentation.
-  add_filter "test/"
-  add_filter "doc/"
-  add_filter "docs/"
-  add_filter "app/"
-
-  # Filter version module since it's loaded too early for SimpleCov.
-  add_filter "lib/rest_framework/version"
-
-  add_group "REST Framework", "lib"
 end
 
 require_relative "../config/environment"
 
 require "minitest/pride"
 require "rails/test_help"
-
-class ActiveSupport::TestCase
-  # Load all fixtures.
-  fixtures :all
-
-  # Do not parallelize for now since Coveralls breaks with parallelization.
-  # parallelize(workers: :number_of_processors)
-end
 
 class ActionController::TestCase
   # Expose parsed_body method on all controller tests.

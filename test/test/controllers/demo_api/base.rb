@@ -1,10 +1,10 @@
-require_relative "../base"
+require "test_helper"
 
-# Common tests for all controllers.
 module BaseDemoApiControllerTests
   def self.included(base)
     base.class_attribute(:create_params)
     base.class_attribute(:update_params)
+    base.setup { Rails.application.load_seed }
   end
 
   def _get_model
@@ -70,10 +70,13 @@ module BaseDemoApiControllerTests
   def test_cannot_create_with_specific_created_at
     try_created_at = Time.new(2000, 1, 1)
     post(:create, as: :json, params: {created_at: try_created_at, **self.class.create_params})
+
     assert_response(:success)
+
     created_at_year = Time.parse(parsed_body["created_at"]).year
-    assert(created_at_year.nonzero?)
-    assert(created_at_year != try_created_at.year)
+    assert_equal(Time.now.year, created_at_year)
+    refute_equal(try_created_at.year, created_at_year)
+
     assert(self._get_model.find_by(id: parsed_body["id"]))
   end
 

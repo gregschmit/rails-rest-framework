@@ -1,4 +1,4 @@
-require_relative "../test_helper"
+require "test_helper"
 
 # The goal of this test is to ensure that the proper routes are defined for API1.
 class DemoApiRoutingTest < ActionDispatch::IntegrationTest

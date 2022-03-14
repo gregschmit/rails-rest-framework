@@ -3,10 +3,12 @@
 class DemoApiController < ApplicationController
   include RESTFramework::BaseControllerMixin
 
+  # TODO: Add root_controller for DemoApi since that's the suggested method. Change Test API to have
+  # root inside the inherited controller like an idiot.
   self.extra_actions = {test: :get}
 
   before_action do
-    @template_logo_text = "Rails REST Framework Demo v#{RESTFramework::VERSION}"
+    @template_logo_text = "Rails REST Framework Demo API"
   end
 
   def root

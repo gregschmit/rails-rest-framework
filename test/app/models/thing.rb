@@ -6,9 +6,10 @@ class Thing < ActiveRecord::Base
   end
 
   before_destroy :check_undestroyable
-  before_save :check_unsaveable
 
   validates_numericality_of :price, greater_than: 0, allow_nil: true
+
+  accepts_nested_attributes_for :owner, allow_destroy: true
 
   # An example of a "calculated" property method.
   def calculated_property
@@ -18,15 +19,8 @@ class Thing < ActiveRecord::Base
   protected
 
   def check_undestroyable
-    if self.name == "An Undestroyable Thing"
+    if self.name == "Undestroyable"
       errors.add(:base, "This record is undestroyable.")
-      throw(:abort)
-    end
-  end
-
-  def check_unsaveable
-    if self.name == "An Unsaveable Thing"
-      errors.add(:base, "This record is unsaveable.")
       throw(:abort)
     end
   end

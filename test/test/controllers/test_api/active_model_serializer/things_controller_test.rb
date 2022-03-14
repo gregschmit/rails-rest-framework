@@ -1,8 +1,9 @@
-require_relative "../../base"
+require "test_helper"
 
 if defined?(ActiveModel::Serializer)
   class TestApi::ActiveModelSerializer::ThingsControllerTest < ActionController::TestCase
     def test_list
+      Thing.create!(name: "test", owner_attributes: {login: "test"})
       get(:index, as: :json)
       assert_response(:success)
       assert(parsed_body[0]["name"])
@@ -11,7 +12,8 @@ if defined?(ActiveModel::Serializer)
     end
 
     def test_show
-      get(:show, as: :json, params: {id: things(:thing_1).id})
+      t = Thing.create!(name: "test", owner_attributes: {login: "test"})
+      get(:show, as: :json, params: {id: t.id})
       assert_response(:success)
       assert(parsed_body["owner"])
     end

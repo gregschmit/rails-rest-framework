@@ -3,9 +3,8 @@
 # Helper to proxy Rails commands to the test project.
 
 require "fileutils"
+FileUtils.chdir("test")
 
-FileUtils.chdir("test") do
-  APP_PATH = File.expand_path("../test/config/application", __dir__)
-  require_relative "../test/config/boot"
-  require "rails/commands"
-end
+APP_PATH = File.expand_path("../test/config/application", __dir__)
+require_relative "../test/config/boot"
+require "rails/commands"

@@ -3,6 +3,10 @@ class TestApiController < ApplicationController
   include RESTFramework::BaseControllerMixin
 
   self.page_size = 2
+
+  before_action do
+    @template_logo_text = "Rails REST Framework Test API"
+  end
 end
 
 module TestApi

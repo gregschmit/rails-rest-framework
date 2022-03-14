@@ -1,6 +1,8 @@
-require_relative "../base"
+require_relative "base"
 
 class TestApi::ThingsWithBareCreateControllerTest < ActionController::TestCase
+  include BaseTestApiControllerTests
+
   def test_bare_create
     post(:create, as: :json, params: {name: "test_bare_create"})
     assert_response(:success)

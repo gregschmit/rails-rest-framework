@@ -120,9 +120,9 @@ using RVM. Then run `bundle install` to install the appropriate gems.
 To run the test suite:
 
 ```shell
-$ rake test
+$ rails test
 ```
 
-The top-level `bin/rails` and `Rakefile` both proxy all Rails/Rake commands to the test project, so
-you can operate it via the usual commands. Ensure you run `rake db:schema:load` before running
-`rails server` or `rails console`. You can also load the test fixtures with `rake db:fixtures:load`.
+The top-level `bin/rails` proxies all Rails commands to the test project, so you can operate it via
+the usual commands. Ensure you run `rails db:setup` before running `rails server` or
+`rails console`.

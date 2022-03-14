@@ -1,9 +1,11 @@
 <tr>
-  <td><%= route[:path] %></td>
+  <td>
+    <% if route[:route].name && link_args = route[:show_link_args] %>
+      <%= link_to route[:relative_path], self.send("#{route[:route].name}_path", *link_args) %>
+    <% else %>
+      <%= route[:relative_path] %>
+    <% end %>
+  </td>
   <td><%= route[:verb] %></td>
-  <% if route[:controller] && route[:action] %>
-    <td><%= route[:controller] %>#<%= route[:action] %></td>
-  <% else %>
-    <td><%= route[:route_app] %></td>
-  <% end %>
+  <td><%= route[:controller] %>#<%= route[:action] %></td>
 </tr>

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Helper to initialize Heroku environment.
+
+rails runner 'ActiveRecord::Base.connection.tables.each { |t| ActiveRecord::Base.connection.drop_table(t, force: :cascade, if_exists: true) }'
+rails db:schema:load
+rails db:seed
