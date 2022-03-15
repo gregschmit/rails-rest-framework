@@ -9,7 +9,7 @@ module RESTFramework::Utils
       path = k
 
       # Convert structure to path/methods/kwargs.
-      if v.is_a?(Hash)  # allow kwargs
+      if v.is_a?(Hash)  # Allow kwargs to be used to define path differently from the key.
         v = v.symbolize_keys
 
         # Ensure methods is an array.
@@ -87,7 +87,7 @@ module RESTFramework::Utils
       }
     }.select { |r|
       (
-        r[:subdomain] == request.subdomain.presence &&
+        (!r[:subdomain] || r[:subdomain] == request.subdomain.presence) &&
         r[:normalized_path].start_with?(current_normalized_path) &&
         r[:controller] &&
         r[:action]

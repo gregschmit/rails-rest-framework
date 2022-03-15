@@ -11,13 +11,6 @@ class TestApiRoutingTest < ActionDispatch::IntegrationTest
     assert_response(:success)
   end
 
-  def test_can_get_blank
-    get("/test_api/blank")
-    assert_response(:success)
-    get("/test_api/blank.json")
-    assert_response(:no_content)
-  end
-
   def test_can_get_things
     get("/test_api/things")
     assert_response(:success)

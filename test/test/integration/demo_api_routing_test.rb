@@ -9,13 +9,6 @@ class DemoApiRoutingTest < ActionDispatch::IntegrationTest
     assert_response(:success)
   end
 
-  def can_get_root_test
-    get("/demo_api/test")
-    assert_response(:success)
-    get("/demo_api/test.json")
-    assert_response(:success)
-  end
-
   def test_can_get_things
     get("/demo_api/things")
     assert_response(:success)

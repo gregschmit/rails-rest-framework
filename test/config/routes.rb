@@ -1,8 +1,8 @@
 Rails.application.routes.draw do
   root to: redirect("/demo_api")
 
-  rest_root :demo_api
   namespace :demo_api do
+    rest_root
     rest_resources :things
     rest_resources :users do
       scope module: :users, as: :users do
@@ -11,8 +11,8 @@ Rails.application.routes.draw do
     end
   end
 
+  rest_root :test_api
   namespace :test_api do
-    rest_root
     rest_resource :user do
       scope module: :user, as: :user do
         rest_resources :things

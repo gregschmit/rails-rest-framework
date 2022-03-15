@@ -13,10 +13,12 @@ class RESTFramework::BaseSerializer
     raise NotImplementedError
   end
 
+  # :nocov:
   # Synonym for `serializable_hash` or compatibility with ActiveModelSerializers.
   def serializable_hash(**kwargs)
     return self.serialize(**kwargs)
   end
+  # :nocov:
 end
 
 # This serializer uses `.serializable_hash` to convert objects to Ruby primitives (with the

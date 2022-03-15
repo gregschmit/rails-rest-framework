@@ -22,6 +22,8 @@ end
 Bundler.require(*Rails.groups)
 
 class Application < Rails::Application
+  config.hosts = nil
+
   config.autoloader = :zeitwerk
   config.eager_load = false
 

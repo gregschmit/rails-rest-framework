@@ -1,6 +1,6 @@
 require "test_helper"
 
-class DemoApiControllerTest < ActionController::TestCase
+class TestApiControllerTest < ActionController::TestCase
   def test_can_hit_root
     get(:root)
     assert_response(:success)
