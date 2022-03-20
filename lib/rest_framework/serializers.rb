@@ -1,24 +1,39 @@
 # The base serializer defines the interface for all REST Framework serializers.
 class RESTFramework::BaseSerializer
+  # Add `object` accessor to be compatible with `ActiveModel::Serializer`.
   attr_accessor :object
 
-  def initialize(object=nil, controller: nil, **kwargs)
+  # Accept/ignore `*args` to be compatible with the `ActiveModel::Serializer#initialize` signature.
+  def initialize(object=nil, *args, controller: nil, **kwargs)
     @object = object
     @controller = controller
   end
 
   # The primary interface for extracting a native Ruby types. This works both for records and
-  # collections.
-  def serialize(**kwargs)
+  # collections. We accept and ignore `*args` for compatibility with `active_model_serializers`.
+  def serialize(*args)
     raise NotImplementedError
   end
 
-  # :nocov:
-  # Synonym for `serializable_hash` or compatibility with ActiveModelSerializers.
-  def serializable_hash(**kwargs)
-    return self.serialize(**kwargs)
+  # Synonym for `serialize` for compatibility with `active_model_serializers`.
+  def serializable_hash(*args)
+    return self.serialize(*args)
   end
-  # :nocov:
+
+  # For compatibility with `active_model_serializers`.
+  def self.cache_enabled?
+    return false
+  end
+
+  # For compatibility with `active_model_serializers`.
+  def self.fragment_cache_enabled?
+    return false
+  end
+
+  # For compatibility with `active_model_serializers`.
+  def associations(*args, **kwargs)
+    return []
+  end
 end
 
 # This serializer uses `.serializable_hash` to convert objects to Ruby primitives (with the
@@ -29,8 +44,9 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   class_attribute :plural_config
   class_attribute :action_config
 
-  def initialize(object=nil, many: nil, model: nil, **kwargs)
-    super(object, **kwargs)
+  # Accept/ignore `*args` to be compatible with the `ActiveModel::Serializer#initialize` signature.
+  def initialize(object=nil, *args, many: nil, model: nil, **kwargs)
+    super(object, *args, **kwargs)
 
     if many.nil?
       # Determine if we are dealing with many objects or just one.
@@ -148,10 +164,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
       except = except.split(",").map(&:strip).map(&:to_sym)
 
       unless except.empty?
-        # Duplicate the cfg to avoid mutating class state.
-        cfg = cfg.deep_dup
-
-        # Filter `only`, `except` (additive), `include`, and `methods`.
+        # Filter `only`, `except` (additive), `include`, `methods`, and `serializer_methods`.
         if cfg[:only]
           cfg[:only] = self.class.filter_subcfg(cfg[:only], except: except)
         else
@@ -159,14 +172,14 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
         end
         cfg[:include] = self.class.filter_subcfg(cfg[:include], except: except)
         cfg[:methods] = self.class.filter_subcfg(cfg[:methods], except: except)
+        cfg[:serializer_methods] = self.class.filter_subcfg(
+          cfg[:serializer_methods], except: except
+        )
       end
     elsif only_param && only = @controller.request.query_parameters[only_param].presence
       only = only.split(",").map(&:strip).map(&:to_sym)
 
       unless only.empty?
-        # Duplicate the cfg to avoid mutating class state.
-        cfg = cfg.deep_dup
-
         # For the `except` part of the serializer, we need to append any columns not in `only`.
         model = @controller.get_model
         except_cols = model&.column_names&.map(&:to_sym)&.reject { |c| c.in?(only) }
@@ -179,27 +192,31 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
         end
         cfg[:include] = self.class.filter_subcfg(cfg[:include], only: only)
         cfg[:methods] = self.class.filter_subcfg(cfg[:methods], only: only)
+        cfg[:serializer_methods] = self.class.filter_subcfg(cfg[:serializer_methods], only: only)
       end
     end
 
     return cfg
   end
 
-  # Get the raw serializer config.
+  # Get the raw serializer config. Use `deep_dup` on any class mutables (array, hash, etc) to avoid
+  # mutating class state.
   def _get_raw_serializer_config
     # Return a locally defined serializer config if one is defined.
     if local_config = self.get_local_native_serializer_config
-      return local_config
+      return local_config.deep_dup
     end
 
     # Return a serializer config if one is defined on the controller.
     if serializer_config = self.get_controller_native_serializer_config
-      return serializer_config
+      return serializer_config.deep_dup
     end
 
     # If the config wasn't determined, build a serializer config from model fields.
     fields = @controller.get_fields if @controller
     if fields
+      fields = fields.deep_dup
+
       if @model
         columns, methods = fields.partition { |f| f.in?(@model.column_names) }
       else
@@ -216,15 +233,31 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
   # Get a configuration passable to `serializable_hash` for the object, filtered if required.
   def get_serializer_config
-    return @_serializer_config ||= filter_except(self._get_raw_serializer_config)
+    return filter_except(self._get_raw_serializer_config)
   end
 
-  def serialize(**kwargs)
-    if @object.respond_to?(:to_ary)
-      return @object.map { |r| r.serializable_hash(self.get_serializer_config) }
+  # Internal helper to serialize a single record and merge results of `serializer_methods`.
+  def _serialize(record, config, serializer_methods)
+    # Ensure serializer_methods is either falsy, or an array.
+    if serializer_methods && !serializer_methods.respond_to?(:to_ary)
+      serializer_methods = [serializer_methods]
     end
 
-    return @object.serializable_hash(self.get_serializer_config)
+    # Merge serialized record with any serializer method results.
+    return record.serializable_hash(config).merge(
+      serializer_methods&.map { |m| [m.to_sym, self.send(m, record)] }.to_h,
+    )
+  end
+
+  def serialize(*args)
+    config = self.get_serializer_config
+    serializer_methods = config.delete(:serializer_methods)
+
+    if @object.respond_to?(:to_ary)
+      return @object.map { |r| self._serialize(r, config, serializer_methods) }
+    end
+
+    return self._serialize(@object, config, serializer_methods)
   end
 
   # Allow a serializer instance to be used as a hash directly in a nested serializer config.

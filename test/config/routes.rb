@@ -31,4 +31,8 @@ Rails.application.routes.draw do
       end
     end
   end
+
+  if defined?(ActiveModel::Serializer)
+    rest_resources :render_json
+  end
 end

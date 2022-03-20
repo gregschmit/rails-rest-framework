@@ -49,7 +49,7 @@ module RESTFramework::Utils
 
   # Helper to normalize a path pattern by replacing URL params with generic placeholder, and
   # removing the `(.:format)` at the end.
-  def self.normalize_path(path)
+  def self.comparable_path(path)
     return path.gsub("(.:format)", "").gsub(/:[0-9A-Za-z_-]+/, ":x")
   end
 
@@ -58,7 +58,7 @@ module RESTFramework::Utils
     current_route ||= self.get_request_route(application_routes, request)
     current_path = current_route.path.spec.to_s
     current_levels = current_path.count("/")
-    current_normalized_path = self.normalize_path(current_path)
+    current_comparable_path = self.comparable_path(current_path)
 
     # Return routes that match our current route subdomain/pattern, grouped by controller. We
     # precompute certain properties of the route for performance.
@@ -77,8 +77,9 @@ module RESTFramework::Utils
         route: r,
         verb: r.verb,
         path: path,
-        normalized_path: self.normalize_path(path),
-        relative_path: path.split("/")[current_levels..]&.join("/"),
+        comparable_path: self.comparable_path(path),
+        # Starts at the number of levels in current path, and removes the `(.:format)` at the end.
+        relative_path: path.split("/")[current_levels..]&.join("/")&.gsub("(.:format)", ""),
         controller: r.defaults[:controller].presence,
         action: r.defaults[:action].presence,
         subdomain: r.defaults[:subdomain].presence,
@@ -88,7 +89,7 @@ module RESTFramework::Utils
     }.select { |r|
       (
         (!r[:subdomain] || r[:subdomain] == request.subdomain.presence) &&
-        r[:normalized_path].start_with?(current_normalized_path) &&
+        r[:comparable_path].start_with?(current_comparable_path) &&
         r[:controller] &&
         r[:action]
       )

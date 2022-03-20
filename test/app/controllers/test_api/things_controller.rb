@@ -6,8 +6,13 @@ class TestApi::ThingsController < TestApiController
     self.singular_config = {
       only: [:id, :name, :shape],
       include: {owner: TestApi::UserController::UsersSerializer.new(many: false)},
+      serializer_methods: :id_plus_one,
     }
     self.plural_config = {only: [:id, :name]}
+
+    def id_plus_one(record)
+      return record.id + 1
+    end
   end
 
   self.fields = %w(id name)
