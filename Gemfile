@@ -22,6 +22,8 @@ if RAILS_VERSION < Gem::Version.new("7") && RAILS_VERSION >= Gem::Version.new("6
 end
 
 group :development do
+  gem "better_errors"
+  gem "binding_of_caller"
   gem "byebug"
   gem "pry-rails"
   gem "rubocop-shopify", require: false

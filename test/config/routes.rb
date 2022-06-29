@@ -21,6 +21,7 @@ Rails.application.routes.draw do
     rest_resources :things
     rest_resources :read_only_things
     rest_resources :things_with_bare_create, force_plural: true, only: [:create]
+    rest_resources :things_without_rescue_unknown_format
     rest_resource :thing, force_singular: true
 
     rest_route :network

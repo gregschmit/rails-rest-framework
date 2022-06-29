@@ -45,6 +45,10 @@ Layout/MultilineAssignmentLayout:
   Enabled: true
   EnforcedStyle: same_line
 
+Layout/MultilineHashBraceLayout:
+  Enabled: true
+  EnforcedStyle: new_line
+
 Layout/MultilineHashKeyLineBreaks:
   Enabled: true
 

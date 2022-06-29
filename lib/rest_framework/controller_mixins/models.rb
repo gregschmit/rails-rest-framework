@@ -59,7 +59,7 @@ module RESTFramework::BaseModelControllerMixin
   end
 
   def _get_specific_action_config(action_config_key, generic_config_key)
-    action_config = self.class.send(action_config_key) || {}
+    action_config = self.class.send(action_config_key)&.with_indifferent_access || {}
     action = self.action_name&.to_sym
 
     # Index action should use :list serializer if :index is not provided.
@@ -71,35 +71,33 @@ module RESTFramework::BaseModelControllerMixin
   # Get a list of fields for the current action.
   def get_fields
     return (
-      _get_specific_action_config(:action_fields, :fields)&.map(&:to_s) ||
-      self.get_model&.column_names ||
-      []
+      _get_specific_action_config(:action_fields, :fields) || self.get_model&.column_names || []
     )
   end
 
   # Get a list of find_by fields for the current action.
   def get_find_by_fields
-    return self.class.find_by_fields&.map(&:to_s) || self.get_fields
+    return self.class.find_by_fields || self.get_fields
   end
 
   # Get a list of find_by fields for the current action.
   def get_filterset_fields
-    return self.class.filterset_fields&.map(&:to_s) || self.get_fields
+    return self.class.filterset_fields || self.get_fields
   end
 
   # Get a list of ordering fields for the current action.
   def get_ordering_fields
-    return self.class.ordering_fields&.map(&:to_s) || self.get_fields
+    return self.class.ordering_fields || self.get_fields
   end
 
   # Get a list of search fields for the current action.
   def get_search_fields
-    return self.class.search_fields&.map(&:to_s) || self.get_fields
+    return self.class.search_fields || self.get_fields
   end
 
   # Get a list of parameters allowed for the current action.
   def get_allowed_parameters
-    return _get_specific_action_config(:allowed_action_parameters, :allowed_parameters)&.map(&:to_s)
+    return _get_specific_action_config(:allowed_action_parameters, :allowed_parameters)
   end
 
   # Helper to get the configured serializer class, or `NativeSerializer` as a default.
@@ -117,7 +115,8 @@ module RESTFramework::BaseModelControllerMixin
   # Filter the request body for keys in current action's allowed_parameters/fields config.
   def get_body_params
     return @_get_body_params ||= begin
-      fields = self.get_allowed_parameters || self.get_fields
+      # Map fields to strings because body keys will be string.
+      fields = (self.get_allowed_parameters || self.get_fields).map(&:to_s)
 
       # Filter the request body.
       body_params = request.request_parameters.select { |p| fields.include?(p) }
@@ -137,7 +136,7 @@ module RESTFramework::BaseModelControllerMixin
       end
 
       # Filter fields in exclude_body_fields.
-      (self.class.exclude_body_fields || []).each { |f| body_params.delete(f.to_s) }
+      (self.class.exclude_body_fields || []).each { |f| body_params.delete(f) }
 
       body_params
     end
@@ -181,8 +180,13 @@ module RESTFramework::BaseModelControllerMixin
 
   # Get a single record by primary key or another column, if allowed.
   def get_record
+    # Cache the result.
+    return @_get_record if @_get_record
+
     recordset = self.get_recordset
-    find_by_fields = self.get_find_by_fields
+
+    # Map find_by fields to strings because query param value is a string.
+    find_by_fields = self.get_find_by_fields.map(&:to_s)
     find_by_key = self.get_model.primary_key
 
     # Find by another column if it's permitted.
@@ -196,18 +200,18 @@ module RESTFramework::BaseModelControllerMixin
     end
 
     # Return the record. Route key is always :id by Rails convention.
-    return recordset.find_by!(find_by_key => params[:id])
+    return @_get_record = recordset.find_by!(find_by_key => params[:id])
   end
 end
 
 # Mixin for listing records.
 module RESTFramework::ListModelMixin
   def index
-    api_response(self._index)
+    api_response(self.index!)
   end
 
-  def _index
-    @records = self.get_filtered_data(self.get_recordset)
+  def index!
+    @records ||= self.get_filtered_data(self.get_recordset)
 
     # Handle pagination, if enabled.
     if self.class.paginator_class
@@ -224,11 +228,11 @@ end
 # Mixin for showing records.
 module RESTFramework::ShowModelMixin
   def show
-    api_response(self._show)
+    api_response(self.show!)
   end
 
-  def _show
-    @record = self.get_record
+  def show!
+    @record ||= self.get_record
     return self.get_serializer_class.new(@record, controller: self).serialize
   end
 end
@@ -236,16 +240,16 @@ end
 # Mixin for creating records.
 module RESTFramework::CreateModelMixin
   def create
-    api_response(self._create)
+    api_response(self.create!)
   end
 
-  def _create
+  def create!
     if self.get_recordset.respond_to?(:create!) && self.create_from_recordset
       # Create with any properties inherited from the recordset.
-      @record = self.get_recordset.create!(self.get_create_params)
+      @record ||= self.get_recordset.create!(self.get_create_params)
     else
       # Otherwise, perform a "bare" create.
-      @record = self.get_model.create!(self.get_create_params)
+      @record ||= self.get_model.create!(self.get_create_params)
     end
 
     return self.get_serializer_class.new(@record, controller: self).serialize
@@ -255,11 +259,11 @@ end
 # Mixin for updating records.
 module RESTFramework::UpdateModelMixin
   def update
-    api_response(self._update)
+    api_response(self.update!)
   end
 
-  def _update
-    @record = self.get_record
+  def update!
+    @record ||= self.get_record
     @record.update!(self.get_update_params)
     return self.get_serializer_class.new(@record, controller: self).serialize
   end
@@ -268,12 +272,12 @@ end
 # Mixin for destroying records.
 module RESTFramework::DestroyModelMixin
   def destroy
-    self._destroy
+    self.destroy!
     api_response("")
   end
 
-  def _destroy
-    @record = self.get_record
+  def destroy!
+    @record ||= self.get_record
     @record.destroy!
   end
 end

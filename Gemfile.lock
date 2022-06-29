@@ -72,7 +72,13 @@ GEM
       tzinfo (~> 2.0)
       zeitwerk (~> 2.3)
     ast (2.4.2)
+    better_errors (2.9.1)
+      coderay (>= 1.0.0)
+      erubi (>= 1.0.0)
+      rack (>= 0.9.0)
     bindex (0.8.1)
+    binding_of_caller (1.0.0)
+      debug_inspector (>= 0.0.1)
     builder (3.2.4)
     byebug (11.1.3)
     case_transform (0.2)
@@ -86,6 +92,7 @@ GEM
       thor (>= 0.19.4, < 2.0)
       tins (~> 1.6)
     crass (1.0.6)
+    debug_inspector (1.1.0)
     docile (1.4.0)
     erubi (1.10.0)
     globalid (1.0.0)
@@ -107,6 +114,10 @@ GEM
     nio4r (2.5.8)
     nokogiri (1.13.3)
       mini_portile2 (~> 2.8.0)
+      racc (~> 1.4)
+    nokogiri (1.13.3-x86_64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.13.3-x86_64-linux)
       racc (~> 1.4)
     parallel (1.21.0)
     parser (3.1.1.0)
@@ -205,6 +216,8 @@ PLATFORMS
 
 DEPENDENCIES
   active_model_serializers (= 0.10.13)
+  better_errors
+  binding_of_caller
   byebug
   coveralls
   minitest (>= 5.0)

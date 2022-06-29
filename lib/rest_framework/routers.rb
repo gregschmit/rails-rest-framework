@@ -6,7 +6,7 @@ module ActionDispatch::Routing
     # Internal interface to get the controller class from the name and current scope.
     def _get_controller_class(name, pluralize: true, fallback_reverse_pluralization: true)
       # Get class name.
-      name = name.to_s.camelize  # camelize to leave plural names plural
+      name = name.to_s.camelize  # Camelize to leave plural names plural.
       name = name.pluralize if pluralize
       if name == name.pluralize
         name_reverse = name.singularize

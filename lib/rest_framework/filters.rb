@@ -13,10 +13,10 @@ end
 class RESTFramework::ModelFilter < RESTFramework::BaseFilter
   # Filter params for keys allowed by the current action's filterset_fields/fields config.
   def _get_filter_params
-    fields = @controller.get_filterset_fields
-    return @controller.request.query_parameters.select { |p, _|
-      fields.include?(p)
-    }.to_h.symbolize_keys  # convert from HashWithIndifferentAccess to Hash w/keys
+    # Map filterset fields to strings because query parameter keys are strings.
+    fields = @controller.get_filterset_fields.map(&:to_s)
+
+    return @controller.request.query_parameters.select { |p, _| fields.include?(p) }
   end
 
   # Filter data according to the request query parameters.
@@ -36,11 +36,12 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
   def _get_ordering
     return nil if @controller.class.ordering_query_param.blank?
 
-    ordering_fields = @controller.get_ordering_fields
+    # Ensure ordering_fields are strings since the split param will be strings.
+    ordering_fields = @controller.get_ordering_fields.map(&:to_s)
     order_string = @controller.params[@controller.class.ordering_query_param]
 
     unless order_string.blank?
-      ordering = {}
+      ordering = {}.with_indifferent_access
       order_string.split(",").each do |field|
         if field[0] == "-"
           column = field[1..-1]
@@ -50,7 +51,7 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
           direction = :asc
         end
         if column.in?(ordering_fields)
-          ordering[column.to_sym] = direction
+          ordering[column] = direction
         end
       end
       return ordering

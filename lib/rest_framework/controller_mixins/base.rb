@@ -45,6 +45,7 @@ module RESTFramework::BaseControllerMixin
         page_query_param: "page",
         page_size_query_param: "page_size",
         max_page_size: nil,
+        rescue_unknown_format_with: :json,
         serializer_class: nil,
         serialize_to_json: true,
         serialize_to_xml: true,
@@ -145,42 +146,55 @@ module RESTFramework::BaseControllerMixin
       raise RESTFramework::NilPassedToAPIResponseError
     end
 
-    respond_to do |format|
-      if payload == ""
-        format.json { head(:no_content) } if self.class.serialize_to_json
-        format.xml { head(:no_content) } if self.class.serialize_to_xml
-      else
-        format.json {
-          jkwargs = kwargs.merge(json_kwargs)
-          render(json: payload, layout: false, **jkwargs)
-        } if self.class.serialize_to_json
-        format.xml {
-          xkwargs = kwargs.merge(xml_kwargs)
-          render(xml: payload, layout: false, **xkwargs)
-        } if self.class.serialize_to_xml
-        # TODO: possibly support more formats here if supported?
-      end
-      format.html {
-        @payload = payload
+    # Flag to track if we had to rescue unknown format.
+    already_rescued_unknown_format = false
+
+    begin
+      respond_to do |format|
         if payload == ""
-          @json_payload = "" if self.class.serialize_to_json
-          @xml_payload = "" if self.class.serialize_to_xml
+          format.json { head(:no_content) } if self.class.serialize_to_json
+          format.xml { head(:no_content) } if self.class.serialize_to_xml
         else
-          @json_payload = payload.to_json if self.class.serialize_to_json
-          @xml_payload = payload.to_xml if self.class.serialize_to_xml
+          format.json {
+            jkwargs = kwargs.merge(json_kwargs)
+            render(json: payload, layout: false, **jkwargs)
+          } if self.class.serialize_to_json
+          format.xml {
+            xkwargs = kwargs.merge(xml_kwargs)
+            render(xml: payload, layout: false, **xkwargs)
+          } if self.class.serialize_to_xml
+          # TODO: possibly support more formats here if supported?
         end
-        @template_logo_text ||= "Rails REST Framework"
-        @title ||= self.controller_name.camelize
-        @route_groups ||= RESTFramework::Utils.get_routes(Rails.application.routes, request)
-        hkwargs = kwargs.merge(html_kwargs)
-        begin
-          render(**hkwargs)
-        rescue ActionView::MissingTemplate  # fallback to rest_framework layout
-          hkwargs[:layout] = "rest_framework"
-          hkwargs[:html] = ""
-          render(**hkwargs)
-        end
-      }
+        format.html {
+          @payload = payload
+          if payload == ""
+            @json_payload = "" if self.class.serialize_to_json
+            @xml_payload = "" if self.class.serialize_to_xml
+          else
+            @json_payload = payload.to_json if self.class.serialize_to_json
+            @xml_payload = payload.to_xml if self.class.serialize_to_xml
+          end
+          @template_logo_text ||= "Rails REST Framework"
+          @title ||= self.controller_name.camelize
+          @route_groups ||= RESTFramework::Utils.get_routes(Rails.application.routes, request)
+          hkwargs = kwargs.merge(html_kwargs)
+          begin
+            render(**hkwargs)
+          rescue ActionView::MissingTemplate  # fallback to rest_framework layout
+            hkwargs[:layout] = "rest_framework"
+            hkwargs[:html] = ""
+            render(**hkwargs)
+          end
+        }
+      end
+    rescue ActionController::UnknownFormat
+      if !already_rescued_unknown_format && rescue_format = self.class.rescue_unknown_format_with
+        request.format = rescue_format
+        already_rescued_unknown_format = true
+        retry
+      else
+        raise
+      end
     end
   end
 end
