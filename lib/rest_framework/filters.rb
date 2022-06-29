@@ -21,7 +21,7 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
 
   # Filter data according to the request query parameters.
   def get_filtered_data(data)
-    filter_params = self._get_filter_params
+    filter_params = self._get_filter_params.symbolize_keys
     unless filter_params.blank?
       return data.where(**filter_params)
     end
