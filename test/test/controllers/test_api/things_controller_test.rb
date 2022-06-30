@@ -77,10 +77,4 @@ class TestApi::ThingsControllerTest < ActionController::TestCase
   def test_get_model_before_recordset
     assert(@controller.get_model)
   end
-
-  # def test_unknown_format_rescued
-  #   get("index.jsom")
-  #   assert_response(:success)
-  #   assert(@response.parsed_body["results"][0]["price"])
-  # end
 end
