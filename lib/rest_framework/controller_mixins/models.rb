@@ -69,10 +69,15 @@ module RESTFramework::BaseModelControllerMixin
   end
 
   # Get a list of fields for the current action.
-  def get_fields
-    return (
-      _get_specific_action_config(:action_fields, :fields) || self.get_model&.column_names || []
-    )
+  def get_fields(fallback: true)
+    action_fields = _get_specific_action_config(:action_fields, :fields)
+
+    # Typically we want to fallback to either the DB dolumns or an empty array.
+    if fallback
+      action_fields ||= self.get_model&.column_names || []
+    end
+
+    return action_fields
   end
 
   # Get a list of find_by fields for the current action.
