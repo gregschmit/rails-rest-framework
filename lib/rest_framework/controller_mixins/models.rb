@@ -68,16 +68,17 @@ module RESTFramework::BaseModelControllerMixin
     return (action_config[action] if action) || self.class.send(generic_config_key)
   end
 
-  # Get a list of fields for the current action.
-  def get_fields(fallback: true)
-    action_fields = _get_specific_action_config(:action_fields, :fields)
+  # Get a list of fields for the current action. Returning `nil` indicates that anything should be
+  # accepted unless `fallback` is true, in which case we should fallback to this controller's model
+  # columns, or en empty array.
+  def get_fields(fallback: false)
+    fields = _get_specific_action_config(:action_fields, :fields)
 
-    # Typically we want to fallback to either the DB dolumns or an empty array.
     if fallback
-      action_fields ||= self.get_model&.column_names || []
+      fields ||= self.get_model&.column_names || []
     end
 
-    return action_fields
+    return fields
   end
 
   # Get a list of find_by fields for the current action.
@@ -95,14 +96,17 @@ module RESTFramework::BaseModelControllerMixin
     return self.class.ordering_fields || self.get_fields
   end
 
-  # Get a list of search fields for the current action.
+  # Get a list of search fields for the current action. Default to the model column names.
   def get_search_fields
-    return self.class.search_fields || self.get_fields
+    return self.class.search_fields || self.get_fields(fallback: true)
   end
 
   # Get a list of parameters allowed for the current action.
   def get_allowed_parameters
-    return _get_specific_action_config(:allowed_action_parameters, :allowed_parameters)
+    return _get_specific_action_config(
+      :allowed_action_parameters,
+      :allowed_parameters,
+    ) || self.fields
   end
 
   # Helper to get the configured serializer class, or `NativeSerializer` as a default.
@@ -120,15 +124,18 @@ module RESTFramework::BaseModelControllerMixin
   # Filter the request body for keys in current action's allowed_parameters/fields config.
   def get_body_params
     return @_get_body_params ||= begin
-      # Map fields to strings because body keys will be string.
-      fields = (self.get_allowed_parameters || self.get_fields).map(&:to_s)
+      # Filter the request body and map to strings. Return all params if we cannot resolve a list of
+      # allowed parameters or fields.
+      body_params = if allowed_params = self.get_allowed_parameters&.map(&:to_s)
+        request.request_parameters.select { |p| allowed_params.include?(p) }
+      else
+        request.request_parameters
+      end
 
-      # Filter the request body.
-      body_params = request.request_parameters.select { |p| fields.include?(p) }
-
-      # Add query params in place of missing body params, if configured.
+      # Add query params in place of missing body params, if configured. If fields are not defined,
+      # fallback to using columns for this particular feature.
       if self.class.accept_generic_params_as_body_params
-        (fields - body_params.keys).each do |k|
+        (self.get_fields(fallback: true) - body_params.keys).each do |k|
           if (value = params[k])
             body_params[k] = value
           end
@@ -189,14 +196,17 @@ module RESTFramework::BaseModelControllerMixin
     return @_get_record if @_get_record
 
     recordset = self.get_recordset
-
-    # Map find_by fields to strings because query param value is a string.
-    find_by_fields = self.get_find_by_fields.map(&:to_s)
     find_by_key = self.get_model.primary_key
 
     # Find by another column if it's permitted.
-    if find_by_query_param && params[find_by_query_param].in?(find_by_fields)
-      find_by_key = params[find_by_query_param]
+    if find_by_param = self.class.find_by_query_param.presence
+      if find_by = params[find_by_param].presence
+        find_by_fields = self.get_find_by_fields&.map(&:to_s)
+
+        if !find_by_fields || find_by.in?(find_by_fields)
+          find_by_key = find_by
+        end
+      end
     end
 
     # Filter recordset, if configured.

@@ -14,9 +14,11 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
   # Filter params for keys allowed by the current action's filterset_fields/fields config.
   def _get_filter_params
     # Map filterset fields to strings because query parameter keys are strings.
-    fields = @controller.get_filterset_fields.map(&:to_s)
+    if fields = @controller.get_filterset_fields&.map(&:to_s)
+      return @controller.request.query_parameters.select { |p, _| fields.include?(p) }
+    end
 
-    return @controller.request.query_parameters.select { |p, _| fields.include?(p) }
+    return @controller.request.query_parameters
   end
 
   # Filter data according to the request query parameters.
@@ -37,7 +39,7 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
     return nil if @controller.class.ordering_query_param.blank?
 
     # Ensure ordering_fields are strings since the split param will be strings.
-    ordering_fields = @controller.get_ordering_fields.map(&:to_s)
+    ordering_fields = @controller.get_ordering_fields&.map(&:to_s)
     order_string = @controller.params[@controller.class.ordering_query_param]
 
     unless order_string.blank?
@@ -50,7 +52,7 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
           column = field
           direction = :asc
         end
-        if column.in?(ordering_fields)
+        if !ordering_fields || column.in?(ordering_fields)
           ordering[column] = direction
         end
       end

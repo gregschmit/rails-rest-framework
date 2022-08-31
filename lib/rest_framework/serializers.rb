@@ -213,8 +213,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     end
 
     # If the config wasn't determined, build a serializer config from controller fields.
-    fields = @controller.get_fields(fallback: false) if @controller
-    if fields
+    if fields = @controller&.get_fields
       fields = fields.deep_dup
 
       if @model
