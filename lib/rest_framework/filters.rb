@@ -18,7 +18,7 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
       return @controller.request.query_parameters.select { |p, _| fields.include?(p) }
     end
 
-    return @controller.request.query_parameters
+    return @controller.request.query_parameters.to_h
   end
 
   # Filter data according to the request query parameters.

@@ -88,7 +88,7 @@ module RESTFramework::BaseModelControllerMixin
 
   # Get a list of find_by fields for the current action.
   def get_filterset_fields
-    return self.class.filterset_fields || self.get_fields
+    return self.class.filterset_fields || self.get_fields(fallback: true)
   end
 
   # Get a list of ordering fields for the current action.
