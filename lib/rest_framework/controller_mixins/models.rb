@@ -86,7 +86,7 @@ module RESTFramework::BaseModelControllerMixin
     return self.class.find_by_fields || self.get_fields
   end
 
-  # Get a list of find_by fields for the current action.
+  # Get a list of find_by fields for the current action. Default to the model column names.
   def get_filterset_fields
     return self.class.filterset_fields || self.get_fields(fallback: true)
   end
