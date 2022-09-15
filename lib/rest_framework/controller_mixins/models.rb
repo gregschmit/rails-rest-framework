@@ -260,8 +260,10 @@ module RESTFramework::CreateModelMixin
 
   def create!
     if self.get_recordset.respond_to?(:create!) && self.create_from_recordset
-      # Create with any properties inherited from the recordset.
-      @record ||= self.get_recordset.create!(self.get_create_params)
+      # Create with any properties inherited from the recordset. We exclude any `select` clauses in
+      # case model callbacks need to call `count` on this collection, which typically raises a SQL
+      # `SyntaxError`.
+      @record ||= self.get_recordset.except(:select).create!(self.get_create_params)
     else
       # Otherwise, perform a "bare" create.
       @record ||= self.get_model.create!(self.get_create_params)

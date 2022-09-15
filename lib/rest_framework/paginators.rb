@@ -21,7 +21,8 @@ end
 class RESTFramework::PageNumberPaginator < RESTFramework::BasePaginator
   def initialize(**kwargs)
     super
-    @count = @data.count
+    # Exclude any `select` clauses since that would cause `count` to fail with a SQL `SyntaxError`.
+    @count = @data.except(:select).count
     @page_size = self._page_size
 
     @total_pages = @count / @page_size
