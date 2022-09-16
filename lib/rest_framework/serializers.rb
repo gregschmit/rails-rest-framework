@@ -101,53 +101,48 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return controller_serializer || @controller.class.try(:native_serializer_config)
   end
 
-  # Helper to filter (mutate) a single subconfig for specific keys.
-  def self.filter_subcfg(subcfg, except: nil, only: nil, additive: false)
-    return subcfg unless except || only
-    return subcfg unless subcfg || additive
-    raise "Cannot pass `only` and `additive` to filter_subcfg." if only && additive
+  # Helper to filter a single subconfig for specific keys. By default, keys from `fields` are
+  # removed from the provided `subcfg`. There are two (mutually exclusive) options to adjust the
+  # behavior:
+  #
+  #  `add`: Add any `fields` to the `subcfg` which aren't already in the `subcfg`.
+  #  `only`: Remove any values found in the `subcfg` not in `fields`.
+  def self.filter_subcfg(subcfg, fields:, add: false, only: false)
+    raise "`add` and `only` conflict with one another" if add && only
+
+    # Don't process nil `subcfg`s.
+    return subcfg unless subcfg
 
     if subcfg.is_a?(Array)
-      subcfg = subcfg.map(&:to_sym)
-      if except
-        if additive
-          # Only add fields which are not already included.
-          subcfg += except - subcfg
-        else
-          subcfg -= except
-        end
+      subcfg = subcfg.transform_values(&:to_sym)
+
+      if add
+        # Only add fields which are not already included.
+        subcfg += fields - subcfg
       elsif only
-        # Ignore `additive` in an `only` context, since it could causing data leaking.
-        unless additive
-          subcfg.select! { |c| c.in?(only) }
-        end
+        subcfg.select! { |c| c.in?(fields) }
+      else
+        subcfg -= fields
       end
     elsif subcfg.is_a?(Hash)
-      # Additive doesn't make sense in a hash context since we wouldn't know the values.
-      unless additive
-        if except
-          subcfg.symbolize_keys!
-          subcfg.reject! { |k, _v| k.in?(except) }
-        elsif only
-          subcfg.symbolize_keys!
-          subcfg.select! { |k, _v| k.in?(only) }
-        end
-      end
-    elsif !subcfg
-      if additive && except
-        subcfg = except
+      subcfg = subcfg.symbolize_keys
+
+      if add
+        # Add doesn't make sense in a hash context since we wouldn't know the values.
+      elsif only
+        subcfg.select! { |k, _v| k.in?(fields) }
+      else
+        subcfg.reject! { |k, _v| k.in?(fields) }
       end
     else  # Subcfg is a single element (assume string/symbol).
       subcfg = subcfg.to_sym
 
-      if except
-        if subcfg.in?(except)
-          subcfg = [] unless additive
-        elsif additive
-          subcfg = [subcfg, *except]
-        end
-      elsif only && !additive && !subcfg.in?(only)  # Protect only/additive data-leaking.
-        subcfg = []
+      if add
+        subcfg = subcfg.in?(fields) ? fields : [subcfg, *fields]
+      elsif only
+        subcfg = subcfg.in?(fields) ? subcfg : []
+      else
+        subcfg = subcfg.in?(fields) ? [] : subcfg
       end
     end
 
@@ -166,14 +161,16 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
       unless except.empty?
         # Filter `only`, `except` (additive), `include`, `methods`, and `serializer_methods`.
         if cfg[:only]
-          cfg[:only] = self.class.filter_subcfg(cfg[:only], except: except)
+          cfg[:only] = self.class.filter_subcfg(cfg[:only], fields: except)
+        elsif cfg[:except]
+          cfg[:except] = self.class.filter_subcfg(cfg[:except], fields: except, add: true)
         else
-          cfg[:except] = self.class.filter_subcfg(cfg[:except], except: except, additive: true)
+          cfg[:except] = except
         end
-        cfg[:include] = self.class.filter_subcfg(cfg[:include], except: except)
-        cfg[:methods] = self.class.filter_subcfg(cfg[:methods], except: except)
+        cfg[:include] = self.class.filter_subcfg(cfg[:include], fields: except)
+        cfg[:methods] = self.class.filter_subcfg(cfg[:methods], fields: except)
         cfg[:serializer_methods] = self.class.filter_subcfg(
-          cfg[:serializer_methods], except: except
+          cfg[:serializer_methods], fields: except
         )
       end
     elsif only_param && only = @controller.request.query_parameters[only_param].presence
@@ -186,13 +183,17 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
         # Filter `only`, `except` (additive), `include`, and `methods`.
         if cfg[:only]
-          cfg[:only] = self.class.filter_subcfg(cfg[:only], only: only)
+          cfg[:only] = self.class.filter_subcfg(cfg[:only], fields: only, only: true)
+        elsif cfg[:except]
+          cfg[:except] = self.class.filter_subcfg(cfg[:except], fields: except_cols, add: true)
         else
-          cfg[:except] = self.class.filter_subcfg(cfg[:except], except: except_cols, additive: true)
+          cfg[:only] = only
         end
-        cfg[:include] = self.class.filter_subcfg(cfg[:include], only: only)
-        cfg[:methods] = self.class.filter_subcfg(cfg[:methods], only: only)
-        cfg[:serializer_methods] = self.class.filter_subcfg(cfg[:serializer_methods], only: only)
+        cfg[:include] = self.class.filter_subcfg(cfg[:include], fields: only, only: true)
+        cfg[:methods] = self.class.filter_subcfg(cfg[:methods], fields: only, only: true)
+        cfg[:serializer_methods] = self.class.filter_subcfg(
+          cfg[:serializer_methods], fields: only, only: true
+        )
       end
     end
 
