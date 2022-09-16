@@ -177,14 +177,13 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
       only = only.split(",").map(&:strip).map(&:to_sym)
 
       unless only.empty?
-        # For the `except` part of the serializer, we need to append any columns not in `only`.
-        model = @controller.get_model
-        except_cols = model&.column_names&.map(&:to_sym)&.reject { |c| c.in?(only) }
-
         # Filter `only`, `except` (additive), `include`, and `methods`.
         if cfg[:only]
           cfg[:only] = self.class.filter_subcfg(cfg[:only], fields: only, only: true)
         elsif cfg[:except]
+          # For the `except` part of the serializer, we need to append any columns not in `only`.
+          model = @controller.get_model
+          except_cols = model&.column_names&.map(&:to_sym)&.reject { |c| c.in?(only) }
           cfg[:except] = self.class.filter_subcfg(cfg[:except], fields: except_cols, add: true)
         else
           cfg[:only] = only
