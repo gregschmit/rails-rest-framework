@@ -51,6 +51,10 @@ module RESTFramework::BaseControllerMixin
         serialize_to_xml: true,
         singleton_controller: nil,
         skip_actions: nil,
+
+        # Helper to disable serializer adapters by default, mainly introduced because Active Model
+        # Serializers will do things like serialize `[]` into `{"":[]}`.
+        disable_adapters_by_default: true,
       }.each do |a, default|
         next if base.respond_to?(a)
 
@@ -137,6 +141,11 @@ module RESTFramework::BaseControllerMixin
     html_kwargs ||= {}
     json_kwargs = kwargs.delete(:json_kwargs) || {}
     xml_kwargs = kwargs.delete(:xml_kwargs) || {}
+
+    # Do not use any adapters by default, if configured.
+    if self.class.disable_adapters_by_default && !kwargs.key?(:adapter)
+      kwargs[:adapter] = nil
+    end
 
     # Raise helpful error if payload is nil. Usually this happens when a record is not found (e.g.,
     # when passing something like `User.find_by(id: some_id)` to `api_response`). The caller should
