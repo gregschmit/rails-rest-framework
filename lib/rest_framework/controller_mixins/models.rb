@@ -114,6 +114,11 @@ module RESTFramework::BaseModelControllerMixin
     return super || RESTFramework::NativeSerializer
   end
 
+  # Helper to serialize data using the `serializer_class`.
+  def serialize(data, **kwargs)
+    return self.get_serializer_class.new(data, controller: self, **kwargs).serialize
+  end
+
   # Helper to get filtering backends, defaulting to using `ModelFilter` and `ModelOrderingFilter`.
   def get_filter_backends
     return self.class.filter_backends || [
@@ -232,10 +237,10 @@ module RESTFramework::ListModelMixin
     if self.class.paginator_class
       paginator = self.class.paginator_class.new(data: @records, controller: self)
       page = paginator.get_page
-      serialized_page = self.get_serializer_class.new(page, controller: self).serialize
+      serialized_page = self.serialize(page)
       return paginator.get_paginated_response(serialized_page)
     else
-      return self.get_serializer_class.new(@records, controller: self).serialize
+      return self.serialize(@records)
     end
   end
 end
@@ -248,7 +253,7 @@ module RESTFramework::ShowModelMixin
 
   def show!
     @record ||= self.get_record
-    return self.get_serializer_class.new(@record, controller: self).serialize
+    return self.serialize(@record)
   end
 end
 
@@ -269,7 +274,7 @@ module RESTFramework::CreateModelMixin
       @record ||= self.get_model.create!(self.get_create_params)
     end
 
-    return self.get_serializer_class.new(@record, controller: self).serialize
+    return self.serialize(@record)
   end
 end
 
@@ -282,7 +287,7 @@ module RESTFramework::UpdateModelMixin
   def update!
     @record ||= self.get_record
     @record.update!(self.get_update_params)
-    return self.get_serializer_class.new(@record, controller: self).serialize
+    return self.serialize(@record)
   end
 end
 

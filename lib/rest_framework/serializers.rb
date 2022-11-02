@@ -282,21 +282,6 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   end
 end
 
-# :nocov:
-# Alias NativeModelSerializer -> NativeSerializer.
-class RESTFramework::NativeModelSerializer < RESTFramework::NativeSerializer
-  def initialize(**kwargs)
-    super
-    ActiveSupport::Deprecation.warn(
-      <<~MSG.split("\n").join(" "),
-        RESTFramework::NativeModelSerializer is deprecated and will be removed in future versions of
-        REST Framework; you should use RESTFramework::NativeSerializer instead.
-      MSG
-    )
-  end
-end
-# :nocov:
-
 # This is a helper factory to wrap an ActiveModelSerializer to provide a `serialize` method which
 # accepts both collections and individual records. Use `.for` to build adapters.
 class RESTFramework::ActiveModelSerializerAdapterFactory
