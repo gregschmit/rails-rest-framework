@@ -28,8 +28,8 @@ Layout/FirstMethodParameterLineBreak:
 Layout/LineLength:
   Enabled: true
   Max: 100
-  IgnoredPatterns:
-    # Ignore long comments, mainly because the `annotate_models` gem produces long comments.
+  AllowedPatterns:
+    # Allow long comments.
     - '^#.*'
 
 Layout/EndAlignment:
@@ -132,6 +132,9 @@ Style/BlockDelimiters:
   Enabled: false
 
 Style/ClassAndModuleChildren:
+  Enabled: false
+
+Style/ClassMethodsDefinitions:
   Enabled: false
 
 Style/CommandLiteral:

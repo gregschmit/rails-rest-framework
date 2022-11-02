@@ -16,7 +16,7 @@ if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3")
   gem "webrick"
 end
 
-# Include gem active_model_serializers so we can test against their interface (Rails 6 only).
+# Include gem active_model_serializers so we can test against their interface (Rails >=6 only).
 if RAILS_VERSION < Gem::Version.new("7") && RAILS_VERSION >= Gem::Version.new("6")
   gem "active_model_serializers", "0.10.13"
 end
