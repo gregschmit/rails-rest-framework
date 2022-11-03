@@ -104,6 +104,11 @@ module RESTFramework::BaseControllerMixin
     return serializer_class
   end
 
+  # Helper to serialize data using the `serializer_class`.
+  def serialize(data, **kwargs)
+    return self.get_serializer_class.new(data, controller: self, **kwargs).serialize
+  end
+
   # Helper to get filtering backends, defaulting to no backends.
   def get_filter_backends
     return self.class.filter_backends || []
@@ -148,17 +153,22 @@ module RESTFramework::BaseControllerMixin
     json_kwargs = kwargs.delete(:json_kwargs) || {}
     xml_kwargs = kwargs.delete(:xml_kwargs) || {}
 
-    # Do not use any adapters by default, if configured.
-    if self.class.disable_adapters_by_default && !kwargs.key?(:adapter)
-      kwargs[:adapter] = nil
-    end
-
     # Raise helpful error if payload is nil. Usually this happens when a record is not found (e.g.,
     # when passing something like `User.find_by(id: some_id)` to `api_response`). The caller should
     # actually be calling `find_by!` to raise ActiveRecord::RecordNotFound and allowing the REST
     # framework to catch this error and return an appropriate error response.
     if payload.nil?
       raise RESTFramework::NilPassedToAPIResponseError
+    end
+
+    # If `payload` is an `ActiveRecord::Relation` or `ActiveRecord::Base`, then serialize it.
+    if payload.is_a?(ActiveRecord::Base) || payload.is_a?(ActiveRecord::Relation)
+      payload = self.serialize(payload)
+    end
+
+    # Do not use any adapters by default, if configured.
+    if self.class.disable_adapters_by_default && !kwargs.key?(:adapter)
+      kwargs[:adapter] = nil
     end
 
     # Flag to track if we had to rescue unknown format.

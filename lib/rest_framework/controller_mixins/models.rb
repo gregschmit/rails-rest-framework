@@ -114,11 +114,6 @@ module RESTFramework::BaseModelControllerMixin
     return super || RESTFramework::NativeSerializer
   end
 
-  # Helper to serialize data using the `serializer_class`.
-  def serialize(data, **kwargs)
-    return self.get_serializer_class.new(data, controller: self, **kwargs).serialize
-  end
-
   # Helper to get filtering backends, defaulting to using `ModelFilter` and `ModelOrderingFilter`.
   def get_filter_backends
     return self.class.filter_backends || [
@@ -182,9 +177,10 @@ module RESTFramework::BaseModelControllerMixin
     return nil
   end
 
-  # Get the set of records this controller has access to.
+  # Get the set of records this controller has access to. The return value is cached and exposed to
+  # the view as the `@recordset` instance variable.
   def get_recordset
-    return @recordset if instance_variable_defined?(:@recordset) && @recordset
+    return @recordset if instance_variable_defined?(:@recordset)
     return (@recordset = self.class.recordset) if self.class.recordset
 
     # If there is a model, return that model's default scope (all records by default).
@@ -192,13 +188,21 @@ module RESTFramework::BaseModelControllerMixin
       return @recordset = model.all
     end
 
-    return nil
+    return @recordset = nil
   end
 
-  # Get a single record by primary key or another column, if allowed.
+  # Helper to get the records this controller has access to *after* any filtering is applied.
+  def get_records
+    return @records if instance_variable_defined?(:@records)
+
+    return @records = self.get_filtered_data(self.get_recordset)
+  end
+
+  # Get a single record by primary key or another column, if allowed. The return value is cached and
+  # exposed to the view as the `@record` instance variable.
   def get_record
     # Cache the result.
-    return @_get_record if @_get_record
+    return @record if instance_variable_defined?(:@record)
 
     recordset = self.get_recordset
     find_by_key = self.get_model.primary_key
@@ -216,44 +220,40 @@ module RESTFramework::BaseModelControllerMixin
 
     # Filter recordset, if configured.
     if self.filter_recordset_before_find
-      recordset = self.get_filtered_data(recordset)
+      recordset = self.get_records
     end
 
-    # Return the record. Route key is always :id by Rails convention.
-    return @_get_record = recordset.find_by!(find_by_key => params[:id])
+    # Return the record. Route key is always `:id` by Rails convention.
+    return @record = recordset.find_by!(find_by_key => params[:id])
   end
 end
 
 # Mixin for listing records.
 module RESTFramework::ListModelMixin
   def index
-    api_response(self.index!)
+    api_response(self.get_index_records)
   end
 
-  def index!
-    @records ||= self.get_filtered_data(self.get_recordset)
+  # Helper to get records with both filtering and pagination applied.
+  def get_index_records
+    records = self.get_records
 
     # Handle pagination, if enabled.
     if self.class.paginator_class
-      paginator = self.class.paginator_class.new(data: @records, controller: self)
+      paginator = self.class.paginator_class.new(data: records, controller: self)
       page = paginator.get_page
       serialized_page = self.serialize(page)
       return paginator.get_paginated_response(serialized_page)
-    else
-      return self.serialize(@records)
     end
+
+    return records
   end
 end
 
 # Mixin for showing records.
 module RESTFramework::ShowModelMixin
   def show
-    api_response(self.show!)
-  end
-
-  def show!
-    @record ||= self.get_record
-    return self.serialize(@record)
+    api_response(self.get_record)
   end
 end
 
@@ -263,18 +263,17 @@ module RESTFramework::CreateModelMixin
     api_response(self.create!)
   end
 
+  # Helper to perform the `create!` call and return the created record.
   def create!
     if self.get_recordset.respond_to?(:create!) && self.create_from_recordset
       # Create with any properties inherited from the recordset. We exclude any `select` clauses in
       # case model callbacks need to call `count` on this collection, which typically raises a SQL
       # `SyntaxError`.
-      @record ||= self.get_recordset.except(:select).create!(self.get_create_params)
+      return self.get_recordset.except(:select).create!(self.get_create_params)
     else
       # Otherwise, perform a "bare" create.
-      @record ||= self.get_model.create!(self.get_create_params)
+      return self.get_model.create!(self.get_create_params)
     end
-
-    return self.serialize(@record)
   end
 end
 
@@ -284,10 +283,9 @@ module RESTFramework::UpdateModelMixin
     api_response(self.update!)
   end
 
+  # Helper to perform the `update!` call and return the updated record.
   def update!
-    @record ||= self.get_record
-    @record.update!(self.get_update_params)
-    return self.serialize(@record)
+    return self.get_record.update!(self.get_update_params)
   end
 end
 
@@ -298,9 +296,9 @@ module RESTFramework::DestroyModelMixin
     api_response("")
   end
 
+  # Helper to perform the `destroy!` call and return the destroyed (and frozen) record.
   def destroy!
-    @record ||= self.get_record
-    @record.destroy!
+    return self.get_record.destroy!
   end
 end
 
