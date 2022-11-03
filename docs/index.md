@@ -1,5 +1,4 @@
 ---
-layout: default
 ---
 
 # Rails REST Framework

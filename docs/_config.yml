@@ -9,3 +9,9 @@ collections:
 
 # Build settings
 markdown: kramdown
+
+defaults:
+  - scope:
+      path: ""  # All files.
+    values:
+      layout: default
