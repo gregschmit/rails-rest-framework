@@ -1,7 +1,8 @@
 ---
 layout: default
 ---
-# Rails REST Framework Documentation
+
+# Rails REST Framework
 
 [![Gem Version](https://badge.fury.io/rb/rest_framework.svg)](https://badge.fury.io/rb/rest_framework)
 [![Build Status](https://travis-ci.com/gregschmit/rails-rest-framework.svg?branch=master)](https://travis-ci.com/gregschmit/rails-rest-framework)
@@ -17,11 +18,13 @@ filtering, and pagination can be tedious.
 **The Solution**: This framework implements browsable API responses, CRUD actions for your models,
 and features like ordering/filtering/pagination, so you can focus on building awesome APIs.
 
-Website/Guide: [https://rails-rest-framework.com](https://rails-rest-framework.com)
+Website/Guide: [https://rails-rest-framework.com](rails-rest-framework.com)
 
-Source: [https://github.com/gregschmit/rails-rest-framework](https://github.com/gregschmit/rails-rest-framework)
+Demo: [http://demo.rails-rest-framework.com](demo.rails-rest-framework.com)
 
-YARD Docs: [https://rubydoc.info/gems/rest_framework](https://rubydoc.info/gems/rest_framework)
+Source: [https://github.com/gregschmit/rails-rest-framework](github.com/gregschmit/rails-rest-framework)
+
+YARD Docs: [https://rubydoc.info/gems/rest_framework](rubydoc.info/gems/rest_framework)
 
 ## Installation
 
@@ -41,6 +44,78 @@ Or install it yourself with:
 
 ```shell
 $ gem install rest_framework
+```
+
+## Quick Usage Tutorial
+
+### Controller Mixins
+
+To transform a controller into a RESTful controller, you can either include `BaseControllerMixin`,
+`ReadOnlyModelControllerMixin`, or `ModelControllerMixin`. `BaseControllerMixin` provides a `root`
+action and a simple interface for routing arbitrary additional actions:
+
+```ruby
+class ApiController < ApplicationController
+  include RESTFramework::BaseControllerMixin
+  self.extra_actions = {test: [:get]}
+
+  def test
+    render inline: "Test successful!"
+  end
+end
+```
+
+`ModelControllerMixin` assists with providing the standard model CRUD for your controller.
+
+```ruby
+class Api::MoviesController < ApiController
+  include RESTFramework::ModelControllerMixin
+
+  self.recordset = Movie.where(enabled: true)
+end
+```
+
+`ReadOnlyModelControllerMixin` only enables list/show actions, but since we're naming this
+controller in a way that doesn't make the model obvious, we can set that explicitly:
+
+```ruby
+class Api::ReadOnlyMoviesController < ApiController
+  include RESTFramework::ReadOnlyModelControllerMixin
+
+  self.model = Movie
+end
+```
+
+Note that you can also override the `get_recordset` instance method to override the API behavior
+dynamically per-request.
+
+### Routing
+
+You can use Rails' `resource`/`resources` routers to route your API, however if you want
+`extra_actions` / `extra_member_actions` to be routed automatically, then you can use `rest_route`
+for non-resourceful controllers, or `rest_resource` / `rest_resources` resourceful routers. You can
+also use `rest_root` to route the root of your API:
+
+```ruby
+Rails.application.routes.draw do
+  rest_root :api  # will find `api_controller` and route the `root` action to '/api'
+  namespace :api do
+    rest_resources :movies
+    rest_resources :users
+  end
+end
+```
+
+Or if you want the API root to be routed to `Api::RootController#root`:
+
+```ruby
+Rails.application.routes.draw do
+  namespace :api do
+    rest_root  # will route `Api::RootController#root` to '/' in this namespace ('/api')
+    rest_resources :movies
+    rest_resources :users
+  end
+end
 ```
 
 ## Development/Testing

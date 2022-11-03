@@ -5,8 +5,9 @@ ENV["RRF_OVERRIDE_VERSION"] = "0.dev"
 gemspec
 
 # Support testing against multiple Rails versions.
+DEV_RAILS_VERSION = File.read(File.expand_path(".rails-version", __dir__)).strip
 RAILS_VERSION = Gem::Version.new(
-  ENV["RAILS_VERSION"] || File.read(File.expand_path(".rails-version", __dir__)).strip,
+  ENV["RAILS_VERSION"] || DEV_RAILS_VERSION,
 )
 gem "rails", "~> #{RAILS_VERSION}"
 gem "rake", ">= 12.0"
@@ -43,10 +44,4 @@ end
 group :production do
   # Heroku requires Postgres.
   gem "pg"
-end
-
-# Documentation: Only use if requested via environment variable `RRF_DOCS`.
-if ENV["RRF_DOCS"]
-  gem "github-pages", ">= 208"
-  gem "yard"
 end
