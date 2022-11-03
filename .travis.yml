@@ -16,7 +16,7 @@ env:
 rvm:
 - 2.6.8
 - 2.7.5
-- &DEV_RUBY_VERSION 3.0.3
+- &DEV_RUBY_VERSION 3.0.4
 install:
 - rm Gemfile.lock
 - bundle install
