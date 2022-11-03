@@ -17,6 +17,7 @@ rvm:
 - 2.6.8
 - 2.7.5
 - 3.0.2
+- 3.1.2
 install:
 - rm Gemfile.lock
 - bundle install
@@ -29,7 +30,7 @@ jobs:
     env: "RAILS_VERSION=7.0.4"
   include:
   - stage: check
-    rvm: 3.0.2
+    rvm: 3.1.2
     env: []
     install:
     - bundle install
@@ -37,7 +38,7 @@ jobs:
     - rubocop
   - stage: publish
     if: tag IS present
-    rvm: 3.0.2
+    rvm: 3.1.2
     env: []
     install: []
     script:
