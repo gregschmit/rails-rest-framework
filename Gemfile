@@ -5,9 +5,8 @@ ENV["RRF_OVERRIDE_VERSION"] = "0.dev"
 gemspec
 
 # Support testing against multiple Rails versions.
-DEV_RAILS_VERSION = File.read(File.expand_path(".rails-version", __dir__)).strip
 RAILS_VERSION = Gem::Version.new(
-  ENV["RAILS_VERSION"] || DEV_RAILS_VERSION,
+  ENV["RAILS_VERSION"] || File.read(File.expand_path(".rails-version", __dir__)).strip,
 )
 gem "rails", "~> #{RAILS_VERSION}"
 gem "rake", ">= 12.0"
