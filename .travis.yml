@@ -10,7 +10,7 @@ stages:
 
 # Default test job matrix.
 env:
-- RAILS_VERSION=6.0.4
+- RAILS_VERSION=6.0.6
 - RAILS_VERSION=6.1.4
 - RAILS_VERSION=7.0.4
 rvm:
