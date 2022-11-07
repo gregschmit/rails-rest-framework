@@ -6,36 +6,121 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/styles/vs.min.css" integrity="sha512-aWjgJTbdG4imzxTxistV5TVNffcYGtIQQm2NBNahV6LmX14Xq9WwZTL1wPjaSglUuVzYgwrq+0EuI4+vKvQHHw==" crossorigin="anonymous">
 <style>
-  /* Adjust headers to always take up their entire row, and tweak the sizing. */
-  h1,h2,h3,h4,h5,h6 { width: 100%; font-weight: normal; }
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.7rem; }
-  h3 { font-size: 1.5rem; }
-  h4 { font-size: 1.3rem; }
-  h5 { font-size: 1.1rem; }
-  h6 { font-size: 1rem; }
+/* Adjust headers to always take up their entire row, and tweak the sizing. */
+h1,h2,h3,h4,h5,h6 { display: inline-block; font-weight: normal; margin-bottom: 0; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.7rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.3rem; }
+h5 { font-size: 1.1rem; }
+h6 { font-size: 1rem; }
 
-  /* Make route group expansion obvious to the user. */
-  .rrf-routes .rrf-route-group-header {
-    background-color: #f8f8f8;
-  }
-  .rrf-routes .rrf-route-group-header:hover {
-    background-color: #f0f0f0;
-  }
-  .rrf-routes .rrf-route-group-header td {
-    cursor: pointer;
-  }
+/* Make code and code blocks a little nicer looking. */
+code {
+  padding: 0 .35em;
+  background-color: #eee !important;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+}
 
-  /* Disable bootstrap's collapsing animation because in tables it causes delayed jerkiness. */
-  .rrf-routes .collapsing {
-    -webkit-transition: none;
-    transition: none;
-    display: none;
-  }
+/* Make route group expansion obvious to the user. */
+.rrf-routes .rrf-route-group-header {
+  background-color: #f8f8f8;
+}
+.rrf-routes .rrf-route-group-header:hover {
+  background-color: #f0f0f0;
+}
+.rrf-routes .rrf-route-group-header td {
+  cursor: pointer;
+}
+
+/* Disable bootstrap's collapsing animation because in tables it causes delayed jerkiness. */
+.rrf-routes .collapsing {
+  -webkit-transition: none;
+  transition: none;
+  display: none;
+}
+
+/* Copy-to-clipboard styles. */
+.rrf-copy {
+  position: relative;
+}
+.rrf-copy .rrf-copy-link {
+  position: absolute;
+  top: .5em;
+  right: .5em;
+  transition: 0.3s ease;
+}
+.rrf-copy .rrf-copy-link.rrf-clicked{
+  color: green;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/highlight.min.js" integrity="sha512-TDKKr+IvoqZnPzc3l35hdjpHD0m+b2EC2SrLEgKDRWpxf2rFCxemkgvJ5kfU48ip+Y+m2XVKyOCD85ybtlZDmw==" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/json.min.js" integrity="sha512-FoN8JE+WWCdIGXAIT8KQXwpiavz0Mvjtfk7Rku3MDUNO0BDCiRMXAsSX+e+COFyZTcDb9HDgP+pM2RX12d4j+A==" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/xml.min.js" integrity="sha512-dICltIgnUP+QSJrnYGCV8943p3qSDgvcg2NU4W8IcOZP4tdrvxlXjbhIznhtVQEcXow0mOjLM0Q6/NvZsmUH4g==" crossorigin="anonymous"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+<script>hljs.initHighlightingOnLoad()</script>
+<script>
+// Helper to replace the document when doing form submission (mainly to support PUT/PATCH/DELETE).
+function rrfReplaceDocument(content) {
+  // Replace the document with provided content.
+  document.open()
+  document.write(content)
+  document.close()
+
+  // Trigger `DOMContentLoaded` manually so our custom JavaScript works.
+  document.dispatchEvent(new Event("DOMContentLoaded", {bubbles: true, cancelable: true}))
+}
+
+// Helper to copy the element's next `<code>` sibling's content to the clipboard.
+function rrfCopyToClipboard(element) {
+  let range = document.createRange()
+  range.selectNode(element.nextSibling)
+  window.getSelection().removeAllRanges()
+  window.getSelection().addRange(range)
+  if (document.execCommand("copy")) {
+    // Trigger clicked animation.
+    element.classList.add("rrf-clicked")
+    element.innerText = "Copied!"
+    setTimeout(() => {
+      element.classList.remove("rrf-clicked")
+      element.innerText = "Copy to Clipboard"
+    }, 700)
+  }
+
+  // Return false to prevent normal link behavior.
+  return false
+}
+
+// Insert copy link and callback to copy contents of `<code>` element.
+document.addEventListener("DOMContentLoaded", (event) => {
+  [...document.getElementsByClassName("rrf-copy")].forEach((element, index) => {
+    element.insertAdjacentHTML(
+      "afterbegin",
+      "<a class=\"rrf-copy-link\" onclick=\"return rrfCopyToClipboard(this)\" href=\"#\">Copy to Clipboard</a>",
+    )
+  })
+})
+
+// Helper to refresh the window.
+function rrfRefresh(button) {
+  button.disabled = true
+  window.location.reload()
+}
+
+// Helper to call `DELETE` on the current path.
+function rrfDelete(button) {
+  button.disabled = true
+  rrfAPICall(window.location.pathname, "DELETE")
+}
+
+// Helper to make an HTML API call and replace the document with the response.
+function rrfAPICall(path, method) {
+  fetch(path, {method: method, headers: {"Accept": "text/html"}})
+    .then((response) => response.text())
+    .then((body) => {
+      rrfReplaceDocument(body)
+    })
+}
+</script>

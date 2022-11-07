@@ -65,9 +65,11 @@ module RESTFramework::Utils
     return application_routes.routes.map { |r|
       path = r.path.spec.to_s
       levels = path.count("/")
+      matches_path = current_path == path
+      matches_params = r.path.required_names.length == current_route.path.required_names.length
 
-      # Show link if the route is GET and our current route has all required URL params.
-      if r.verb == "GET" && r.path.required_names.length == current_route.path.required_names.length
+      # Show link if the route is GET and matches URL params of current route.
+      if r.verb == "GET" && matches_params
         show_link_args = current_route.path.required_names.map { |n| request.params[n] }.compact
       else
         show_link_args = nil
@@ -85,6 +87,8 @@ module RESTFramework::Utils
         subdomain: r.defaults[:subdomain].presence,
         levels: levels,
         show_link_args: show_link_args,
+        matches_path: matches_path,
+        matches_params: matches_params,
       }
     }.select { |r|
       (

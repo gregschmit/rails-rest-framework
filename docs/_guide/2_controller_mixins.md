@@ -171,9 +171,7 @@ class Api::MoviesController < ApiController
     # REST Framework will rescue ActiveRecord::RecordInvalid or ActiveRecord::RecordNotSaved
     @record.update!(enabled: false)
 
-    serialized_record = self.get_serializer_class.new(object: @record, controller: self).serialize
-
-    return api_response(serialized_record)
+    return api_response(@record)
   end
 end
 ```

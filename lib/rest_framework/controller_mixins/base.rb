@@ -177,8 +177,8 @@ module RESTFramework::BaseControllerMixin
     begin
       respond_to do |format|
         if payload == ""
-          format.json { head(:no_content) } if self.class.serialize_to_json
-          format.xml { head(:no_content) } if self.class.serialize_to_xml
+          format.json { head(kwargs[:status] || :no_content) } if self.class.serialize_to_json
+          format.xml { head(kwargs[:status] || :no_content) } if self.class.serialize_to_xml
         else
           format.json {
             jkwargs = kwargs.merge(json_kwargs)
@@ -205,7 +205,7 @@ module RESTFramework::BaseControllerMixin
           hkwargs = kwargs.merge(html_kwargs)
           begin
             render(**hkwargs)
-          rescue ActionView::MissingTemplate  # fallback to rest_framework layout
+          rescue ActionView::MissingTemplate  # Fallback to `rest_framework` layout.
             hkwargs[:layout] = "rest_framework"
             hkwargs[:html] = ""
             render(**hkwargs)
