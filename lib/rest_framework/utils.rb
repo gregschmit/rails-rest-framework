@@ -42,11 +42,6 @@ module RESTFramework::Utils
     application_routes.router.recognize(request) { |route, _| return route }
   end
 
-  # Helper to get the route pattern for a route, stripped of the `(:format)` segment.
-  def self.get_route_pattern(route)
-    return route.path.spec.to_s.gsub(/\(\.:format\)$/, "")
-  end
-
   # Helper to normalize a path pattern by replacing URL params with generic placeholder, and
   # removing the `(.:format)` at the end.
   def self.comparable_path(path)
@@ -62,7 +57,16 @@ module RESTFramework::Utils
 
     # Return routes that match our current route subdomain/pattern, grouped by controller. We
     # precompute certain properties of the route for performance.
-    return application_routes.routes.map { |r|
+    return application_routes.routes.select { |r|
+      # We `select` first to avoid unnecessarily calculating metadata for routes we don't even want
+      # to show.
+      (
+        (r.defaults[:subdomain].blank? || r.defaults[:subdomain] == request.subdomain) &&
+        self.comparable_path(r.path.spec.to_s).start_with?(current_comparable_path) &&
+        r.defaults[:controller].present? &&
+        r.defaults[:action].present?
+      )
+    }.map { |r|
       path = r.path.spec.to_s
       levels = path.count("/")
       matches_path = current_path == path
@@ -78,29 +82,20 @@ module RESTFramework::Utils
       {
         route: r,
         verb: r.verb,
-        path: path,
-        comparable_path: self.comparable_path(path),
         # Starts at the number of levels in current path, and removes the `(.:format)` at the end.
         relative_path: path.split("/")[current_levels..]&.join("/")&.gsub("(.:format)", ""),
         controller: r.defaults[:controller].presence,
         action: r.defaults[:action].presence,
-        subdomain: r.defaults[:subdomain].presence,
-        levels: levels,
         show_link_args: show_link_args,
         matches_path: matches_path,
-        matches_params: matches_params,
+        # The following options are only used in subsequent processing in this method.
+        _path: path,
+        _levels: levels,
       }
-    }.select { |r|
-      (
-        (!r[:subdomain] || r[:subdomain] == request.subdomain.presence) &&
-        r[:comparable_path].start_with?(current_comparable_path) &&
-        r[:controller] &&
-        r[:action]
-      )
     }.sort_by { |r|
       # Sort by levels first, so the routes matching closely with current request show first, then
       # by the path, and finally by the HTTP verb.
-      [r[:levels], r[:path], HTTP_METHOD_ORDERING.index(r[:verb]) || 99]
+      [r[:_levels], r[:_path], HTTP_METHOD_ORDERING.index(r[:verb]) || 99]
     }.group_by { |r| r[:controller] }.sort_by { |c, _r|
       # Sort the controller groups by current controller first, then depth, then alphanumerically.
       [request.params[:controller] == c ? 0 : 1, c.count("/"), c]
