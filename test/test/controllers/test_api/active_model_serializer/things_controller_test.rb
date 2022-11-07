@@ -8,6 +8,7 @@ if defined?(ActiveModel::Serializer)
       assert_response(:success)
       assert(@response.parsed_body[0]["name"])
       assert(@response.parsed_body[0]["owner"])
+      assert_equal("working!", @response.parsed_body[0]["test_serializer_method"])
       assert_nil(@response.parsed_body[0]["calculated_property"])
     end
 

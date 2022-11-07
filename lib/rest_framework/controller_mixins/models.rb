@@ -123,35 +123,33 @@ module RESTFramework::BaseModelControllerMixin
 
   # Filter the request body for keys in current action's allowed_parameters/fields config.
   def get_body_params
-    return @_get_body_params ||= begin
-      # Filter the request body and map to strings. Return all params if we cannot resolve a list of
-      # allowed parameters or fields.
-      body_params = if allowed_params = self.get_allowed_parameters&.map(&:to_s)
-        request.request_parameters.select { |p| allowed_params.include?(p) }
-      else
-        request.request_parameters
-      end
+    # Filter the request body and map to strings. Return all params if we cannot resolve a list of
+    # allowed parameters or fields.
+    body_params = if allowed_params = self.get_allowed_parameters&.map(&:to_s)
+      request.request_parameters.select { |p| allowed_params.include?(p) }
+    else
+      request.request_parameters
+    end
 
-      # Add query params in place of missing body params, if configured. If fields are not defined,
-      # fallback to using columns for this particular feature.
-      if self.class.accept_generic_params_as_body_params
-        (self.get_fields(fallback: true) - body_params.keys).each do |k|
-          if (value = params[k])
-            body_params[k] = value
-          end
+    # Add query params in place of missing body params, if configured. If fields are not defined,
+    # fallback to using columns for this particular feature.
+    if self.class.accept_generic_params_as_body_params
+      (self.get_fields(fallback: true) - body_params.keys).each do |k|
+        if (value = params[k])
+          body_params[k] = value
         end
       end
-
-      # Filter primary key if configured.
-      if self.class.filter_pk_from_request_body
-        body_params.delete(self.get_model&.primary_key)
-      end
-
-      # Filter fields in exclude_body_fields.
-      (self.class.exclude_body_fields || []).each { |f| body_params.delete(f) }
-
-      body_params
     end
+
+    # Filter primary key if configured.
+    if self.class.filter_pk_from_request_body
+      body_params.delete(self.get_model&.primary_key)
+    end
+
+    # Filter fields in exclude_body_fields.
+    (self.class.exclude_body_fields || []).each { |f| body_params.delete(f) }
+
+    return body_params
   end
   alias_method :get_create_params, :get_body_params
   alias_method :get_update_params, :get_body_params
@@ -260,7 +258,7 @@ end
 # Mixin for creating records.
 module RESTFramework::CreateModelMixin
   def create
-    api_response(self.create!)
+    api_response(self.create!, status: :created)
   end
 
   # Helper to perform the `create!` call and return the created record.
