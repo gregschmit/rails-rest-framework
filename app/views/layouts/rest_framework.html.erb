@@ -107,9 +107,37 @@
             </div>
           </div>
         <% end %>
-        <% unless @route_groups.blank? %>
+        <% if @route_groups.present? %>
           <div class="row">
-            <%= render partial: 'rest_framework/routes' %>
+            <div class="w-100">
+              <ul class="nav nav-tabs">
+                <li class="nav-item">
+                  <a class="nav-link active" href="#tab-routes" data-bs-toggle="tab" role="tab">
+                    Routes
+                  </a>
+                </li>
+                <% raw_form_routes = @route_groups.values[0].select { |r|
+                  r[:matches_params] && r[:verb].in?(["POST", "PUT", "PATCH"])
+                } %>
+                <% unless raw_form_routes.empty? %>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#tab-raw-form" data-bs-toggle="tab" role="tab">
+                      Raw Form
+                    </a>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+            <div class="tab-content w-100 pt-3">
+              <div class="tab-pane fade show active" id="tab-routes" role="tab">
+                <%= render partial: 'rest_framework/routes' %>
+              </div>
+              <% unless raw_form_routes.empty? %>
+                <div class="tab-pane fade" id="tab-raw-form" role="tab">
+                  <%= render partial: 'rest_framework/raw_form', locals: {raw_form_routes: raw_form_routes} %>
+                </div>
+              <% end %>
+            </div>
           </div>
         <% end %>
       </div>

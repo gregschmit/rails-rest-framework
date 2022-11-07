@@ -51,13 +51,21 @@ module RESTFramework::Utils
   # Helper for showing routes under a controller action; used for the browsable API.
   def self.get_routes(application_routes, request, current_route: nil)
     current_route ||= self.get_request_route(application_routes, request)
-    current_path = current_route.path.spec.to_s
+    current_path = current_route.path.spec.to_s.gsub("(.:format)", "")
     current_levels = current_path.count("/")
     current_comparable_path = self.comparable_path(current_path)
 
+    # Add helpful properties of the current route.
+    path_args = current_route.required_parts.map { |n| request.path_parameters[n] }
+    route_props = {
+      with_path_args: ->(r) {
+        r.format(r.required_parts.each_with_index.map { |p, i| [p, path_args[i]] }.to_h)
+      },
+    }
+
     # Return routes that match our current route subdomain/pattern, grouped by controller. We
     # precompute certain properties of the route for performance.
-    return application_routes.routes.select { |r|
+    return route_props, application_routes.routes.select { |r|
       # We `select` first to avoid unnecessarily calculating metadata for routes we don't even want
       # to show.
       (
@@ -67,29 +75,22 @@ module RESTFramework::Utils
         r.defaults[:action].present?
       )
     }.map { |r|
-      path = r.path.spec.to_s
+      path = r.path.spec.to_s.gsub("(.:format)", "")
       levels = path.count("/")
       matches_path = current_path == path
-      matches_params = r.path.required_names.length == current_route.path.required_names.length
-
-      # Show link if the route is GET and matches URL params of current route.
-      if r.verb == "GET" && matches_params
-        show_link_args = current_route.path.required_names.map { |n| request.params[n] }.compact
-      else
-        show_link_args = nil
-      end
+      matches_params = r.required_parts.length == current_route.required_parts.length
 
       {
         route: r,
         verb: r.verb,
+        path: path,
         # Starts at the number of levels in current path, and removes the `(.:format)` at the end.
-        relative_path: path.split("/")[current_levels..]&.join("/")&.gsub("(.:format)", ""),
+        relative_path: path.split("/")[current_levels..]&.join("/"),
         controller: r.defaults[:controller].presence,
         action: r.defaults[:action].presence,
-        show_link_args: show_link_args,
         matches_path: matches_path,
+        matches_params: matches_params,
         # The following options are only used in subsequent processing in this method.
-        _path: path,
         _levels: levels,
       }
     }.sort_by { |r|
