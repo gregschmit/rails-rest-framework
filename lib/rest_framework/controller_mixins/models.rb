@@ -229,7 +229,7 @@ end
 # Mixin for listing records.
 module RESTFramework::ListModelMixin
   def index
-    api_response(self.get_index_records)
+    return api_response(self.get_index_records)
   end
 
   # Helper to get records with both filtering and pagination applied.
@@ -251,14 +251,14 @@ end
 # Mixin for showing records.
 module RESTFramework::ShowModelMixin
   def show
-    api_response(self.get_record)
+    return api_response(self.get_record)
   end
 end
 
 # Mixin for creating records.
 module RESTFramework::CreateModelMixin
   def create
-    api_response(self.create!, status: :created)
+    return api_response(self.create!, status: :created)
   end
 
   # Helper to perform the `create!` call and return the created record.
@@ -278,12 +278,14 @@ end
 # Mixin for updating records.
 module RESTFramework::UpdateModelMixin
   def update
-    api_response(self.update!)
+    return api_response(self.update!)
   end
 
   # Helper to perform the `update!` call and return the updated record.
   def update!
-    return self.get_record.update!(self.get_update_params)
+    record = self.get_record
+    record.update!(self.get_update_params)
+    return record
   end
 end
 
@@ -291,7 +293,7 @@ end
 module RESTFramework::DestroyModelMixin
   def destroy
     self.destroy!
-    api_response("")
+    return api_response("")
   end
 
   # Helper to perform the `destroy!` call and return the destroyed (and frozen) record.

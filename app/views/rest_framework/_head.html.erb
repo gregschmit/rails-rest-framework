@@ -115,12 +115,26 @@ function rrfDelete(button) {
   rrfAPICall(window.location.pathname, "DELETE")
 }
 
+// Helper to submit the raw form.
+function rrfSubmitRawForm(button) {
+  button.disabled = true
+
+  // Grab the selected route/method, media type, and the body.
+  const [method, path] = document.getElementById("rawFormRoute").value.split(":")
+  const media_type = document.getElementById("rawFormMediaType").value
+  const body = document.getElementById("rawFormContent").value
+
+  // Perform the API call.
+  rrfAPICall(path, method, {body, headers: {"Content-Type": media_type}})
+}
+
 // Helper to make an HTML API call and replace the document with the response.
-function rrfAPICall(path, method) {
-  fetch(path, {method: method, headers: {"Accept": "text/html"}})
+function rrfAPICall(path, method, kwargs={}) {
+  const headers = kwargs.headers || {}
+  delete kwargs.headers
+
+  fetch(path, {method, headers: {"Accept": "text/html", ...headers}, ...kwargs})
     .then((response) => response.text())
-    .then((body) => {
-      rrfReplaceDocument(body)
-    })
+    .then((body) => { rrfReplaceDocument(body) })
 }
 </script>
