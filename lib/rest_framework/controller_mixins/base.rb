@@ -201,7 +201,9 @@ module RESTFramework::BaseControllerMixin
           end
           @template_logo_text ||= "Rails REST Framework"
           @title ||= self.controller_name.camelize
-          @route_groups ||= RESTFramework::Utils.get_routes(Rails.application.routes, request)
+          @route_props, @route_groups = RESTFramework::Utils.get_routes(
+            Rails.application.routes, request
+          )
           hkwargs = kwargs.merge(html_kwargs)
           begin
             render(**hkwargs)
