@@ -1,6 +1,6 @@
 # Seed data is used for controller tests which need data to be useful, and also for the Demo API.
 
-User.create!(
+User.create(
   login: "example",
   age: 23,
   balance: 20.34,
@@ -9,7 +9,7 @@ User.create!(
     {name: "Example Thing 2", shape: "Hexagon", price: 8},
   ],
 )
-User.create!(
+User.create(
   login: "admin",
   is_admin: true,
   age: 34,
@@ -20,5 +20,5 @@ User.create!(
   ],
 )
 
-Thing.create!(name: "Orphan Thing 1", shape: "Mobius Strip", price: 4000)
-Thing.create!(name: "Orphan Thing 2", shape: "Umbilic Torus", price: 5000)
+Thing.create(name: "Orphan Thing 1", shape: "Mobius Strip", price: 4000)
+Thing.create(name: "Orphan Thing 2", shape: "Umbilic Torus", price: 5000)

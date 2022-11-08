@@ -86,7 +86,7 @@ class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
     unless search.blank?
       return data.where(
         fields.map { |f|
-          "CAST(#{f} AS CHAR) #{@controller.class.search_ilike ? "ILIKE" : "LIKE"} ?"
+          "CAST(#{f} AS VARCHAR) #{@controller.class.search_ilike ? "ILIKE" : "LIKE"} ?"
         }.join(" OR "),
         *(["%#{search}%"] * fields.length),
       )

@@ -73,7 +73,7 @@
         </div>
         <% if @json_payload.present? || @xml_payload.present? %>
           <div class="row">
-            <div class="w-100">
+            <div>
               <ul class="nav nav-tabs">
                 <% if @json_payload.present? %>
                   <li class="nav-item">
@@ -91,7 +91,7 @@
                 <% end %>
               </ul>
             </div>
-            <div class="tab-content w-100 pt-3">
+            <div class="tab-content pt-2">
               <div class="tab-pane fade show active" id="tab-json" role="tab">
                 <% if @json_payload.present? %>
                   <div>
@@ -109,7 +109,7 @@
         <% end %>
         <% if @route_groups.present? %>
           <div class="row">
-            <div class="w-100">
+            <div>
               <ul class="nav nav-tabs">
                 <li class="nav-item">
                   <a class="nav-link active" href="#tab-routes" data-bs-toggle="tab" role="tab">
@@ -128,7 +128,7 @@
                 <% end %>
               </ul>
             </div>
-            <div class="tab-content w-100 pt-3">
+            <div class="tab-content pt-2">
               <div class="tab-pane fade show active" id="tab-routes" role="tab">
                 <%= render partial: 'rest_framework/routes' %>
               </div>
