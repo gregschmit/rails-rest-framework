@@ -36,5 +36,4 @@ end
 
 require_relative "../config/environment"
 
-require "minitest/pride"
 require "rails/test_help"

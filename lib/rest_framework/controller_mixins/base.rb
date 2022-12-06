@@ -36,23 +36,28 @@ module RESTFramework::BaseControllerMixin
       {
         filter_pk_from_request_body: true,
         exclude_body_fields: [:created_at, :created_by, :updated_at, :updated_by],
-        accept_generic_params_as_body_params: true,
+        accept_generic_params_as_body_params: false,
+        show_backtrace: false,
         extra_actions: nil,
         extra_member_actions: nil,
         filter_backends: nil,
+        singleton_controller: nil,
+        skip_actions: nil,
+
+        # Options related to serialization.
+        rescue_unknown_format_with: :json,
+        serializer_class: nil,
+        serialize_to_json: true,
+        serialize_to_xml: true,
+
+        # Options related to pagination.
         paginator_class: nil,
         page_size: 20,
         page_query_param: "page",
         page_size_query_param: "page_size",
         max_page_size: nil,
-        rescue_unknown_format_with: :json,
-        serializer_class: nil,
-        serialize_to_json: true,
-        serialize_to_xml: true,
-        singleton_controller: nil,
-        skip_actions: nil,
 
-        # Helper to disable serializer adapters by default, mainly introduced because Active Model
+        # Option to disable serializer adapters by default, mainly introduced because Active Model
         # Serializers will do things like serialize `[]` into `{"":[]}`.
         disable_adapters_by_default: true,
       }.each do |a, default|
@@ -83,6 +88,7 @@ module RESTFramework::BaseControllerMixin
       base.rescue_from(ActiveRecord::RecordInvalid, with: :record_invalid)
       base.rescue_from(ActiveRecord::RecordNotSaved, with: :record_not_saved)
       base.rescue_from(ActiveRecord::RecordNotDestroyed, with: :record_not_destroyed)
+      base.rescue_from(ActiveModel::UnknownAttributeError, with: :unknown_attribute_error)
     end
   end
 
@@ -126,23 +132,46 @@ module RESTFramework::BaseControllerMixin
 
   def record_invalid(e)
     return api_response(
-      {message: "Record invalid.", exception: e, errors: e.record&.errors}, status: 400
+      {
+        message: "Record invalid.", errors: e.record&.errors
+      }.merge(self.class.show_backtrace ? {exception: e.full_message} : {}),
+      status: 400,
     )
   end
 
   def record_not_found(e)
-    return api_response({message: "Record not found.", exception: e}, status: 404)
+    return api_response(
+      {
+        message: "Record not found.",
+      }.merge(self.class.show_backtrace ? {exception: e.full_message} : {}),
+      status: 404,
+    )
   end
 
   def record_not_saved(e)
     return api_response(
-      {message: "Record not saved.", exception: e, errors: e.record&.errors}, status: 406
+      {
+        message: "Record not saved.", errors: e.record&.errors
+      }.merge(self.class.show_backtrace ? {exception: e.full_message} : {}),
+      status: 400,
     )
   end
 
   def record_not_destroyed(e)
     return api_response(
-      {message: "Record not destroyed.", exception: e, errors: e.record&.errors}, status: 406
+      {
+        message: "Record not destroyed.", errors: e.record&.errors
+      }.merge(self.class.show_backtrace ? {exception: e.full_message} : {}),
+      status: 400,
+    )
+  end
+
+  def unknown_attribute_error(e)
+    return api_response(
+      {
+        message: e.message.capitalize,
+      }.merge(self.class.show_backtrace ? {exception: e.full_message} : {}),
+      status: 400,
     )
   end
 

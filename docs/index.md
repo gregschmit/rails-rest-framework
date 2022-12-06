@@ -19,7 +19,7 @@ and features like ordering/filtering/pagination, so you can focus on building aw
 
 Website/Guide: [rails-rest-framework.com](https://rails-rest-framework.com)
 
-Demo: [demo.rails-rest-framework.com](http://demo.rails-rest-framework.com)
+Demo: [demo.rails-rest-framework.com](https://demo.rails-rest-framework.com)
 
 Source: [github.com/gregschmit/rails-rest-framework](https://github.com/gregschmit/rails-rest-framework)
 

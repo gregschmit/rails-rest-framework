@@ -9,13 +9,19 @@ class DemoApi::ThingsControllerTest < ActionController::TestCase
   def test_destroy_aborted
     t = Thing.create!(name: "Undestroyable")
     delete(:destroy, as: :json, params: {id: t.id})
-    assert_response(406)
+    assert_response(400)
   end
 
   def test_update_validation_failed
     t = Thing.create!(name: "test")
     patch(:update, as: :json, params: {id: t.id}, body: {price: -1}.to_json)
     assert_response(400)
+  end
+
+  def test_create_failed
+    post(:create, as: :json, body: {some_column: "should fail"}.to_json)
+    assert_response(400)
+    assert(@response.parsed_body.key?("message"))
   end
 
   def test_except_columns

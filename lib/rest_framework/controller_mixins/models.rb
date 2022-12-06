@@ -125,17 +125,17 @@ module RESTFramework::BaseModelControllerMixin
   def get_body_params
     # Filter the request body and map to strings. Return all params if we cannot resolve a list of
     # allowed parameters or fields.
-    body_params = if allowed_params = self.get_allowed_parameters&.map(&:to_s)
+    allowed_params = self.get_allowed_parameters&.map(&:to_s)
+    body_params = if allowed_params
       request.request_parameters.select { |p| allowed_params.include?(p) }
     else
       request.request_parameters
     end
 
-    # Add query params in place of missing body params, if configured. If fields are not defined,
-    # fallback to using columns for this particular feature.
-    if self.class.accept_generic_params_as_body_params
-      (self.get_fields(fallback: true) - body_params.keys).each do |k|
-        if (value = params[k])
+    # Add query params in place of missing body params, if configured.
+    if self.class.accept_generic_params_as_body_params && allowed_params
+      (allowed_params - body_params.keys).each do |k|
+        if value = params[k].presence
           body_params[k] = value
         end
       end
