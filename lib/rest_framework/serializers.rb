@@ -248,7 +248,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     )
   end
 
-  def serialize(*args)
+  def serialize(*_args)
     config = self.get_serializer_config
     serializer_methods = config.delete(:serializer_methods)
 

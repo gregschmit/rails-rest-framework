@@ -5,9 +5,17 @@ require_relative "../filters"
 module RESTFramework::BaseModelControllerMixin
   include RESTFramework::BaseControllerMixin
 
+  module ClassMethods
+    # Get the configured serializer class, or `NativeSerializer` as a default.
+    def get_serializer_class
+      return super || RESTFramework::NativeSerializer
+    end
+  end
+
   def self.included(base)
     if base.is_a?(Class)
       RESTFramework::BaseControllerMixin.included(base)
+      base.extend(ClassMethods)
 
       # Add class attributes (with defaults) unless they already exist.
       {
@@ -107,11 +115,6 @@ module RESTFramework::BaseModelControllerMixin
       :allowed_action_parameters,
       :allowed_parameters,
     ) || self.fields
-  end
-
-  # Helper to get the configured serializer class, or `NativeSerializer` as a default.
-  def get_serializer_class
-    return super || RESTFramework::NativeSerializer
   end
 
   # Helper to get filtering backends, defaulting to using `ModelFilter` and `ModelOrderingFilter`.

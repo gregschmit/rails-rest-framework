@@ -26,6 +26,24 @@ module RESTFramework::BaseControllerMixin
 
       return skip
     end
+
+    # Get the configured serializer class.
+    def get_serializer_class
+      return nil unless serializer_class = self.serializer_class
+
+      # Support dynamically resolving serializer given a symbol or string.
+      serializer_class = serializer_class.to_s if serializer_class.is_a?(Symbol)
+      if serializer_class.is_a?(String)
+        serializer_class = self.const_get(serializer_class)
+      end
+
+      # Wrap it with an adapter if it's an active_model_serializer.
+      if defined?(ActiveModel::Serializer) && (serializer_class < ActiveModel::Serializer)
+        serializer_class = RESTFramework::ActiveModelSerializerAdapterFactory.for(serializer_class)
+      end
+
+      return serializer_class
+    end
   end
 
   def self.included(base)
@@ -92,27 +110,9 @@ module RESTFramework::BaseControllerMixin
     end
   end
 
-  # Helper to get the configured serializer class.
-  def get_serializer_class
-    return nil unless serializer_class = self.class.serializer_class
-
-    # Support dynamically resolving serializer given a symbol or string.
-    serializer_class = serializer_class.to_s if serializer_class.is_a?(Symbol)
-    if serializer_class.is_a?(String)
-      serializer_class = self.class.const_get(serializer_class)
-    end
-
-    # Wrap it with an adapter if it's an active_model_serializer.
-    if defined?(ActiveModel::Serializer) && (serializer_class < ActiveModel::Serializer)
-      serializer_class = RESTFramework::ActiveModelSerializerAdapterFactory.for(serializer_class)
-    end
-
-    return serializer_class
-  end
-
   # Helper to serialize data using the `serializer_class`.
   def serialize(data, **kwargs)
-    return self.get_serializer_class.new(data, controller: self, **kwargs).serialize
+    return self.class.get_serializer_class.new(data, controller: self, **kwargs).serialize
   end
 
   # Helper to get filtering backends, defaulting to no backends.

@@ -13,4 +13,36 @@ class DemoApi::ThingsController < DemoApiController
     thing.update!(is_discounted: !thing.is_discounted)
     return api_response({message: "Is discounted toggled to #{thing.is_discounted}."})
   end
+
+  class Channel < ApplicationCable::Channel
+    # Subscribe with:
+    # {"command": "subscribe","identifier": "{\"channel\": \"DemoApi::ThingsController::Channel\"}"}
+    def subscribed
+      logger.info("GNS: subscribed")
+      stream_from("demo_api/things")
+    end
+
+    def index(_data)
+      controller = self._controller.new
+      controller.request = ActionDispatch::Request.new({})
+      controller.request.format
+      controller.index
+      ActionCable.server.broadcast(
+        "demo_api/things",
+        self._controller.get_serializer_class.new(self._controller.get_recordset).serialize,
+      )
+    end
+
+    def _controller
+      return self.class.to_s.deconstantize.constantize
+    end
+  end
+
+  this_controller = self
+  Thing.after_commit do
+    ActionCable.server.broadcast(
+      "demo_api/things",
+      this_controller.get_serializer_class.new(self).serialize,
+    )
+  end
 end

@@ -1,0 +1,3 @@
+# This Procfile is for running the test app on development systems.
+rails: bin/rails server
+redis: redis-server

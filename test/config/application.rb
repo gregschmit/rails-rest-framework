@@ -8,6 +8,7 @@ require "rails"
   "action_controller/railtie",
   "action_view/railtie",
   "active_job/railtie",
+  "action_cable/engine",
   "rails/test_unit/railtie",
 ].each do |railtie|
   require railtie
@@ -33,6 +34,8 @@ class Application < Rails::Application
 
   config.cache_classes = false
   config.action_controller.perform_caching = false
+
+  config.action_cable.disable_request_forgery_protection = true
 
   if Rails::VERSION::MAJOR >= 7
     config.active_support.remove_deprecated_time_with_zone_name = true

@@ -10,11 +10,8 @@ RAILS_VERSION = Gem::Version.new(
 )
 gem "rails", "~> #{RAILS_VERSION}"
 gem "rake", ">= 12.0"
-
-# Ruby 3 removed webrick, so we need to install it manually.
-if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3")
-  gem "webrick"
-end
+gem "puma"
+gem "redis"
 
 # Include gem active_model_serializers so we can test against their interface (Rails >=6 only).
 if RAILS_VERSION > Gem::Version.new("6")
@@ -25,6 +22,7 @@ group :development do
   gem "better_errors"
   gem "binding_of_caller"
   gem "byebug"
+  gem "foreman"
   gem "pry-rails"
   gem "rubocop-shopify", require: false
   gem "web-console"
