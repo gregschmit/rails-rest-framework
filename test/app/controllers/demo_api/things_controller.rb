@@ -39,10 +39,19 @@ class DemoApi::ThingsController < DemoApiController
   end
 
   this_controller = self
-  Thing.after_commit do
-    ActionCable.server.broadcast(
-      "demo_api/things",
-      this_controller.get_serializer_class.new(self).serialize,
-    )
-  end
+  Thing.define_method(:bcast) {
+    if self.in?(controller.get_recordset)
+      ActionCable.server.broadcast(
+        "demo_api/things",
+        this_controller.get_serializer_class.new(self).serialize,
+      )
+    end
+  }
+  Thing.after_commit(:bcast)
+  # Thing.after_commit do
+  #   ActionCable.server.broadcast(
+  #     "demo_api/things",
+  #     this_controller.get_serializer_class.new(self).serialize,
+  #   )
+  # end
 end
