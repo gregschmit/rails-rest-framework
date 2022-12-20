@@ -238,10 +238,16 @@ module RESTFramework::ListModelMixin
 
     # Handle pagination, if enabled.
     if self.class.paginator_class
-      paginator = self.class.paginator_class.new(data: records, controller: self)
-      page = paginator.get_page
-      serialized_page = self.serialize(page)
-      return paginator.get_paginated_response(serialized_page)
+      # If there is no `max_page_size`, `page_size_query_param` is not `nil`, and the page size is
+      # set to "0", then skip pagination.
+      unless !self.class.max_page_size &&
+          self.class.page_size_query_param &&
+          params[self.class.page_size_query_param] == "0"
+        paginator = self.class.paginator_class.new(data: records, controller: self)
+        page = paginator.get_page
+        serialized_page = self.serialize(page)
+        return paginator.get_paginated_response(serialized_page)
+      end
     end
 
     return records

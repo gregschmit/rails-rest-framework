@@ -11,6 +11,12 @@ Rails.application.routes.draw do
     end
   end
 
+  # namespace :plain_api do
+  #   rest_root
+  #   rest_resources :things
+  #   rest_resources :users
+  # end
+
   rest_root :test_api
   namespace :test_api do
     rest_resource :user do
