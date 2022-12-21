@@ -62,7 +62,7 @@ code {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/xml.min.js" integrity="sha512-dICltIgnUP+QSJrnYGCV8943p3qSDgvcg2NU4W8IcOZP4tdrvxlXjbhIznhtVQEcXow0mOjLM0Q6/NvZsmUH4g==" crossorigin="anonymous"></script>
 <script>hljs.initHighlightingOnLoad()</script>
 <script>
-// Helper to replace the document when doing form submission (mainly to support PUT/PATCH/DELETE).
+// Replace the document when doing form submission (mainly to support PUT/PATCH/DELETE).
 function rrfReplaceDocument(content) {
   // Replace the document with provided content.
   document.open()
@@ -73,7 +73,7 @@ function rrfReplaceDocument(content) {
   document.dispatchEvent(new Event("DOMContentLoaded", {bubbles: true, cancelable: true}))
 }
 
-// Helper to copy the element's next `<code>` sibling's content to the clipboard.
+// Copy the element's next `<code>` sibling's content to the clipboard.
 function rrfCopyToClipboard(element) {
   let range = document.createRange()
   range.selectNode(element.nextSibling)
@@ -103,19 +103,25 @@ document.addEventListener("DOMContentLoaded", (event) => {
   })
 })
 
-// Helper to refresh the window.
+// Refresh the window.
 function rrfRefresh(button) {
   button.disabled = true
   window.location.reload()
 }
 
-// Helper to call `DELETE` on the current path.
+// Call `DELETE` on the current path.
 function rrfDelete(button) {
   button.disabled = true
   rrfAPICall(window.location.pathname, "DELETE")
 }
 
-// Helper to submit the raw form.
+// Call `OPTIONS` on the current path.
+function rrfOptions(button) {
+  button.disabled = true
+  rrfAPICall(window.location.pathname, "OPTIONS")
+}
+
+// Submit the raw form.
 function rrfSubmitRawForm(button) {
   button.disabled = true
 
@@ -128,7 +134,7 @@ function rrfSubmitRawForm(button) {
   rrfAPICall(path, method, {body, headers: {"Content-Type": media_type}})
 }
 
-// Helper to make an HTML API call and replace the document with the response.
+// Make an HTML API call and replace the document with the response.
 function rrfAPICall(path, method, kwargs={}) {
   const headers = kwargs.headers || {}
   delete kwargs.headers

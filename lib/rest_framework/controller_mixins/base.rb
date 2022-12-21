@@ -26,6 +26,19 @@ module RESTFramework::BaseControllerMixin
 
       return skip
     end
+
+    # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
+    def get_options_metadata
+      return @_base_options_metadata ||= {
+        name: self.metadata&.name || self.controller_name.titleize,
+        description: self.metadata&.description,
+        renders: [
+          "text/html",
+          self.serialize_to_json ? "application/json" : nil,
+          self.serialize_to_xml ? "application/xml" : nil,
+        ].compact,
+      }.compact
+    end
   end
 
   def self.included(base)
@@ -43,6 +56,7 @@ module RESTFramework::BaseControllerMixin
         filter_backends: nil,
         singleton_controller: nil,
         skip_actions: nil,
+        metadata: nil,
 
         # Options related to serialization.
         rescue_unknown_format_with: :json,
@@ -92,7 +106,7 @@ module RESTFramework::BaseControllerMixin
     end
   end
 
-  # Helper to get the configured serializer class.
+  # Get the configured serializer class.
   def get_serializer_class
     return nil unless serializer_class = self.class.serializer_class
 
@@ -110,17 +124,17 @@ module RESTFramework::BaseControllerMixin
     return serializer_class
   end
 
-  # Helper to serialize data using the `serializer_class`.
+  # Serialize the given data using the `serializer_class`.
   def serialize(data, **kwargs)
     return self.get_serializer_class.new(data, controller: self, **kwargs).serialize
   end
 
-  # Helper to get filtering backends, defaulting to no backends.
+  # Get filtering backends, defaulting to no backends.
   def get_filter_backends
     return self.class.filter_backends || []
   end
 
-  # Helper to filter an arbitrary data set over all configured filter backends.
+  # Filter an arbitrary data set over all configured filter backends.
   def get_filtered_data(data)
     self.get_filter_backends.each do |filter_class|
       filter = filter_class.new(controller: self)
@@ -229,7 +243,7 @@ module RESTFramework::BaseControllerMixin
             @xml_payload = payload.to_xml if self.class.serialize_to_xml
           end
           @template_logo_text ||= "Rails REST Framework"
-          @title ||= self.controller_name.camelize
+          @title ||= self.controller_name.titleize
           @route_props, @route_groups = RESTFramework::Utils.get_routes(
             Rails.application.routes, request
           )
@@ -252,5 +266,10 @@ module RESTFramework::BaseControllerMixin
         raise
       end
     end
+  end
+
+  # Provide a generic `OPTIONS` response with metadata such as available actions.
+  def options
+    return api_response(self.class.get_options_metadata)
   end
 end

@@ -11,10 +11,17 @@ end
 # A simple filtering backend that supports filtering a recordset based on fields defined on the
 # controller class.
 class RESTFramework::ModelFilter < RESTFramework::BaseFilter
+  # Get a list of filterset fields for the current action. Fallback to the columns because we don't
+  # want to try filtering by any query parameter because that could clash with other query
+  # parameters.
+  def _get_fields
+    return @controller.class.filterset_fields || @controller.get_fields(fallback: true)
+  end
+
   # Filter params for keys allowed by the current action's filterset_fields/fields config.
   def _get_filter_params
     # Map filterset fields to strings because query parameter keys are strings.
-    if fields = @controller.get_filterset_fields&.map(&:to_s)
+    if fields = self._get_fields.map(&:to_s)
       return @controller.request.query_parameters.select { |p, _| fields.include?(p) }
     end
 
@@ -34,15 +41,21 @@ end
 
 # A filter backend which handles ordering of the recordset.
 class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
+  # Get a list of ordering fields for the current action. Do not fallback to columns in case the
+  # user wants to order by a virtual column.
+  def _get_fields
+    return @controller.class.ordering_fields || @controller.get_fields
+  end
+
   # Convert ordering string to an ordering configuration.
   def _get_ordering
     return nil if @controller.class.ordering_query_param.blank?
 
     # Ensure ordering_fields are strings since the split param will be strings.
-    ordering_fields = @controller.get_ordering_fields&.map(&:to_s)
+    fields = self._get_fields&.map(&:to_s)
     order_string = @controller.params[@controller.class.ordering_query_param]
 
-    unless order_string.blank?
+    if order_string.present? && fields
       ordering = {}.with_indifferent_access
       order_string.split(",").each do |field|
         if field[0] == "-"
@@ -52,7 +65,7 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
           column = field
           direction = :asc
         end
-        if !ordering_fields || column.in?(ordering_fields)
+        if !fields || column.in?(fields)
           ordering[column] = direction
         end
       end
@@ -77,13 +90,19 @@ end
 
 # Multi-field text searching on models.
 class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
+  # Get a list of search fields for the current action. Fallback to the model column names because
+  # we need an explicit list of columns to search on, so `nil` is useless in this context.
+  def _get_fields
+    return @controller.class.search_fields || @controller.get_fields(fallback: true)
+  end
+
   # Filter data according to the request query parameters.
   def get_filtered_data(data)
-    fields = @controller.get_search_fields
+    fields = self._get_fields
     search = @controller.request.query_parameters[@controller.class.search_query_param]
 
     # Ensure we use array conditions to prevent SQL injection.
-    unless search.blank?
+    if search.present? && !fields.empty?
       return data.where(
         fields.map { |f|
           "CAST(#{f} AS VARCHAR) #{@controller.class.search_ilike ? "ILIKE" : "LIKE"} ?"

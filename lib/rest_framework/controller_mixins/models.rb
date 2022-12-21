@@ -5,9 +5,36 @@ require_relative "../filters"
 module RESTFramework::BaseModelControllerMixin
   include RESTFramework::BaseControllerMixin
 
+  module ClassMethods
+    # Helper to get the actions that should be skipped.
+    def get_skip_actions(skip_undefined: true)
+      # First, skip explicitly skipped actions.
+      skip = self.skip_actions || []
+
+      # Now add methods which don't exist, since we don't want to route those.
+      if skip_undefined
+        [:index, :new, :create, :show, :edit, :update, :destroy].each do |a|
+          skip << a unless self.method_defined?(a)
+        end
+      end
+
+      return skip
+    end
+
+    # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
+    def get_options_metadata
+      return @_model_options_metadata ||= super.merge(
+        {
+          from_a_model: true,
+        },
+      )
+    end
+  end
+
   def self.included(base)
     if base.is_a?(Class)
       RESTFramework::BaseControllerMixin.included(base)
+      base.extend(ClassMethods)
 
       # Add class attributes (with defaults) unless they already exist.
       {
@@ -34,7 +61,7 @@ module RESTFramework::BaseModelControllerMixin
         native_serializer_only_query_param: "only",
         native_serializer_except_query_param: "except",
 
-        # Attributes for default model filtering (and ordering).
+        # Attributes for default model filtering, ordering, and searching.
         filterset_fields: nil,
         ordering_fields: nil,
         ordering_query_param: "ordering",
@@ -81,27 +108,14 @@ module RESTFramework::BaseModelControllerMixin
     return fields
   end
 
-  # Get a list of find_by fields for the current action.
+  # Get a list of find_by fields for the current action. Do not fallback in case the user wants to
+  # find by virtual columns.
   def get_find_by_fields
     return self.class.find_by_fields || self.get_fields
   end
 
-  # Get a list of find_by fields for the current action. Default to the model column names.
-  def get_filterset_fields
-    return self.class.filterset_fields || self.get_fields(fallback: true)
-  end
-
-  # Get a list of ordering fields for the current action.
-  def get_ordering_fields
-    return self.class.ordering_fields || self.get_fields
-  end
-
-  # Get a list of search fields for the current action. Default to the model column names.
-  def get_search_fields
-    return self.class.search_fields || self.get_fields(fallback: true)
-  end
-
-  # Get a list of parameters allowed for the current action.
+  # Get a list of parameters allowed for the current action. By default we do not fallback so
+  # arbitrary fields can be submitted if no fields are defined.
   def get_allowed_parameters
     return _get_specific_action_config(
       :allowed_action_parameters,

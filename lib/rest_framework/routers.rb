@@ -93,6 +93,11 @@ module ActionDispatch::Routing
         collection do
           actions = RESTFramework::Utils.parse_extra_actions(controller_class.extra_actions)
           self._route_extra_actions(actions)
+
+          # Route `OPTIONS`, if available.
+          if controller_class.method_defined?(:options)
+            options("", action: :options)
+          end
         end
 
         yield if block_given?
@@ -135,6 +140,11 @@ module ActionDispatch::Routing
         end
 
         self._route_extra_actions(actions, &block)
+
+        # Route `OPTIONS`, if available.
+        if controller_class.method_defined?(:options)
+          options("", action: :options)
+        end
       end
     end
 
