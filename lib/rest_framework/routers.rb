@@ -96,7 +96,7 @@ module ActionDispatch::Routing
 
           # Route `OPTIONS`, if available.
           if controller_class.method_defined?(:options)
-            options("", action: :options)
+            options("", action: :options) if self.respond_to?(:options)
           end
         end
 
@@ -143,7 +143,7 @@ module ActionDispatch::Routing
 
         # Route `OPTIONS`, if available.
         if controller_class.method_defined?(:options)
-          options("", action: :options)
+          options("", action: :options) if self.respond_to?(:options)
         end
       end
     end
