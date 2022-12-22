@@ -75,6 +75,6 @@ class TestApi::ThingsControllerTest < ActionController::TestCase
   end
 
   def test_get_model_before_recordset
-    assert(@controller.get_model)
+    assert(@controller.class.get_model)
   end
 end

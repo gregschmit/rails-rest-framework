@@ -61,7 +61,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     @model ||= @object[0].class if
       @many && @object.is_a?(Enumerable) && @object.is_a?(ActiveRecord::Base)
 
-    @model ||= @controller.get_model if @controller
+    @model ||= @controller.class.get_model if @controller
   end
 
   # Get controller action, if possible.
@@ -182,7 +182,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
           cfg[:only] = self.class.filter_subcfg(cfg[:only], fields: only, only: true)
         elsif cfg[:except]
           # For the `except` part of the serializer, we need to append any columns not in `only`.
-          model = @controller.get_model
+          model = @controller.class.get_model
           except_cols = model&.column_names&.map(&:to_sym)&.reject { |c| c.in?(only) }
           cfg[:except] = self.class.filter_subcfg(cfg[:except], fields: except_cols, add: true)
         else
@@ -216,14 +216,24 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     if fields = @controller&.get_fields
       fields = fields.deep_dup
 
+      columns = []
+      includes = []
+      methods = []
       if @model
-        columns, methods = fields.partition { |f| f.in?(@model.column_names) }
+        fields.each do |f|
+          if f.in?(@model.column_names)
+            columns << f
+          elsif @model.reflections.key?(f)
+            includes << f
+          elsif @model.method_defined?(f)
+            methods << f
+          end
+        end
       else
         columns = fields
-        methods = []
       end
 
-      return {only: columns, methods: methods}
+      return {only: columns, include: includes, methods: methods}
     end
 
     # By default, pass an empty configuration, allowing the serialization of all columns.

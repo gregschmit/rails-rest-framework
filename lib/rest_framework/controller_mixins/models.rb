@@ -6,26 +6,103 @@ module RESTFramework::BaseModelControllerMixin
   include RESTFramework::BaseControllerMixin
 
   module ClassMethods
-    # Helper to get the actions that should be skipped.
-    def get_skip_actions(skip_undefined: true)
-      # First, skip explicitly skipped actions.
-      skip = self.skip_actions || []
+    IGNORE_VALIDATORS_WITH_KEYS = [:if, :unless]
 
-      # Now add methods which don't exist, since we don't want to route those.
-      if skip_undefined
-        [:index, :new, :create, :show, :edit, :update, :destroy].each do |a|
-          skip << a unless self.method_defined?(a)
+    # Get the model for this controller.
+    def get_model(from_get_recordset: false)
+      return @model if @model
+      return (@model = self.model) if self.model
+
+      # Delegate to the recordset's model, if it's defined.
+      unless from_get_recordset  # Prevent infinite recursion.
+        if (recordset = self.new.get_recordset)
+          return @model = recordset.klass
         end
       end
 
-      return skip
+      # Try to determine model from controller name.
+      begin
+        return @model = self.name.demodulize.match(/(.*)Controller/)[1].singularize.constantize
+      rescue NameError
+      end
+
+      return nil
+    end
+
+    # Get metadata about the resource's fields.
+    def get_fields_metadata
+      # Get metadata sources.
+      model = self.get_model
+      fields = self.fields&.map(&:to_s) || model&.column_names || []
+      columns = model&.columns_hash
+      column_defaults = model&.column_defaults
+      attributes = model&._default_attributes
+
+      return fields.map { |f|
+        metadata = {required: false}
+
+        # Determine `type`, `required`, and `kind` based on schema.
+        if column = columns[f]
+          metadata[:type] = column.type
+          metadata[:required] = true unless column.null
+          metadata[:kind] = "column"
+        end
+
+        # Determine `default` based on schema; we use `column_defaults` rather than `columns_hash`
+        # because these are casted to the proper type.
+        column_default = column_defaults[f]
+        unless column_default.nil?
+          metadata[:default] = column_default
+        end
+
+        # Determine `default` and `kind` based on attribute only if not determined by the DB.
+        if attributes.key?(f) && attribute = attributes[f]
+          unless metadata.key?(:default)
+            default = attribute.value_before_type_cast
+            metadata[:default] = default unless default.nil?
+          end
+
+          unless metadata[:kind]
+            metadata[:kind] = "attribute"
+          end
+        end
+
+        # Determine if `kind` is a association or method if not determined already.
+        unless metadata[:kind]
+          if association = model.reflections[f]
+            metadata[:kind] = "association.#{association.macro}"
+          elsif model.method_defined?(f)
+            metadata[:kind] = "method"
+          end
+        end
+
+        # Collect validator options into a hash on their type, while also updating `required` based
+        # on any presence validators.
+        model.validators_on(f).each do |validator|
+          kind = validator.kind
+          options = validator.options
+
+          # Reject validator if it includes keys like `:if` and `:unless` because those are
+          # conditionally applied in a way that is not feasible to communicate via the API.
+          next if IGNORE_VALIDATORS_WITH_KEYS.any? { |k| options.key?(k) }
+
+          # Update `required` if we find a presence validator.
+          metadata[:required] = true if kind == :presence
+
+          metadata[:validators] ||= {}
+          metadata[:validators][kind] ||= []
+          metadata[:validators][kind] << options
+        end
+
+        next [f, metadata]
+      }.to_h
     end
 
     # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
     def get_options_metadata
       return @_model_options_metadata ||= super.merge(
         {
-          from_a_model: true,
+          fields: self.get_fields_metadata,
         },
       )
     end
@@ -45,6 +122,7 @@ module RESTFramework::BaseModelControllerMixin
         # Attributes for configuring record fields.
         fields: nil,
         action_fields: nil,
+        metadata_fields: nil,
 
         # Attributes for finding records.
         find_by_fields: nil,
@@ -102,20 +180,20 @@ module RESTFramework::BaseModelControllerMixin
     fields = _get_specific_action_config(:action_fields, :fields)
 
     if fallback
-      fields ||= self.get_model&.column_names || []
+      fields ||= self.class.get_model&.column_names || []
     end
 
     return fields
   end
 
-  # Get a list of find_by fields for the current action. Do not fallback in case the user wants to
-  # find by virtual columns.
+  # Get a list of find_by fields for the current action. Do not fallback to columns in case the user
+  # wants to find by virtual columns.
   def get_find_by_fields
     return self.class.find_by_fields || self.get_fields
   end
 
-  # Get a list of parameters allowed for the current action. By default we do not fallback so
-  # arbitrary fields can be submitted if no fields are defined.
+  # Get a list of parameters allowed for the current action. By default we do not fallback to
+  # columns so arbitrary fields can be submitted if no fields are defined.
   def get_allowed_parameters
     return _get_specific_action_config(
       :allowed_action_parameters,
@@ -157,7 +235,7 @@ module RESTFramework::BaseModelControllerMixin
 
     # Filter primary key if configured.
     if self.class.filter_pk_from_request_body
-      body_params.delete(self.get_model&.primary_key)
+      body_params.delete(self.class.get_model&.primary_key)
     end
 
     # Filter fields in exclude_body_fields.
@@ -168,27 +246,6 @@ module RESTFramework::BaseModelControllerMixin
   alias_method :get_create_params, :get_body_params
   alias_method :get_update_params, :get_body_params
 
-  # Get the model for this controller.
-  def get_model(from_get_recordset: false)
-    return @model if instance_variable_defined?(:@model) && @model
-    return (@model = self.class.model) if self.class.model
-
-    # Delegate to the recordset's model, if it's defined.
-    unless from_get_recordset  # prevent infinite recursion
-      if (recordset = self.get_recordset)
-        return @model = recordset.klass
-      end
-    end
-
-    # Try to determine model from controller name.
-    begin
-      return @model = self.class.name.demodulize.match(/(.*)Controller/)[1].singularize.constantize
-    rescue NameError
-    end
-
-    return nil
-  end
-
   # Get the set of records this controller has access to. The return value is cached and exposed to
   # the view as the `@recordset` instance variable.
   def get_recordset
@@ -196,7 +253,7 @@ module RESTFramework::BaseModelControllerMixin
     return (@recordset = self.class.recordset) if self.class.recordset
 
     # If there is a model, return that model's default scope (all records by default).
-    if (model = self.get_model(from_get_recordset: true))
+    if (model = self.class.get_model(from_get_recordset: true))
       return @recordset = model.all
     end
 
@@ -217,7 +274,7 @@ module RESTFramework::BaseModelControllerMixin
     return @record if instance_variable_defined?(:@record)
 
     recordset = self.get_recordset
-    find_by_key = self.get_model.primary_key
+    find_by_key = self.class.get_model.primary_key
 
     # Find by another column if it's permitted.
     if find_by_param = self.class.find_by_query_param.presence
@@ -290,7 +347,7 @@ module RESTFramework::CreateModelMixin
       return self.get_recordset.except(:select).create!(self.get_create_params)
     else
       # Otherwise, perform a "bare" create.
-      return self.get_model.create!(self.get_create_params)
+      return self.class.get_model.create!(self.get_create_params)
     end
   end
 end

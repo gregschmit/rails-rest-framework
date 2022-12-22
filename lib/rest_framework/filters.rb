@@ -11,9 +11,8 @@ end
 # A simple filtering backend that supports filtering a recordset based on fields defined on the
 # controller class.
 class RESTFramework::ModelFilter < RESTFramework::BaseFilter
-  # Get a list of filterset fields for the current action. Fallback to the columns because we don't
-  # want to try filtering by any query parameter because that could clash with other query
-  # parameters.
+  # Get a list of filterset fields for the current action. Fallback to columns because we don't want
+  # to try filtering by any query parameter because that could clash with other query parameters.
   def _get_fields
     return @controller.class.filterset_fields || @controller.get_fields(fallback: true)
   end
@@ -90,8 +89,8 @@ end
 
 # Multi-field text searching on models.
 class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
-  # Get a list of search fields for the current action. Fallback to the model column names because
-  # we need an explicit list of columns to search on, so `nil` is useless in this context.
+  # Get a list of search fields for the current action. Fallback to columns because we need an
+  # explicit list of columns to search on, so `nil` is useless in this context.
   def _get_fields
     return @controller.class.search_fields || @controller.get_fields(fallback: true)
   end
