@@ -39,7 +39,7 @@ module RESTFramework::BaseModelControllerMixin
       attributes = model&._default_attributes
 
       return fields.map { |f|
-        metadata = {required: false}
+        metadata = {}
 
         # Determine `type`, `required`, and `kind` based on schema.
         if column = columns[f]
