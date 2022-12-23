@@ -39,12 +39,14 @@ module RESTFramework::BaseModelControllerMixin
       attributes = model&._default_attributes
 
       return fields.map { |f|
-        metadata = {}
+        # Initialize metadata to make the order consistent.
+        metadata = {type: nil, kind: nil, label: nil, required: nil, read_only: nil}
 
-        # Determine `type`, `required`, and `kind` based on schema.
+        # Determine `type`, `required`, `label`, and `kind` based on schema.
         if column = columns[f]
           metadata[:type] = column.type
           metadata[:required] = true unless column.null
+          metadata[:label] = column.human_name.instance_eval { |n| n == "Id" ? "ID" : n }
           metadata[:kind] = "column"
         end
 
@@ -94,7 +96,7 @@ module RESTFramework::BaseModelControllerMixin
           metadata[:validators][kind] << options
         end
 
-        next [f, metadata]
+        next [f, metadata.compact]
       }.to_h
     end
 
