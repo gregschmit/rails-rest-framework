@@ -62,6 +62,9 @@ module ActionDispatch::Routing
       # Set controller if it's not explicitly set.
       kwargs[:controller] = name unless kwargs[:controller]
 
+      # Passing `unscoped: true` will prevent a nested resource from being scoped.
+      unscoped = kwargs.delete(:unscoped)
+
       # Determine plural/singular resource.
       force_singular = kwargs.delete(:force_singular)
       force_plural = kwargs.delete(:force_plural)
@@ -103,7 +106,13 @@ module ActionDispatch::Routing
           end
         end
 
-        yield if block_given?
+        if unscoped
+          yield if block_given?
+        else
+          scope(module: name, as: name) do
+            yield if block_given?
+          end
+        end
       end
     end
 
@@ -134,6 +143,9 @@ module ActionDispatch::Routing
       # Set controller if it's not explicitly set.
       kwargs[:controller] = name unless kwargs[:controller]
 
+      # Passing `unscoped: true` will prevent a nested resource from being scoped.
+      unscoped = kwargs.delete(:unscoped)
+
       # Route actions using the resourceful router, but skip all builtin actions.
       public_send(:resource, name, only: [], **kwargs) do
         # Route a root for this resource.
@@ -157,7 +169,13 @@ module ActionDispatch::Routing
           end
         end
 
-        yield if block_given?
+        if unscoped
+          yield if block_given?
+        else
+          scope(module: name, as: name) do
+            yield if block_given?
+          end
+        end
       end
     end
 

@@ -41,7 +41,14 @@ module RESTFramework::BaseModelControllerMixin
 
       return fields.map { |f|
         # Initialize metadata to make the order consistent.
-        metadata = {type: nil, kind: nil, label: nil, required: nil, read_only: nil}
+        metadata = {
+          type: nil, kind: nil, label: nil, primary_key: nil, required: nil, read_only: nil
+        }
+
+        # Determine `primary_key` based on model.
+        if model&.primary_key == f
+          metadata[:primary_key] = true
+        end
 
         # Determine `type`, `required`, `label`, and `kind` based on schema.
         if column = columns[f]
@@ -165,7 +172,7 @@ module RESTFramework::BaseModelControllerMixin
       base.send(:"#{a}=", default)
     end
 
-    # Attach delegation methods to the controller.
+    # Actions to run at the end of the class definition.
     TracePoint.trace(:end) do |t|
       next if base != t.self
 
@@ -201,6 +208,8 @@ module RESTFramework::BaseModelControllerMixin
         end
       end
 
+      # It's important to disable the trace once we've found the end of the base class definition,
+      # for performance.
       t.disable
     end
   end
