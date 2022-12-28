@@ -22,16 +22,17 @@
           <nav>
             <ol class="breadcrumb">
               <%
-                breadcrumbs = request.path.split("/").inject([["/", "(root)"]]) { |breadcrumbs, part|
+                breadcrumbs = request.path.split("/").inject([]) { |breadcrumbs, part|
                   # Ignore blank parts of the path (leading slash or double-slashes).
                   next breadcrumbs if part.blank?
 
-                  last_path = breadcrumbs[-1][0]
+                  last_path = breadcrumbs.last&.first || "/"
                   breadcrumbs << [
                     [last_path, part].join(last_path[-1] == "/" ? "" : "/"),
                     part,
                   ]
-                  breadcrumbs
+
+                  next breadcrumbs
                 }
               %>
               <% breadcrumbs.each_with_index do |(path, label), i| %>
