@@ -31,9 +31,11 @@ module BaseDemoApiControllerTests
     assert(@response.parsed_body.all? { |r| r[filter_key.to_s] == filter_value })
   end
 
-  def test_options
-    process(:options, method: "OPTIONS")
-    assert_response(:success)
+  if Rails::VERSION::MAJOR >= 7
+    def test_options
+      process(:options, method: "OPTIONS")
+      assert_response(:success)
+    end
   end
 
   def test_show
