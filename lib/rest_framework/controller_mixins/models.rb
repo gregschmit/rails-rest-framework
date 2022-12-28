@@ -30,10 +30,11 @@ module RESTFramework::BaseModelControllerMixin
     end
 
     # Get metadata about the resource's fields.
-    def get_fields_metadata
+    def get_fields_metadata(fields: nil)
       # Get metadata sources.
       model = self.get_model
-      fields = self.fields&.map(&:to_s) || model&.column_names || []
+      fields ||= self.fields || model&.column_names || []
+      fields = fields.map(&:to_s)
       columns = model&.columns_hash
       column_defaults = model&.column_defaults
       attributes = model&._default_attributes
@@ -101,10 +102,10 @@ module RESTFramework::BaseModelControllerMixin
     end
 
     # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
-    def get_options_metadata
-      return @_model_options_metadata ||= super.merge(
+    def get_options_metadata(fields: nil)
+      return super().merge(
         {
-          fields: self.get_fields_metadata,
+          fields: self.get_fields_metadata(fields: fields),
         },
       )
     end
@@ -152,7 +153,7 @@ module RESTFramework::BaseModelControllerMixin
 
         # Other misc attributes.
         create_from_recordset: true,  # Option for `recordset.create` vs `Model.create` behavior.
-        filter_recordset_before_find: true,  # Option to control if filtering is done before find.
+        filter_recordset_before_find: true,  # Control if filtering is done before find.
       }.each do |a, default|
         next if base.respond_to?(a)
 
@@ -186,6 +187,11 @@ module RESTFramework::BaseModelControllerMixin
     end
 
     return fields
+  end
+
+  # Pass fields to get dynamic metadata based on which fields are available.
+  def get_options_metadata
+    return self.class.get_options_metadata(fields: self.get_fields(fallback: true))
   end
 
   # Get a list of find_by fields for the current action. Do not fallback to columns in case the user

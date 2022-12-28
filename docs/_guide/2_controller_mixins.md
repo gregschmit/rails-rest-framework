@@ -100,18 +100,6 @@ class ApiController < ApplicationController
 end
 ```
 
-#### skip_actions
-
-You may want to skip some of the default actions provided by the router. `skip_actions` should be an
-array (or iterable) which defines actions we should skip. Here is an example of that:
-
-```ruby
-class ApiController < ApplicationController
-  include RESTFramework::BaseControllerMixin
-  self.skip_actions = [:show, :destroy]
-end
-```
-
 ## ModelControllerMixin
 
 `ModelControllerMixin` assists with providing the standard model CRUD (create, read, update,

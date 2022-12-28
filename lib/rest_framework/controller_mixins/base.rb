@@ -12,19 +12,40 @@ module RESTFramework::BaseControllerMixin
   end
 
   module ClassMethods
-    # Helper to get the actions that should be skipped.
-    def get_skip_actions(skip_undefined: true)
-      # First, skip explicitly skipped actions.
-      skip = self.skip_actions || []
+    # Collect actions (including extra actions) metadata for this controller.
+    def get_actions_metadata
+      actions = {}
 
-      # Now add methods which don't exist, since we don't want to route those.
-      if skip_undefined
-        [:index, :new, :create, :show, :edit, :update, :destroy].each do |a|
-          skip << a unless self.method_defined?(a)
-        end
+      # Start with builtin actions.
+      RESTFramework::BUILTIN_ACTIONS.merge(
+        RESTFramework::RRF_BUILTIN_ACTIONS,
+      ).each do |action, methods|
+        actions[action] = {path: "", methods: methods}
       end
 
-      return skip
+      # Add extra actions.
+      if extra_actions = self.try(:extra_actions)
+        actions.merge!(RESTFramework::Utils.parse_extra_actions(extra_actions))
+      end
+
+      return actions
+    end
+
+    # Collect member actions (including extra member actions) metadata for this controller.
+    def get_member_actions_metadata
+      actions = {}
+
+      # Start with builtin actions.
+      RESTFramework::BUILTIN_MEMBER_ACTIONS.each do |action, methods|
+        actions[action] = {path: "", methods: methods}
+      end
+
+      # Add extra actions.
+      if extra_actions = self.try(:extra_member_actions)
+        actions.merge!(RESTFramework::Utils.parse_extra_actions(extra_actions))
+      end
+
+      return actions
     end
 
     # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
@@ -37,6 +58,8 @@ module RESTFramework::BaseControllerMixin
           self.serialize_to_json ? "application/json" : nil,
           self.serialize_to_xml ? "application/xml" : nil,
         ].compact,
+        actions: self.get_actions_metadata,
+        member_actions: self.get_member_actions_metadata,
       }.compact
     end
   end
@@ -55,7 +78,6 @@ module RESTFramework::BaseControllerMixin
         extra_member_actions: nil,
         filter_backends: nil,
         singleton_controller: nil,
-        skip_actions: nil,
         metadata: nil,
 
         # Options related to serialization.
@@ -90,7 +112,7 @@ module RESTFramework::BaseControllerMixin
         base.alias_method(:extra_collection_actions=, :extra_actions=)
       end
 
-      # Skip csrf since this is an API.
+      # Skip CSRF since this is an API.
       begin
         base.skip_before_action(:verify_authenticity_token)
       rescue
@@ -142,6 +164,10 @@ module RESTFramework::BaseControllerMixin
     end
 
     return data
+  end
+
+  def get_options_metadata
+    return self.class.get_options_metadata
   end
 
   def record_invalid(e)
@@ -270,6 +296,6 @@ module RESTFramework::BaseControllerMixin
 
   # Provide a generic `OPTIONS` response with metadata such as available actions.
   def options
-    return api_response(self.class.get_options_metadata)
+    return api_response(self.get_options_metadata)
   end
 end

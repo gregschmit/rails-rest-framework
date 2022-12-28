@@ -5,24 +5,14 @@ Rails.application.routes.draw do
     rest_root
     rest_resources :things
     rest_resources :users do
-      scope module: :users, as: :users do
-        rest_resources :things
-      end
+      rest_resources :things
     end
   end
-
-  # namespace :plain_api do
-  #   rest_root
-  #   rest_resources :things
-  #   rest_resources :users
-  # end
 
   rest_root :test_api
   namespace :test_api do
     rest_resource :user do
-      scope module: :user, as: :user do
-        rest_resources :things
-      end
+      rest_resources :things
     end
     rest_resources :things
     rest_resources :read_only_things

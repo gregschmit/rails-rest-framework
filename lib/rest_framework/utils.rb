@@ -1,11 +1,9 @@
 module RESTFramework::Utils
-  HTTP_METHOD_ORDERING = %w(GET POST PUT PATCH DELETE)
+  HTTP_METHOD_ORDERING = %w(GET POST PUT PATCH DELETE OPTIONS HEAD)
 
-  # Helper to take extra_actions hash and convert to a consistent format:
-  # `{paths:, methods:, kwargs:}`.
+  # Convert `extra_actions` hash to a consistent format: `{path:, methods:, kwargs:}`.
   def self.parse_extra_actions(extra_actions)
-    return (extra_actions || {}).map do |k, v|
-      kwargs = {action: k}
+    return (extra_actions || {}).map { |k, v|
       path = k
 
       # Convert structure to path/methods/kwargs.
@@ -25,30 +23,38 @@ module RESTFramework::Utils
         end
 
         # Pass any further kwargs to the underlying Rails interface.
-        kwargs = kwargs.merge(v)
+        kwargs = v.presence
       elsif v.is_a?(Symbol) || v.is_a?(String)
         methods = [v]
       else
         methods = v
       end
 
-      # Return a hash with keys: :path, :methods, :kwargs.
-      {path: path, methods: methods, kwargs: kwargs}
+      [k, {path: path, methods: methods, kwargs: kwargs}.compact]
+    }.to_h
+  end
+
+  # Get actions which should be skipped for a given controller.
+  def self.get_skipped_builtin_actions(controller_class)
+    return (
+      RESTFramework::BUILTIN_ACTIONS.keys + RESTFramework::BUILTIN_MEMBER_ACTIONS.keys
+    ).reject do |action|
+      controller_class.method_defined?(action)
     end
   end
 
-  # Helper to get the first route pattern which matches the given request.
+  # Get the first route pattern which matches the given request.
   def self.get_request_route(application_routes, request)
     application_routes.router.recognize(request) { |route, _| return route }
   end
 
-  # Helper to normalize a path pattern by replacing URL params with generic placeholder, and
-  # removing the `(.:format)` at the end.
+  # Normalize a path pattern by replacing URL params with generic placeholder, and removing the
+  # `(.:format)` at the end.
   def self.comparable_path(path)
     return path.gsub("(.:format)", "").gsub(/:[0-9A-Za-z_-]+/, ":x")
   end
 
-  # Helper for showing routes under a controller action; used for the browsable API.
+  # Show routes under a controller action; used for the browsable API.
   def self.get_routes(application_routes, request, current_route: nil)
     current_route ||= self.get_request_route(application_routes, request)
     current_path = current_route.path.spec.to_s.gsub("(.:format)", "")

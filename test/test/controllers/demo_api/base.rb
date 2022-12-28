@@ -31,6 +31,11 @@ module BaseDemoApiControllerTests
     assert(@response.parsed_body.all? { |r| r[filter_key.to_s] == filter_value })
   end
 
+  def test_options
+    process(:options, method: "OPTIONS")
+    assert_response(:success)
+  end
+
   def test_show
     id = self._get_model.first.id
     get(:show, params: {id: id})

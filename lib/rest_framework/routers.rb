@@ -39,9 +39,9 @@ module ActionDispatch::Routing
 
     # Interal interface for routing extra actions.
     def _route_extra_actions(actions, &block)
-      actions.each do |action_config|
-        action_config[:methods].each do |m|
-          public_send(m, action_config[:path], **action_config[:kwargs])
+      actions.each do |action, config|
+        config[:methods].each do |m|
+          public_send(m, config[:path], action: action, **(config[:kwargs] || {}))
         end
         yield if block_given?
       end
@@ -51,8 +51,7 @@ module ActionDispatch::Routing
     # @param default_singular [Boolean] the default plurality of the resource if the plurality is
     #   not otherwise defined by the controller
     # @param name [Symbol] the resource name, from which path and controller are deduced by default
-    # @param skip_undefined [Boolean] whether we should skip routing undefined resourceful actions
-    def _rest_resources(default_singular, name, skip_undefined: true, **kwargs, &block)
+    def _rest_resources(default_singular, name, **kwargs, &block)
       controller = kwargs.delete(:controller) || name
       if controller.is_a?(Class)
         controller_class = controller
@@ -78,25 +77,29 @@ module ActionDispatch::Routing
       resource_method = singular ? :resource : :resources
 
       # Call either `resource` or `resources`, passing appropriate modifiers.
-      skip_undefined = kwargs.delete(:skip_undefined) || true
-      skip = controller_class.get_skip_actions(skip_undefined: skip_undefined)
+      skip = RESTFramework::Utils.get_skipped_builtin_actions(controller_class)
       public_send(resource_method, name, except: skip, **kwargs) do
         if controller_class.respond_to?(:extra_member_actions)
           member do
-            actions = RESTFramework::Utils.parse_extra_actions(
-              controller_class.extra_member_actions,
+            self._route_extra_actions(
+              RESTFramework::Utils.parse_extra_actions(controller_class.extra_member_actions),
             )
-            self._route_extra_actions(actions)
           end
         end
 
         collection do
-          actions = RESTFramework::Utils.parse_extra_actions(controller_class.extra_actions)
-          self._route_extra_actions(actions)
+          # Route extra controller-defined actions.
+          self._route_extra_actions(
+            RESTFramework::Utils.parse_extra_actions(controller_class.extra_actions),
+          )
 
-          # Route `OPTIONS`, if available.
-          if controller_class.method_defined?(:options)
-            options("", action: :options) if self.respond_to?(:options)
+          # Route extra RRF-defined actions.
+          RESTFramework::RRF_BUILTIN_ACTIONS.each do |action, methods|
+            next unless controller_class.method_defined?(action)
+
+            [methods].flatten.each do |m|
+              public_send(m, "", action: action) if self.respond_to?(m)
+            end
           end
         end
 
@@ -132,19 +135,29 @@ module ActionDispatch::Routing
       kwargs[:controller] = name unless kwargs[:controller]
 
       # Route actions using the resourceful router, but skip all builtin actions.
-      actions = RESTFramework::Utils.parse_extra_actions(controller_class.extra_actions)
       public_send(:resource, name, only: [], **kwargs) do
         # Route a root for this resource.
         if route_root_to
           get("", action: route_root_to)
         end
 
-        self._route_extra_actions(actions, &block)
+        collection do
+          # Route extra controller-defined actions.
+          self._route_extra_actions(
+            RESTFramework::Utils.parse_extra_actions(controller_class.extra_actions),
+          )
 
-        # Route `OPTIONS`, if available.
-        if controller_class.method_defined?(:options)
-          options("", action: :options) if self.respond_to?(:options)
+          # Route extra RRF-defined actions.
+          RESTFramework::RRF_BUILTIN_ACTIONS.each do |action, methods|
+            next unless controller_class.method_defined?(action)
+
+            [methods].flatten.each do |m|
+              public_send(m, "", action: action) if self.respond_to?(m)
+            end
+          end
         end
+
+        yield if block_given?
       end
     end
 

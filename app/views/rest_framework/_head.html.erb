@@ -57,11 +57,33 @@ code {
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/neatjson@0.10.5/javascript/neatjson.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/highlight.min.js" integrity="sha512-TDKKr+IvoqZnPzc3l35hdjpHD0m+b2EC2SrLEgKDRWpxf2rFCxemkgvJ5kfU48ip+Y+m2XVKyOCD85ybtlZDmw==" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/json.min.js" integrity="sha512-FoN8JE+WWCdIGXAIT8KQXwpiavz0Mvjtfk7Rku3MDUNO0BDCiRMXAsSX+e+COFyZTcDb9HDgP+pM2RX12d4j+A==" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.2.0/languages/xml.min.js" integrity="sha512-dICltIgnUP+QSJrnYGCV8943p3qSDgvcg2NU4W8IcOZP4tdrvxlXjbhIznhtVQEcXow0mOjLM0Q6/NvZsmUH4g==" crossorigin="anonymous"></script>
-<script>hljs.initHighlightingOnLoad()</script>
 <script>
+hljs.initHighlightingOnLoad()
+
+// What to do when document loads.
+document.addEventListener("DOMContentLoaded", (event) => {
+  // Pretty-print JSON.
+  [...document.getElementsByClassName("language-json")].forEach((element, index) => {
+    element.innerHTML = neatJSON(JSON.parse(element.innerHTML), {
+      wrap: 80,
+      afterComma: 1,
+      afterColon: 1,
+    })
+  });
+
+  // Insert copy link and callback to copy contents of `<code>` element.
+  [...document.getElementsByClassName("rrf-copy")].forEach((element, index) => {
+    element.insertAdjacentHTML(
+      "afterbegin",
+      "<a class=\"rrf-copy-link\" onclick=\"return rrfCopyToClipboard(this)\" href=\"#\">Copy to Clipboard</a>",
+    )
+  })
+})
+
 // Replace the document when doing form submission (mainly to support PUT/PATCH/DELETE).
 function rrfReplaceDocument(content) {
   // Replace the document with provided content.
@@ -92,16 +114,6 @@ function rrfCopyToClipboard(element) {
   // Return false to prevent normal link behavior.
   return false
 }
-
-// Insert copy link and callback to copy contents of `<code>` element.
-document.addEventListener("DOMContentLoaded", (event) => {
-  [...document.getElementsByClassName("rrf-copy")].forEach((element, index) => {
-    element.insertAdjacentHTML(
-      "afterbegin",
-      "<a class=\"rrf-copy-link\" onclick=\"return rrfCopyToClipboard(this)\" href=\"#\">Copy to Clipboard</a>",
-    )
-  })
-})
 
 // Refresh the window.
 function rrfRefresh(button) {
