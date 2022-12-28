@@ -13,17 +13,22 @@ module RESTFramework::BaseModelControllerMixin
       return @model if @model
       return (@model = self.model) if self.model
 
-      # Delegate to the recordset's model, if it's defined.
-      unless from_get_recordset  # Prevent infinite recursion.
-        if (recordset = self.new.get_recordset)
-          return @model = recordset.klass
-        end
-      end
-
       # Try to determine model from controller name.
       begin
-        return @model = self.name.demodulize.match(/(.*)Controller/)[1].singularize.constantize
+        return @model = self.name.demodulize.chomp("Controller").singularize.constantize
       rescue NameError
+      end
+
+      # Delegate to the recordset's model, if it's defined.
+      unless from_get_recordset  # Prevent infinite recursion.
+        # Instantiate a new controller to get the recordset.
+        controller = self.new
+        controller.request = ActionController::TestRequest.new
+        controller.params = {}
+
+        if (recordset = controller.get_recordset)
+          return @model = recordset.klass
+        end
       end
 
       return nil
