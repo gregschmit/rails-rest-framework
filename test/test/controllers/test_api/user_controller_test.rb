@@ -25,4 +25,12 @@ class TestApi::UserControllerTest < ActionController::TestCase
     assert_nil(@response.parsed_body["things"][0]["shape"])
     assert_nil(@response.parsed_body["things"][0]["price"])
   end
+
+  def test_delegated_method
+    get(:delegated, as: :json)
+    assert_response(:success)
+    assert(@response.parsed_body["login"])
+    assert_not_nil(@response.parsed_body["is_admin"])
+    assert_nil(@response.parsed_body["age"])
+  end
 end

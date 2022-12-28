@@ -65,67 +65,67 @@ module RESTFramework::BaseControllerMixin
   end
 
   def self.included(base)
-    if base.is_a?(Class)
-      base.extend(ClassMethods)
+    return unless base.is_a?(Class)
 
-      # Add class attributes (with defaults) unless they already exist.
-      {
-        filter_pk_from_request_body: true,
-        exclude_body_fields: [:created_at, :created_by, :updated_at, :updated_by],
-        accept_generic_params_as_body_params: false,
-        show_backtrace: false,
-        extra_actions: nil,
-        extra_member_actions: nil,
-        filter_backends: nil,
-        singleton_controller: nil,
-        metadata: nil,
+    base.extend(ClassMethods)
 
-        # Options related to serialization.
-        rescue_unknown_format_with: :json,
-        serializer_class: nil,
-        serialize_to_json: true,
-        serialize_to_xml: true,
+    # Add class attributes (with defaults) unless they already exist.
+    {
+      filter_pk_from_request_body: true,
+      exclude_body_fields: [:created_at, :created_by, :updated_at, :updated_by],
+      accept_generic_params_as_body_params: false,
+      show_backtrace: false,
+      extra_actions: nil,
+      extra_member_actions: nil,
+      filter_backends: nil,
+      singleton_controller: nil,
+      metadata: nil,
 
-        # Options related to pagination.
-        paginator_class: nil,
-        page_size: 20,
-        page_query_param: "page",
-        page_size_query_param: "page_size",
-        max_page_size: nil,
+      # Options related to serialization.
+      rescue_unknown_format_with: :json,
+      serializer_class: nil,
+      serialize_to_json: true,
+      serialize_to_xml: true,
 
-        # Option to disable serializer adapters by default, mainly introduced because Active Model
-        # Serializers will do things like serialize `[]` into `{"":[]}`.
-        disable_adapters_by_default: true,
-      }.each do |a, default|
-        next if base.respond_to?(a)
+      # Options related to pagination.
+      paginator_class: nil,
+      page_size: 20,
+      page_query_param: "page",
+      page_size_query_param: "page_size",
+      max_page_size: nil,
 
-        base.class_attribute(a)
+      # Option to disable serializer adapters by default, mainly introduced because Active Model
+      # Serializers will do things like serialize `[]` into `{"":[]}`.
+      disable_adapters_by_default: true,
+    }.each do |a, default|
+      next if base.respond_to?(a)
 
-        # Set default manually so we can still support Rails 4. Maybe later we can use the default
-        # parameter on `class_attribute`.
-        base.send(:"#{a}=", default)
-      end
+      base.class_attribute(a)
 
-      # Alias `extra_actions` to `extra_collection_actions`.
-      unless base.respond_to?(:extra_collection_actions)
-        base.alias_method(:extra_collection_actions, :extra_actions)
-        base.alias_method(:extra_collection_actions=, :extra_actions=)
-      end
-
-      # Skip CSRF since this is an API.
-      begin
-        base.skip_before_action(:verify_authenticity_token)
-      rescue
-        nil
-      end
-
-      # Handle some common exceptions.
-      base.rescue_from(ActiveRecord::RecordNotFound, with: :record_not_found)
-      base.rescue_from(ActiveRecord::RecordInvalid, with: :record_invalid)
-      base.rescue_from(ActiveRecord::RecordNotSaved, with: :record_not_saved)
-      base.rescue_from(ActiveRecord::RecordNotDestroyed, with: :record_not_destroyed)
-      base.rescue_from(ActiveModel::UnknownAttributeError, with: :unknown_attribute_error)
+      # Set default manually so we can still support Rails 4. Maybe later we can use the default
+      # parameter on `class_attribute`.
+      base.send(:"#{a}=", default)
     end
+
+    # Alias `extra_actions` to `extra_collection_actions`.
+    unless base.respond_to?(:extra_collection_actions)
+      base.alias_method(:extra_collection_actions, :extra_actions)
+      base.alias_method(:extra_collection_actions=, :extra_actions=)
+    end
+
+    # Skip CSRF since this is an API.
+    begin
+      base.skip_before_action(:verify_authenticity_token)
+    rescue
+      nil
+    end
+
+    # Handle some common exceptions.
+    base.rescue_from(ActiveRecord::RecordNotFound, with: :record_not_found)
+    base.rescue_from(ActiveRecord::RecordInvalid, with: :record_invalid)
+    base.rescue_from(ActiveRecord::RecordNotSaved, with: :record_not_saved)
+    base.rescue_from(ActiveRecord::RecordNotDestroyed, with: :record_not_destroyed)
+    base.rescue_from(ActiveModel::UnknownAttributeError, with: :unknown_attribute_error)
   end
 
   # Get the configured serializer class.

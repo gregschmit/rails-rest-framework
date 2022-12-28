@@ -112,57 +112,96 @@ module RESTFramework::BaseModelControllerMixin
   end
 
   def self.included(base)
-    if base.is_a?(Class)
-      RESTFramework::BaseControllerMixin.included(base)
-      base.extend(ClassMethods)
+    return unless base.is_a?(Class)
 
-      # Add class attributes (with defaults) unless they already exist.
-      {
-        # Core attributes related to models.
-        model: nil,
-        recordset: nil,
+    RESTFramework::BaseControllerMixin.included(base)
+    base.extend(ClassMethods)
 
-        # Attributes for configuring record fields.
-        fields: nil,
-        action_fields: nil,
-        metadata_fields: nil,
+    # Add class attributes (with defaults) unless they already exist.
+    {
+      # Core attributes related to models.
+      model: nil,
+      recordset: nil,
 
-        # Attributes for finding records.
-        find_by_fields: nil,
-        find_by_query_param: "find_by",
+      # Attributes for configuring record fields.
+      fields: nil,
+      action_fields: nil,
+      metadata_fields: nil,
 
-        # Attributes for create/update parameters.
-        allowed_parameters: nil,
-        allowed_action_parameters: nil,
+      # Attributes for finding records.
+      find_by_fields: nil,
+      find_by_query_param: "find_by",
 
-        # Attributes for the default native serializer.
-        native_serializer_config: nil,
-        native_serializer_singular_config: nil,
-        native_serializer_plural_config: nil,
-        native_serializer_only_query_param: "only",
-        native_serializer_except_query_param: "except",
+      # Attributes for create/update parameters.
+      allowed_parameters: nil,
+      allowed_action_parameters: nil,
 
-        # Attributes for default model filtering, ordering, and searching.
-        filterset_fields: nil,
-        ordering_fields: nil,
-        ordering_query_param: "ordering",
-        ordering_no_reorder: false,
-        search_fields: nil,
-        search_query_param: "search",
-        search_ilike: false,
+      # Attributes for the default native serializer.
+      native_serializer_config: nil,
+      native_serializer_singular_config: nil,
+      native_serializer_plural_config: nil,
+      native_serializer_only_query_param: "only",
+      native_serializer_except_query_param: "except",
 
-        # Other misc attributes.
-        create_from_recordset: true,  # Option for `recordset.create` vs `Model.create` behavior.
-        filter_recordset_before_find: true,  # Control if filtering is done before find.
-      }.each do |a, default|
-        next if base.respond_to?(a)
+      # Attributes for default model filtering, ordering, and searching.
+      filterset_fields: nil,
+      ordering_fields: nil,
+      ordering_query_param: "ordering",
+      ordering_no_reorder: false,
+      search_fields: nil,
+      search_query_param: "search",
+      search_ilike: false,
 
-        base.class_attribute(a)
+      # Other misc attributes.
+      create_from_recordset: true,  # Option for `recordset.create` vs `Model.create` behavior.
+      filter_recordset_before_find: true,  # Control if filtering is done before find.
+    }.each do |a, default|
+      next if base.respond_to?(a)
 
-        # Set default manually so we can still support Rails 4. Maybe later we can use the default
-        # parameter on `class_attribute`.
-        base.send(:"#{a}=", default)
+      base.class_attribute(a)
+
+      # Set default manually so we can still support Rails 4. Maybe later we can use the default
+      # parameter on `class_attribute`.
+      base.send(:"#{a}=", default)
+    end
+
+    # Attach delegation methods to the controller.
+    TracePoint.trace(:end) do |t|
+      next if base != t.self
+
+      # Delegate extra actions.
+      base.extra_actions&.each do |action, config|
+        next unless config.is_a?(Hash) && config[:delegate]
+
+        base.define_method(action) do
+          model = self.class.get_model
+          next unless model.respond_to?(action)
+
+          if model.method(action).parameters.last&.first == :keyrest
+            return api_response(model.send(action, **params))
+          else
+            return api_response(model.send(action))
+          end
+        end
       end
+
+      # Delegate extra member actions.
+      base.extra_member_actions&.each do |action, config|
+        next unless config.is_a?(Hash) && config[:delegate]
+
+        base.define_method(action) do
+          record = self.get_record
+          next unless record.respond_to?(action)
+
+          if record.method(action).parameters.last&.first == :keyrest
+            return api_response(record.send(action, **params))
+          else
+            return api_response(record.send(action))
+          end
+        end
+      end
+
+      t.disable
     end
   end
 
@@ -392,9 +431,9 @@ module RESTFramework::ReadOnlyModelControllerMixin
   include RESTFramework::BaseModelControllerMixin
 
   def self.included(base)
-    if base.is_a?(Class)
-      RESTFramework::BaseModelControllerMixin.included(base)
-    end
+    return unless base.is_a?(Class)
+
+    RESTFramework::BaseModelControllerMixin.included(base)
   end
 
   include RESTFramework::ListModelMixin
@@ -406,9 +445,9 @@ module RESTFramework::ModelControllerMixin
   include RESTFramework::BaseModelControllerMixin
 
   def self.included(base)
-    if base.is_a?(Class)
-      RESTFramework::BaseModelControllerMixin.included(base)
-    end
+    return unless base.is_a?(Class)
+
+    RESTFramework::BaseModelControllerMixin.included(base)
   end
 
   include RESTFramework::ListModelMixin

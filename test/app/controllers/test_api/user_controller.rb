@@ -14,6 +14,7 @@ class TestApi::UserController < TestApiController
   self.singleton_controller = true
   self.fields = %w(login is_admin balance)
   self.extra_actions = {with_things: :get}
+  self.extra_member_actions = {delegated: {methods: :get, delegate: true}}
   self.serializer_class = UsersSerializer
 
   def with_things

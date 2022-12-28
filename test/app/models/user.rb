@@ -9,4 +9,9 @@ class User < ActiveRecord::Base
   def calculated_property
     return 5.45
   end
+
+  # An example of a delegated method.
+  def delegated
+    return {login: self.login, is_admin: self.is_admin}
+  end
 end

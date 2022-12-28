@@ -23,7 +23,7 @@ module RESTFramework::Utils
         end
 
         # Pass any further kwargs to the underlying Rails interface.
-        kwargs = v.presence
+        kwargs = v.presence&.except(:delegate)
       elsif v.is_a?(Symbol) || v.is_a?(String)
         methods = [v]
       else
