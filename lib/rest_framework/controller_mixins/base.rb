@@ -20,7 +20,7 @@ module RESTFramework::BaseControllerMixin
       RESTFramework::BUILTIN_ACTIONS.merge(
         RESTFramework::RRF_BUILTIN_ACTIONS,
       ).each do |action, methods|
-        actions[action] = {path: "", methods: methods}
+        actions[action] = {path: "", methods: methods} if self.method_defined?(action)
       end
 
       # Add extra actions.
@@ -37,7 +37,7 @@ module RESTFramework::BaseControllerMixin
 
       # Start with builtin actions.
       RESTFramework::BUILTIN_MEMBER_ACTIONS.each do |action, methods|
-        actions[action] = {path: "", methods: methods}
+        actions[action] = {path: "", methods: methods} if self.method_defined?(action)
       end
 
       # Add extra actions.
