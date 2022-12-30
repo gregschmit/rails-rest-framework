@@ -1,20 +1,30 @@
 module RESTFramework::Utils
   HTTP_METHOD_ORDERING = %w(GET POST PUT PATCH DELETE OPTIONS HEAD)
 
-  # Convert `extra_actions` hash to a consistent format: `{path:, methods:, kwargs:}`.
-  def self.parse_extra_actions(extra_actions)
+  # Convert `extra_actions` hash to a consistent format: `{path:, methods:, kwargs:}`, and
+  # additional metadata fields.
+  #
+  # If a controller is provided, labels will be added to any metadata fields.
+  def self.parse_extra_actions(extra_actions, controller: nil)
     return (extra_actions || {}).map { |k, v|
       path = k
 
       # Convert structure to path/methods/kwargs.
       if v.is_a?(Hash)  # Allow kwargs to be used to define path differently from the key.
+        # Symbolize keys (which also makes a copy so we don't mutate the original).
         v = v.symbolize_keys
+        methods = v.delete(:methods)
 
-        # Ensure methods is an array.
-        if v[:methods].is_a?(String) || v[:methods].is_a?(Symbol)
-          methods = [v.delete(:methods)]
-        else
-          methods = v.delete(:methods)
+        # First, remove any metadata keys.
+        delegate = v.delete(:delegate)
+        fields = v.delete(:fields)
+
+        # Add label to fields.
+        if controller && fields
+          fields = fields.map { |f| [f, {}] }.to_h if f.is_a?(Array)
+          fields&.each do |field, cfg|
+            cfg[:label] = controller.get_label(field)
+          end
         end
 
         # Override path if it's provided.
@@ -23,14 +33,24 @@ module RESTFramework::Utils
         end
 
         # Pass any further kwargs to the underlying Rails interface.
-        kwargs = v.presence&.except(:delegate)
-      elsif v.is_a?(Symbol) || v.is_a?(String)
-        methods = [v]
+        kwargs = v.presence
+      elsif v.is_a?(Array) && v.length == 1
+        methods = v[0]
       else
         methods = v
       end
 
-      [k, {path: path, methods: methods, kwargs: kwargs}.compact]
+      next [
+        k,
+        {
+          path: path,
+          methods: methods,
+          kwargs: kwargs,
+          delegate: delegate,
+          fields: fields,
+          type: :extra,
+        }.compact,
+      ]
     }.to_h
   end
 
@@ -107,5 +127,14 @@ module RESTFramework::Utils
       # Sort the controller groups by current controller first, then depth, then alphanumerically.
       [request.params[:controller] == c ? 0 : 1, c.count("/"), c]
     }.to_h
+  end
+
+  # Custom inflector for RESTful controllers.
+  def self.inflect(s, acronyms=nil)
+    acronyms&.each do |acronym|
+      s = s.gsub(/\b#{acronym}\b/i, acronym)
+    end
+
+    return s
   end
 end

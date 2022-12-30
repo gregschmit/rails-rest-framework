@@ -57,6 +57,9 @@
               <% end %>
               <button type="button" class="btn btn-primary" onclick="rrfRefresh(this)">GET</button>
             </div>
+            <% if @description.present? %>
+              <br><br><p style="display: inline-block; margin-bottom: 0"><%= @description %></p>
+            <% end %>
           </div>
         </div>
         <hr/>

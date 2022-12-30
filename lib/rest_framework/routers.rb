@@ -39,8 +39,10 @@ module ActionDispatch::Routing
 
     # Interal interface for routing extra actions.
     def _route_extra_actions(actions, &block)
-      actions.each do |action, config|
-        config[:methods].each do |m|
+      parsed_actions = RESTFramework::Utils.parse_extra_actions(actions)
+
+      parsed_actions.each do |action, config|
+        [config[:methods]].flatten.each do |m|
           public_send(m, config[:path], action: action, **(config[:kwargs] || {}))
         end
         yield if block_given?
@@ -84,17 +86,13 @@ module ActionDispatch::Routing
       public_send(resource_method, name, except: skip, **kwargs) do
         if controller_class.respond_to?(:extra_member_actions)
           member do
-            self._route_extra_actions(
-              RESTFramework::Utils.parse_extra_actions(controller_class.extra_member_actions),
-            )
+            self._route_extra_actions(controller_class.extra_member_actions)
           end
         end
 
         collection do
           # Route extra controller-defined actions.
-          self._route_extra_actions(
-            RESTFramework::Utils.parse_extra_actions(controller_class.extra_actions),
-          )
+          self._route_extra_actions(controller_class.extra_actions)
 
           # Route extra RRF-defined actions.
           RESTFramework::RRF_BUILTIN_ACTIONS.each do |action, methods|
@@ -155,9 +153,7 @@ module ActionDispatch::Routing
 
         collection do
           # Route extra controller-defined actions.
-          self._route_extra_actions(
-            RESTFramework::Utils.parse_extra_actions(controller_class.extra_actions),
-          )
+          self._route_extra_actions(controller_class.extra_actions)
 
           # Route extra RRF-defined actions.
           RESTFramework::RRF_BUILTIN_ACTIONS.each do |action, methods|

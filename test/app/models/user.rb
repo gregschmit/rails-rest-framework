@@ -5,7 +5,7 @@ class User < ActiveRecord::Base
 
   accepts_nested_attributes_for :things, allow_destroy: true
 
-  # An example of a "cauculated" property method.
+  # An example of a "calculated" property method.
   def calculated_property
     return 5.45
   end

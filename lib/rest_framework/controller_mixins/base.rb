@@ -6,12 +6,59 @@ require_relative "../utils"
 # the ability to route arbitrary actions with `extra_actions`. This is also where `api_response`
 # is defined.
 module RESTFramework::BaseControllerMixin
+  RRF_BASE_CONTROLLER_CONFIG = {
+    filter_pk_from_request_body: true,
+    exclude_body_fields: [:created_at, :created_by, :updated_at, :updated_by],
+    accept_generic_params_as_body_params: false,
+    show_backtrace: false,
+    extra_actions: nil,
+    extra_member_actions: nil,
+    filter_backends: nil,
+    singleton_controller: nil,
+
+    # Metadata and display options.
+    title: nil,
+    description: nil,
+    inflect_acronyms: ["ID", "REST", "API"],
+
+    # Options related to serialization.
+    rescue_unknown_format_with: :json,
+    serializer_class: nil,
+    serialize_to_json: true,
+    serialize_to_xml: true,
+
+    # Options related to pagination.
+    paginator_class: nil,
+    page_size: 20,
+    page_query_param: "page",
+    page_size_query_param: "page_size",
+    max_page_size: nil,
+
+    # Option to disable serializer adapters by default, mainly introduced because Active Model
+    # Serializers will do things like serialize `[]` into `{"":[]}`.
+    disable_adapters_by_default: true,
+  }
+
   # Default action for API root.
   def root
-    api_response({message: "This is the root of your awesome API!"})
+    api_response({message: "This is the API root."})
   end
 
   module ClassMethods
+    # Get the title of this controller. By default, this is the name of the controller class,
+    # titleized and with any custom inflection acronyms applied.
+    def get_title
+      return self.title || RESTFramework::Utils.inflect(
+        self.name.demodulize.chomp("Controller").titleize(keep_id_suffix: true),
+        self.inflect_acronyms,
+      )
+    end
+
+    # Get a label from a field/column name, titleized and inflected.
+    def get_label(s)
+      return RESTFramework::Utils.inflect(s.titleize(keep_id_suffix: true), self.inflect_acronyms)
+    end
+
     # Collect actions (including extra actions) metadata for this controller.
     def get_actions_metadata
       actions = {}
@@ -20,12 +67,14 @@ module RESTFramework::BaseControllerMixin
       RESTFramework::BUILTIN_ACTIONS.merge(
         RESTFramework::RRF_BUILTIN_ACTIONS,
       ).each do |action, methods|
-        actions[action] = {path: "", methods: methods} if self.method_defined?(action)
+        if self.method_defined?(action)
+          actions[action] = {path: "", methods: methods, type: :builtin}
+        end
       end
 
       # Add extra actions.
       if extra_actions = self.try(:extra_actions)
-        actions.merge!(RESTFramework::Utils.parse_extra_actions(extra_actions))
+        actions.merge!(RESTFramework::Utils.parse_extra_actions(extra_actions, controller: self))
       end
 
       return actions
@@ -37,12 +86,14 @@ module RESTFramework::BaseControllerMixin
 
       # Start with builtin actions.
       RESTFramework::BUILTIN_MEMBER_ACTIONS.each do |action, methods|
-        actions[action] = {path: "", methods: methods} if self.method_defined?(action)
+        if self.method_defined?(action)
+          actions[action] = {path: "", methods: methods, type: :builtin}
+        end
       end
 
       # Add extra actions.
       if extra_actions = self.try(:extra_member_actions)
-        actions.merge!(RESTFramework::Utils.parse_extra_actions(extra_actions))
+        actions.merge!(RESTFramework::Utils.parse_extra_actions(extra_actions, controller: self))
       end
 
       return actions
@@ -51,8 +102,8 @@ module RESTFramework::BaseControllerMixin
     # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
     def get_options_metadata
       return @_base_options_metadata ||= {
-        name: self.metadata&.name || self.controller_name.titleize,
-        description: self.metadata&.description,
+        title: self.get_title,
+        description: self.description,
         renders: [
           "text/html",
           self.serialize_to_json ? "application/json" : nil,
@@ -62,6 +113,16 @@ module RESTFramework::BaseControllerMixin
         member_actions: self.get_member_actions_metadata,
       }.compact
     end
+
+    # Define any behavior to execute at the end of controller definition.
+    def rrf_finalize
+      if RESTFramework.config.freeze_config
+        self::RRF_BASE_CONTROLLER_CONFIG.keys.each { |k|
+          v = self.send(k)
+          v.freeze if v.is_a?(Hash) || v.is_a?(Array)
+        }
+      end
+    end
   end
 
   def self.included(base)
@@ -70,34 +131,7 @@ module RESTFramework::BaseControllerMixin
     base.extend(ClassMethods)
 
     # Add class attributes (with defaults) unless they already exist.
-    {
-      filter_pk_from_request_body: true,
-      exclude_body_fields: [:created_at, :created_by, :updated_at, :updated_by],
-      accept_generic_params_as_body_params: false,
-      show_backtrace: false,
-      extra_actions: nil,
-      extra_member_actions: nil,
-      filter_backends: nil,
-      singleton_controller: nil,
-      metadata: nil,
-
-      # Options related to serialization.
-      rescue_unknown_format_with: :json,
-      serializer_class: nil,
-      serialize_to_json: true,
-      serialize_to_xml: true,
-
-      # Options related to pagination.
-      paginator_class: nil,
-      page_size: 20,
-      page_query_param: "page",
-      page_size_query_param: "page_size",
-      max_page_size: nil,
-
-      # Option to disable serializer adapters by default, mainly introduced because Active Model
-      # Serializers will do things like serialize `[]` into `{"":[]}`.
-      disable_adapters_by_default: true,
-    }.each do |a, default|
+    RRF_BASE_CONTROLLER_CONFIG.each do |a, default|
       next if base.respond_to?(a)
 
       base.class_attribute(a)
@@ -126,6 +160,19 @@ module RESTFramework::BaseControllerMixin
     base.rescue_from(ActiveRecord::RecordNotSaved, with: :record_not_saved)
     base.rescue_from(ActiveRecord::RecordNotDestroyed, with: :record_not_destroyed)
     base.rescue_from(ActiveModel::UnknownAttributeError, with: :unknown_attribute_error)
+
+    # Use `TracePoint` hook to automatically call `rrf_finalize`.
+    unless RESTFramework.config.disable_auto_finalize
+      TracePoint.trace(:end) do |t|
+        next if base != t.self
+
+        base.rrf_finalize
+
+        # It's important to disable the trace once we've found the end of the base class definition,
+        # for performance.
+        t.disable
+      end
+    end
   end
 
   # Get the configured serializer class.
@@ -269,7 +316,8 @@ module RESTFramework::BaseControllerMixin
             @xml_payload = payload.to_xml if self.class.serialize_to_xml
           end
           @template_logo_text ||= "Rails REST Framework"
-          @title ||= self.controller_name.titleize
+          @title ||= self.class.get_title
+          @description ||= self.class.description
           @route_props, @route_groups = RESTFramework::Utils.get_routes(
             Rails.application.routes, request
           )

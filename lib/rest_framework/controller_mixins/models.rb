@@ -5,6 +5,44 @@ require_relative "../filters"
 module RESTFramework::BaseModelControllerMixin
   include RESTFramework::BaseControllerMixin
 
+  RRF_BASE_MODEL_CONTROLLER_CONFIG = {
+    # Core attributes related to models.
+    model: nil,
+    recordset: nil,
+
+    # Attributes for configuring record fields.
+    fields: nil,
+    action_fields: nil,
+
+    # Attributes for finding records.
+    find_by_fields: nil,
+    find_by_query_param: "find_by",
+
+    # Attributes for create/update parameters.
+    allowed_parameters: nil,
+    allowed_action_parameters: nil,
+
+    # Attributes for the default native serializer.
+    native_serializer_config: nil,
+    native_serializer_singular_config: nil,
+    native_serializer_plural_config: nil,
+    native_serializer_only_query_param: "only",
+    native_serializer_except_query_param: "except",
+
+    # Attributes for default model filtering, ordering, and searching.
+    filterset_fields: nil,
+    ordering_fields: nil,
+    ordering_query_param: "ordering",
+    ordering_no_reorder: false,
+    search_fields: nil,
+    search_query_param: "search",
+    search_ilike: false,
+
+    # Other misc attributes.
+    create_from_recordset: true,  # Option for `recordset.create` vs `Model.create` behavior.
+    filter_recordset_before_find: true,  # Control if filtering is done before find.
+  }
+
   module ClassMethods
     IGNORE_VALIDATORS_WITH_KEYS = [:if, :unless]
 
@@ -19,8 +57,8 @@ module RESTFramework::BaseModelControllerMixin
       rescue NameError
       end
 
-      # Delegate to the recordset's model, if it's defined.
-      unless from_get_recordset  # Prevent infinite recursion.
+      # Delegate to the recordset's model, if it's defined. This option prevents infinite recursion.
+      unless from_get_recordset
         # Instantiate a new controller to get the recordset.
         controller = self.new
         controller.request = ActionController::TestRequest.new
@@ -34,24 +72,34 @@ module RESTFramework::BaseModelControllerMixin
       return nil
     end
 
+    # Override `get_label` to include ActiveRecord i18n-translated column names.
+    def get_label(s)
+      return self.get_model.human_attribute_name(s, default: super)
+    end
+
     # Get metadata about the resource's fields.
     def get_fields_metadata(fields: nil)
       # Get metadata sources.
       model = self.get_model
-      fields ||= self.fields || model&.column_names || []
+      fields ||= self.fields || model.column_names || []
       fields = fields.map(&:to_s)
-      columns = model&.columns_hash
-      column_defaults = model&.column_defaults
-      attributes = model&._default_attributes
+      columns = model.columns_hash
+      column_defaults = model.column_defaults
+      attributes = model._default_attributes
 
       return fields.map { |f|
         # Initialize metadata to make the order consistent.
         metadata = {
-          type: nil, kind: nil, label: nil, primary_key: nil, required: nil, read_only: nil
+          type: nil,
+          kind: nil,
+          label: self.get_label(f),
+          primary_key: nil,
+          required: nil,
+          read_only: nil,
         }
 
         # Determine `primary_key` based on model.
-        if model&.primary_key == f
+        if model.primary_key == f
           metadata[:primary_key] = true
         end
 
@@ -59,7 +107,6 @@ module RESTFramework::BaseModelControllerMixin
         if column = columns[f]
           metadata[:type] = column.type
           metadata[:required] = true unless column.null
-          metadata[:label] = column.human_name.instance_eval { |n| n == "Id" ? "ID" : n }
           metadata[:kind] = "column"
         end
 
@@ -121,73 +168,15 @@ module RESTFramework::BaseModelControllerMixin
         },
       )
     end
-  end
 
-  def self.included(base)
-    return unless base.is_a?(Class)
-
-    RESTFramework::BaseControllerMixin.included(base)
-    base.extend(ClassMethods)
-
-    # Add class attributes (with defaults) unless they already exist.
-    {
-      # Core attributes related to models.
-      model: nil,
-      recordset: nil,
-
-      # Attributes for configuring record fields.
-      fields: nil,
-      action_fields: nil,
-      metadata_fields: nil,
-
-      # Attributes for finding records.
-      find_by_fields: nil,
-      find_by_query_param: "find_by",
-
-      # Attributes for create/update parameters.
-      allowed_parameters: nil,
-      allowed_action_parameters: nil,
-
-      # Attributes for the default native serializer.
-      native_serializer_config: nil,
-      native_serializer_singular_config: nil,
-      native_serializer_plural_config: nil,
-      native_serializer_only_query_param: "only",
-      native_serializer_except_query_param: "except",
-
-      # Attributes for default model filtering, ordering, and searching.
-      filterset_fields: nil,
-      ordering_fields: nil,
-      ordering_query_param: "ordering",
-      ordering_no_reorder: false,
-      search_fields: nil,
-      search_query_param: "search",
-      search_ilike: false,
-
-      # Other misc attributes.
-      create_from_recordset: true,  # Option for `recordset.create` vs `Model.create` behavior.
-      filter_recordset_before_find: true,  # Control if filtering is done before find.
-    }.each do |a, default|
-      next if base.respond_to?(a)
-
-      base.class_attribute(a)
-
-      # Set default manually so we can still support Rails 4. Maybe later we can use the default
-      # parameter on `class_attribute`.
-      base.send(:"#{a}=", default)
-    end
-
-    # Actions to run at the end of the class definition.
-    TracePoint.trace(:end) do |t|
-      next if base != t.self
-
+    def setup_delegation
       # Delegate extra actions.
-      base.extra_actions&.each do |action, config|
+      self.extra_actions&.each do |action, config|
         next unless config.is_a?(Hash) && config[:delegate]
+        next unless self.get_model.respond_to?(action)
 
-        base.define_method(action) do
+        self.define_method(action) do
           model = self.class.get_model
-          next unless model.respond_to?(action)
 
           if model.method(action).parameters.last&.first == :keyrest
             return api_response(model.send(action, **params))
@@ -198,12 +187,12 @@ module RESTFramework::BaseModelControllerMixin
       end
 
       # Delegate extra member actions.
-      base.extra_member_actions&.each do |action, config|
+      self.extra_member_actions&.each do |action, config|
         next unless config.is_a?(Hash) && config[:delegate]
+        next unless self.get_model.method_defined?(action)
 
-        base.define_method(action) do
+        self.define_method(action) do
           record = self.get_record
-          next unless record.respond_to?(action)
 
           if record.method(action).parameters.last&.first == :keyrest
             return api_response(record.send(action, **params))
@@ -212,10 +201,38 @@ module RESTFramework::BaseModelControllerMixin
           end
         end
       end
+    end
 
-      # It's important to disable the trace once we've found the end of the base class definition,
-      # for performance.
-      t.disable
+    # Define any behavior to execute at the end of controller definition.
+    def rrf_finalize
+      super
+      self.setup_delegation
+      # self.setup_channel
+
+      if RESTFramework.config.freeze_config
+        self::RRF_BASE_MODEL_CONTROLLER_CONFIG.keys.each { |k|
+          v = self.send(k)
+          v.freeze if v.is_a?(Hash) || v.is_a?(Array)
+        }
+      end
+    end
+  end
+
+  def self.included(base)
+    return unless base.is_a?(Class)
+
+    RESTFramework::BaseControllerMixin.included(base)
+    base.extend(ClassMethods)
+
+    # Add class attributes (with defaults) unless they already exist.
+    RRF_BASE_MODEL_CONTROLLER_CONFIG.each do |a, default|
+      next if base.respond_to?(a)
+
+      base.class_attribute(a)
+
+      # Set default manually so we can still support Rails 4. Maybe later we can use the default
+      # parameter on `class_attribute`.
+      base.send(:"#{a}=", default)
     end
   end
 
