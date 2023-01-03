@@ -44,7 +44,7 @@ module RESTFramework::BaseModelControllerMixin
   }
 
   module ClassMethods
-    IGNORE_VALIDATORS_WITH_KEYS = [:if, :unless]
+    IGNORE_VALIDATORS_WITH_KEYS = [:if, :unless].freeze
 
     # Get the model for this controller.
     def get_model(from_get_recordset: false)
@@ -162,11 +162,7 @@ module RESTFramework::BaseModelControllerMixin
 
     # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
     def get_options_metadata(fields: nil)
-      return super().merge(
-        {
-          fields: self.get_fields_metadata(fields: fields),
-        },
-      )
+      return super().merge({fields: self.get_fields_metadata(fields: fields)})
     end
 
     def setup_delegation

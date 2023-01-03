@@ -10,8 +10,10 @@ IS_MAIN_TRAVIS_RUBY = File.read(File.expand_path("../../.ruby-version", __dir__)
 IS_MAIN_TRAVIS_RAILS = ENV["RAILS_VERSION"]&.match?(
   File.read(File.expand_path("../../.rails-version", __dir__)).strip,
 )
-IS_MAIN_TRAVIS_ENV = IS_MAIN_TRAVIS_RUBY && IS_MAIN_TRAVIS_RAILS
-require "coveralls" if IS_MAIN_TRAVIS_ENV
+if IS_MAIN_TRAVIS_ENV = IS_MAIN_TRAVIS_RUBY && IS_MAIN_TRAVIS_RAILS
+  require "coveralls"
+  puts("Including coverage.")
+end
 
 # Configure SimpleCov.
 SimpleCov.start do

@@ -8,7 +8,7 @@ require_relative "../utils"
 module RESTFramework::BaseControllerMixin
   RRF_BASE_CONTROLLER_CONFIG = {
     filter_pk_from_request_body: true,
-    exclude_body_fields: [:created_at, :created_by, :updated_at, :updated_by],
+    exclude_body_fields: [:created_at, :created_by, :updated_at, :updated_by].freeze,
     accept_generic_params_as_body_params: false,
     show_backtrace: false,
     extra_actions: nil,
@@ -19,7 +19,7 @@ module RESTFramework::BaseControllerMixin
     # Metadata and display options.
     title: nil,
     description: nil,
-    inflect_acronyms: ["ID", "REST", "API"],
+    inflect_acronyms: ["ID", "REST", "API"].freeze,
 
     # Options related to serialization.
     rescue_unknown_format_with: :json,

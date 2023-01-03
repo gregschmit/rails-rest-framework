@@ -7,7 +7,7 @@ module RESTFramework
   BUILTIN_MEMBER_ACTIONS = {
     show: :get,
     edit: :get,
-    update: [:put, :patch],
+    update: [:put, :patch].freeze,
     destroy: :delete,
   }.freeze
   RRF_BUILTIN_ACTIONS = {
@@ -24,7 +24,7 @@ module RESTFramework
     # in:
     #  - Model delegation, for the helper methods to be defined dynamically.
     #  - Websockets, for `::Channel` class to be defined dynamically.
-    #  - Controller configuration finalizatino.
+    #  - Controller configuration finalization.
     attr_accessor :disable_auto_finalize
 
     # Freeze configuration attributes during finalization to prevent accidental mutation.
