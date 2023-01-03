@@ -12,7 +12,7 @@ IS_MAIN_TRAVIS_RAILS = ENV["RAILS_VERSION"]&.match?(
 )
 if IS_MAIN_TRAVIS_ENV = IS_MAIN_TRAVIS_RUBY && IS_MAIN_TRAVIS_RAILS
   require "coveralls"
-  puts("Including coverage (token: #{ENV["COVERALLS_REPO_TOKEN"][0..8]}...).")
+  puts("Configured to submit coverage to `coveralls.io`.")
 end
 
 # Configure SimpleCov.

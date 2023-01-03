@@ -31,7 +31,7 @@ group :development do
 end
 
 group :test do
-  gem "coveralls", require: false
+  gem "coveralls_reborn", require: false
   gem "minitest", ">= 5.0"
 end
 
