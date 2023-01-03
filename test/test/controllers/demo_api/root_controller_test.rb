@@ -1,4 +1,4 @@
-require_relative "base"
+require "test_helper"
 
 class DemoApi::RootControllerTest < ActionController::TestCase
   def test_nil_fails

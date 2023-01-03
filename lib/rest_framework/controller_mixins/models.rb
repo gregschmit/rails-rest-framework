@@ -200,6 +200,7 @@ module RESTFramework::BaseModelControllerMixin
     end
 
     # Define any behavior to execute at the end of controller definition.
+    # :nocov:
     def rrf_finalize
       super
       self.setup_delegation
@@ -212,6 +213,7 @@ module RESTFramework::BaseModelControllerMixin
         }
       end
     end
+    # :nocov:
   end
 
   def self.included(base)

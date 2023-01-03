@@ -115,6 +115,7 @@ module RESTFramework::BaseControllerMixin
     end
 
     # Define any behavior to execute at the end of controller definition.
+    # :nocov:
     def rrf_finalize
       if RESTFramework.config.freeze_config
         self::RRF_BASE_CONTROLLER_CONFIG.keys.each { |k|
@@ -123,6 +124,7 @@ module RESTFramework::BaseControllerMixin
         }
       end
     end
+    # :nocov:
   end
 
   def self.included(base)
@@ -163,6 +165,7 @@ module RESTFramework::BaseControllerMixin
 
     # Use `TracePoint` hook to automatically call `rrf_finalize`.
     unless RESTFramework.config.disable_auto_finalize
+      # :nocov:
       TracePoint.trace(:end) do |t|
         next if base != t.self
 
@@ -172,6 +175,7 @@ module RESTFramework::BaseControllerMixin
         # for performance.
         t.disable
       end
+      # :nocov:
     end
   end
 

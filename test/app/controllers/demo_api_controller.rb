@@ -1,5 +1,4 @@
-# The Demo API should test very simple functionality of the REST framework, and will be deployed to
-# Heroku for demo purposes.
+# This API should demo functionality of the REST framework.
 class DemoApiController < ApplicationController
   include RESTFramework::BaseControllerMixin
 

@@ -1,7 +1,7 @@
 require "rails/generators"
 
 # Most projects don't have the inflection "REST" as an acronym, so this is a helper class to prevent
-# this generator from being namespaced under `r_e_s_t_framework`.
+# this generator from being namespaced as `"r_e_s_t_framework"`.
 # :nocov:
 class RESTFrameworkCustomGeneratorControllerNamespace < String
   def camelize

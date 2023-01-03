@@ -1,6 +1,6 @@
 require "test_helper"
 
-module BaseDemoApiControllerTests
+module BaseCRUD
   def self.included(base)
     base.class_attribute(:create_params)
     base.class_attribute(:update_params)
