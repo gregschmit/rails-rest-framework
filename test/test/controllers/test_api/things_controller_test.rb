@@ -85,8 +85,10 @@ class TestApi::ThingsControllerTest < ActionController::TestCase
     assert(@controller.class.get_model)
   end
 
-  def test_options
-    get(:options, as: :json)
-    assert_response(:success)
+  if Rails::VERSION::MAJOR >= 7
+    def test_options
+      get(:options, as: :json)
+      assert_response(:success)
+    end
   end
 end
