@@ -52,6 +52,13 @@ class TestApi::ThingsControllerTest < ActionController::TestCase
     assert_nil(@response.parsed_body["results"][0]["shape"])
   end
 
+  def test_list_except_name
+    get(:index, as: :json, params: {except: "name"})
+    assert_response(:success)
+    assert(@response.parsed_body["results"][0]["price"])
+    assert_nil(@response.parsed_body["results"][0]["name"])
+  end
+
   def test_show
     t = Thing.create!(
       name: "test", shape: "test", price: 5, owner_attributes: {login: "test", is_admin: true},
@@ -76,5 +83,10 @@ class TestApi::ThingsControllerTest < ActionController::TestCase
 
   def test_get_model_before_recordset
     assert(@controller.class.get_model)
+  end
+
+  def test_options
+    get(:options, as: :json)
+    assert_response(:success)
   end
 end

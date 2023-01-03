@@ -114,7 +114,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return subcfg unless subcfg
 
     if subcfg.is_a?(Array)
-      subcfg = subcfg.transform_values(&:to_sym)
+      subcfg = subcfg.map(&:to_sym)
 
       if add
         # Only add fields which are not already included.
