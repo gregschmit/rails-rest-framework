@@ -59,7 +59,7 @@ class ApiController < ApplicationController
   self.extra_actions = {test: [:get]}
 
   def test
-    render inline: "Test successful!"
+    render api_response({message: "Test successful!"})
   end
 end
 ```
