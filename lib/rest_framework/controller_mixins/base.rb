@@ -8,7 +8,9 @@ require_relative "../utils"
 module RESTFramework::BaseControllerMixin
   RRF_BASE_CONTROLLER_CONFIG = {
     filter_pk_from_request_body: true,
-    exclude_body_fields: [:created_at, :created_by, :updated_at, :updated_by].freeze,
+    exclude_body_fields: [
+      :created_at, :created_by, :created_by_id, :updated_at, :updated_by, :updated_by_id
+    ].freeze,
     accept_generic_params_as_body_params: false,
     show_backtrace: false,
     extra_actions: nil,
