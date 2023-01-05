@@ -137,4 +137,17 @@ module RESTFramework::Utils
 
     return s
   end
+
+  # Parse fields hashes.
+  def self.parse_fields_hash(fields_hash, model)
+    parsed_fields = fields_hash[:only] || model&.column_names || []
+    parsed_fields -= fields_hash[:except] if fields_hash[:except]
+
+    # Warn for any unknown keys.
+    (fields_hash.keys - [:only, :except]).each do |k|
+      Rails.logger.warn("RRF: Unknown key in fields hash: #{k}")
+    end
+
+    return parsed_fields
+  end
 end

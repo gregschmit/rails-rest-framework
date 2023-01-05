@@ -81,7 +81,7 @@ module RESTFramework::BaseModelControllerMixin
     def get_fields_metadata(fields: nil)
       # Get metadata sources.
       model = self.get_model
-      fields ||= self.fields || model.column_names || []
+      fields ||= self.get_fields
       fields = fields.map(&:to_s)
       columns = model.columns_hash
       column_defaults = model.column_defaults
@@ -244,14 +244,27 @@ module RESTFramework::BaseModelControllerMixin
     return (action_config[action] if action) || self.class.send(generic_config_key)
   end
 
+  # Get fields without any action context. Always fallback to columns at the class level.
+  def self.get_fields
+    if self.fields.is_a?(Hash)
+      return RESTFramework::Utils.parse_fields_hash(self.fields, self.get_model)
+    end
+
+    return self.fields || self.get_model&.column_names || []
+  end
+
   # Get a list of fields for the current action. Returning `nil` indicates that anything should be
   # accepted unless `fallback` is true, in which case we should fallback to this controller's model
   # columns, or en empty array.
   def get_fields(fallback: false)
     fields = _get_specific_action_config(:action_fields, :fields)
 
-    if fallback
-      fields ||= self.class.get_model&.column_names || []
+    # If fields is a hash, then parse using columns as a base, respecting `only` and `except`.
+    if fields.is_a?(Hash)
+      return RESTFramework::Utils.parse_fields_hash(fields, self.class.get_model)
+    elsif !fields && fallback
+      # Otherwise, if fields is nil and fallback is true, then fallback to columns.
+      return self.class.get_model&.column_names || []
     end
 
     return fields
