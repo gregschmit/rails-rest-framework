@@ -274,7 +274,7 @@ module RESTFramework::BaseModelControllerMixin
     return _get_specific_action_config(
       :allowed_action_parameters,
       :allowed_parameters,
-    ) || self.fields
+    ) || self.get_fields
   end
 
   # Helper to get the configured serializer class, or `NativeSerializer` as a default.
