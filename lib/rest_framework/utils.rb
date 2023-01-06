@@ -79,7 +79,7 @@ module RESTFramework::Utils
     current_route ||= self.get_request_route(application_routes, request)
     current_path = current_route.path.spec.to_s.gsub("(.:format)", "")
     current_levels = current_path.count("/")
-    current_comparable_path = self.comparable_path(current_path)
+    current_comparable_path = %r{^#{Regexp.quote(self.comparable_path(current_path))}(/|$)}
 
     # Add helpful properties of the current route.
     path_args = current_route.required_parts.map { |n| request.path_parameters[n] }
@@ -96,7 +96,7 @@ module RESTFramework::Utils
       # to show.
       (
         (r.defaults[:subdomain].blank? || r.defaults[:subdomain] == request.subdomain) &&
-        self.comparable_path(r.path.spec.to_s).start_with?(current_comparable_path) &&
+        current_comparable_path.match?(self.comparable_path(r.path.spec.to_s)) &&
         r.defaults[:controller].present? &&
         r.defaults[:action].present?
       )
