@@ -160,9 +160,30 @@ module RESTFramework::BaseModelControllerMixin
       }.to_h
     end
 
+    # Get metadata about the resource's associations (reflections).
+    def get_associations_metadata
+      return self.get_model.reflections.map { |k, v|
+        next [k, {
+          macro: v.macro,
+          label: self.get_label(k),
+          class_name: v.class_name,
+          foreign_key: v.foreign_key,
+          primary_key: v.active_record_primary_key,
+          polymorphic: v.polymorphic?,
+          table_name: v.table_name,
+          options: v.options,
+        }.compact]
+      }.to_h
+    end
+
     # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
     def get_options_metadata(fields: nil)
-      return super().merge({fields: self.get_fields_metadata(fields: fields)})
+      return super().merge(
+        {
+          fields: self.get_fields_metadata(fields: fields),
+          associations: self.get_associations_metadata,
+        },
+      )
     end
 
     def setup_delegation
