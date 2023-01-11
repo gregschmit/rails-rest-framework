@@ -4,7 +4,7 @@ inherit_gem:
 
 AllCops:
   Exclude:
-  - db/schema.rb
+  - test/db/schema.rb
   - vendor
   SuggestExtensions: false
   NewCops: disable

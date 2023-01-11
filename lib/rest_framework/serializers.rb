@@ -88,7 +88,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return self.config || self.singular_config || self.plural_config
   end
 
-  # Helper to get a native serializer configuration from the controller.
+  # Get a native serializer configuration from the controller.
   def get_controller_native_serializer_config
     return nil unless @controller
 
@@ -101,9 +101,8 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return controller_serializer || @controller.class.try(:native_serializer_config)
   end
 
-  # Helper to filter a single subconfig for specific keys. By default, keys from `fields` are
-  # removed from the provided `subcfg`. There are two (mutually exclusive) options to adjust the
-  # behavior:
+  # Filter a single subconfig for specific keys. By default, keys from `fields` are removed from the
+  # provided `subcfg`. There are two (mutually exclusive) options to adjust the behavior:
   #
   #  `add`: Add any `fields` to the `subcfg` which aren't already in the `subcfg`.
   #  `only`: Remove any values found in the `subcfg` not in `fields`.
@@ -149,7 +148,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return subcfg
   end
 
-  # Helper to filter out configuration properties based on the :except query parameter.
+  # Filter out configuration properties based on the :except query parameter.
   def filter_except(cfg)
     return cfg unless @controller
 
@@ -245,7 +244,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return filter_except(self._get_raw_serializer_config)
   end
 
-  # Internal helper to serialize a single record and merge results of `serializer_methods`.
+  # Serialize a single record and merge results of `serializer_methods`.
   def _serialize(record, config, serializer_methods)
     # Ensure serializer_methods is either falsy, or an array.
     if serializer_methods && !serializer_methods.respond_to?(:to_ary)

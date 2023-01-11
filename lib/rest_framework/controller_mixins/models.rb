@@ -163,15 +163,20 @@ module RESTFramework::BaseModelControllerMixin
     # Get metadata about the resource's associations (reflections).
     def get_associations_metadata
       return self.get_model.reflections.map { |k, v|
+        begin
+          pk = v.active_record_primary_key
+        rescue ActiveRecord::UnknownPrimaryKey
+        end
+
         next [k, {
           macro: v.macro,
           label: self.get_label(k),
           class_name: v.class_name,
           foreign_key: v.foreign_key,
-          primary_key: v.active_record_primary_key,
+          primary_key: pk,
           polymorphic: v.polymorphic?,
           table_name: v.table_name,
-          options: v.options,
+          options: v.options.presence,
         }.compact]
       }.to_h
     end
@@ -238,9 +243,10 @@ module RESTFramework::BaseModelControllerMixin
   end
 
   def self.included(base)
+    RESTFramework::BaseControllerMixin.included(base)
+
     return unless base.is_a?(Class)
 
-    RESTFramework::BaseControllerMixin.included(base)
     base.extend(ClassMethods)
 
     # Add class attributes (with defaults) unless they already exist.
@@ -311,12 +317,12 @@ module RESTFramework::BaseModelControllerMixin
     ) || self.get_fields
   end
 
-  # Helper to get the configured serializer class, or `NativeSerializer` as a default.
+  # Get the configured serializer class, or `NativeSerializer` as a default.
   def get_serializer_class
     return super || RESTFramework::NativeSerializer
   end
 
-  # Helper to get filtering backends, defaulting to using `ModelFilter` and `ModelOrderingFilter`.
+  # Get filtering backends, defaulting to using `ModelFilter` and `ModelOrderingFilter`.
   def get_filter_backends
     return self.class.filter_backends || [
       RESTFramework::ModelFilter, RESTFramework::ModelOrderingFilter
@@ -324,14 +330,16 @@ module RESTFramework::BaseModelControllerMixin
   end
 
   # Filter the request body for keys in current action's allowed_parameters/fields config.
-  def get_body_params
+  def get_body_params(request_parameters: nil)
+    request_parameters ||= request.request_parameters
+
     # Filter the request body and map to strings. Return all params if we cannot resolve a list of
     # allowed parameters or fields.
     allowed_params = self.get_allowed_parameters&.map(&:to_s)
     body_params = if allowed_params
-      request.request_parameters.select { |p| allowed_params.include?(p) }
+      request_parameters.select { |p| allowed_params.include?(p) }
     else
-      request.request_parameters
+      request_parameters
     end
 
     # Add query params in place of missing body params, if configured.
@@ -370,7 +378,7 @@ module RESTFramework::BaseModelControllerMixin
     return @recordset = nil
   end
 
-  # Helper to get the records this controller has access to *after* any filtering is applied.
+  # Get the records this controller has access to *after* any filtering is applied.
   def get_records
     return @records if instance_variable_defined?(:@records)
 
@@ -413,7 +421,7 @@ module RESTFramework::ListModelMixin
     return api_response(self.get_index_records)
   end
 
-  # Helper to get records with both filtering and pagination applied.
+  # Get records with both filtering and pagination applied.
   def get_index_records
     records = self.get_records
 
@@ -448,7 +456,7 @@ module RESTFramework::CreateModelMixin
     return api_response(self.create!, status: :created)
   end
 
-  # Helper to perform the `create!` call and return the created record.
+  # Perform the `create!` call and return the created record.
   def create!
     if self.get_recordset.respond_to?(:create!) && self.create_from_recordset
       # Create with any properties inherited from the recordset. We exclude any `select` clauses in
@@ -468,7 +476,7 @@ module RESTFramework::UpdateModelMixin
     return api_response(self.update!)
   end
 
-  # Helper to perform the `update!` call and return the updated record.
+  # Perform the `update!` call and return the updated record.
   def update!
     record = self.get_record
     record.update!(self.get_update_params)
@@ -483,7 +491,7 @@ module RESTFramework::DestroyModelMixin
     return api_response("")
   end
 
-  # Helper to perform the `destroy!` call and return the destroyed (and frozen) record.
+  # Perform the `destroy!` call and return the destroyed (and frozen) record.
   def destroy!
     return self.get_record.destroy!
   end
@@ -493,29 +501,25 @@ end
 module RESTFramework::ReadOnlyModelControllerMixin
   include RESTFramework::BaseModelControllerMixin
 
-  def self.included(base)
-    return unless base.is_a?(Class)
-
-    RESTFramework::BaseModelControllerMixin.included(base)
-  end
-
   include RESTFramework::ListModelMixin
   include RESTFramework::ShowModelMixin
+
+  def self.included(base)
+    RESTFramework::BaseModelControllerMixin.included(base)
+  end
 end
 
 # Mixin that includes all the CRUD mixins.
 module RESTFramework::ModelControllerMixin
   include RESTFramework::BaseModelControllerMixin
 
-  def self.included(base)
-    return unless base.is_a?(Class)
-
-    RESTFramework::BaseModelControllerMixin.included(base)
-  end
-
   include RESTFramework::ListModelMixin
   include RESTFramework::ShowModelMixin
   include RESTFramework::CreateModelMixin
   include RESTFramework::UpdateModelMixin
   include RESTFramework::DestroyModelMixin
+
+  def self.included(base)
+    RESTFramework::BaseModelControllerMixin.included(base)
+  end
 end

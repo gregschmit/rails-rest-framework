@@ -102,6 +102,15 @@ module ActionDispatch::Routing
               public_send(m, "", action: action) if self.respond_to?(m)
             end
           end
+
+          # Route bulk actions, if configured.
+          RESTFramework::RRF_BUILTIN_BULK_ACTIONS.each do |action, methods|
+            next unless controller_class.method_defined?(action)
+
+            [methods].flatten.each do |m|
+              public_send(m, "", action: action) if self.respond_to?(m)
+            end
+          end
         end
 
         if unscoped

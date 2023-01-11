@@ -13,6 +13,10 @@ module RESTFramework
   RRF_BUILTIN_ACTIONS = {
     options: :options,
   }.freeze
+  RRF_BUILTIN_BULK_ACTIONS = {
+    update_all: [:put, :patch].freeze,
+    destroy_all: :delete,
+  }.freeze
 
   # Global configuration should be kept minimal, as controller-level configurations allows multiple
   # APIs to be defined to behave differently.

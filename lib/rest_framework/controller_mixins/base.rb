@@ -18,7 +18,7 @@ module RESTFramework::BaseControllerMixin
     filter_backends: nil,
     singleton_controller: nil,
 
-    # Metadata and display options.
+    # Options related to metadata and display.
     title: nil,
     description: nil,
     inflect_acronyms: ["ID", "REST", "API"].freeze,
@@ -35,6 +35,10 @@ module RESTFramework::BaseControllerMixin
     page_query_param: "page",
     page_size_query_param: "page_size",
     max_page_size: nil,
+
+    # Options related to bulk actions and batch processing.
+    bulk_guard_query_param: nil,
+    enable_batch_processing: nil,
 
     # Option to disable serializer adapters by default, mainly introduced because Active Model
     # Serializers will do things like serialize `[]` into `{"":[]}`.
@@ -69,6 +73,13 @@ module RESTFramework::BaseControllerMixin
       RESTFramework::BUILTIN_ACTIONS.merge(
         RESTFramework::RRF_BUILTIN_ACTIONS,
       ).each do |action, methods|
+        if self.method_defined?(action)
+          actions[action] = {path: "", methods: methods, type: :builtin}
+        end
+      end
+
+      # Add builtin bulk actions.
+      RESTFramework::RRF_BUILTIN_BULK_ACTIONS.each do |action, methods|
         if self.method_defined?(action)
           actions[action] = {path: "", methods: methods, type: :builtin}
         end
@@ -268,8 +279,8 @@ module RESTFramework::BaseControllerMixin
     )
   end
 
-  # Helper to render a browsable API for `html` format, along with basic `json`/`xml` formats, and
-  # with support or passing custom `kwargs` to the underlying `render` calls.
+  # Render a browsable API for `html` format, along with basic `json`/`xml` formats, and with
+  # support or passing custom `kwargs` to the underlying `render` calls.
   def api_response(payload, html_kwargs: nil, **kwargs)
     html_kwargs ||= {}
     json_kwargs = kwargs.delete(:json_kwargs) || {}

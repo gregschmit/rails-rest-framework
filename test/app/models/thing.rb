@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: things
+#
+#  id            :integer          not null, primary key
+#  is_discounted :boolean          default(FALSE)
+#  name          :string           default(""), not null
+#  price         :decimal(6, 2)
+#  shape         :string
+#  created_at    :datetime
+#  updated_at    :datetime
+#  owner_id      :integer
+#
+# Indexes
+#
+#  index_things_on_name      (name) UNIQUE
+#  index_things_on_owner_id  (owner_id)
+#
+# Foreign Keys
+#
+#  owner_id  (owner_id => users.id) ON DELETE => cascade
+#
 class Thing < ActiveRecord::Base
   if Rails::VERSION::MAJOR >= 5
     belongs_to :owner, class_name: "User", optional: true

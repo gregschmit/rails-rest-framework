@@ -77,6 +77,9 @@ GEM
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
+    annotate (3.2.0)
+      activerecord (>= 3.2, < 8.0)
+      rake (>= 10.4, < 14.0)
     ast (2.4.2)
     better_errors (2.9.1)
       coderay (>= 1.0.0)
@@ -224,6 +227,7 @@ PLATFORMS
 
 DEPENDENCIES
   active_model_serializers (= 0.10.13)
+  annotate
   better_errors
   binding_of_caller
   byebug
