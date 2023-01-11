@@ -20,16 +20,24 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
   # Filter params for keys allowed by the current action's filterset_fields/fields config.
   def _get_filter_params
     # Map filterset fields to strings because query parameter keys are strings.
-    if fields = self._get_fields.map(&:to_s)
-      return @controller.request.query_parameters.select { |p, _| fields.include?(p) }
-    end
+    fields = self._get_fields.map(&:to_s)
 
-    return @controller.request.query_parameters.to_h
+    return @controller.request.query_parameters.select { |p, _|
+      fields.include?(p) || fields.include?(p.chomp("__in"))
+    }.map { |p, v|
+      # Convert fields ending in "__in" to array values.
+      if p.end_with?("__in")
+        p = p.chomp("__in")
+        v = v.split(",")
+      end
+
+      [p, v]
+    }.to_h.symbolize_keys
   end
 
   # Filter data according to the request query parameters.
   def get_filtered_data(data)
-    filter_params = self._get_filter_params.symbolize_keys
+    filter_params = self._get_filter_params
     unless filter_params.blank?
       return data.where(**filter_params)
     end

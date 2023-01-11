@@ -23,8 +23,8 @@ install:
 # based on the job matrix.
 - rm Gemfile.lock
 - bundle install
-script:
 - bin/rails db:migrate
+script:
 - BACKTRACE=1 bin/rails test
 
 jobs:

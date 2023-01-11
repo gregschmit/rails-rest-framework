@@ -38,9 +38,11 @@ module RESTFramework::BaseModelControllerMixin
     search_query_param: "search",
     search_ilike: false,
 
-    # Other misc attributes.
-    create_from_recordset: true,  # Option for `recordset.create` vs `Model.create` behavior.
-    filter_recordset_before_find: true,  # Control if filtering is done before find.
+    # Option for `recordset.create` vs `Model.create` behavior.
+    create_from_recordset: true,
+
+    # Control if filtering is done before find.
+    filter_recordset_before_find: true,
   }
 
   module ClassMethods
