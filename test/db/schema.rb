@@ -14,8 +14,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_11_070115) do
   create_table "movies", force: :cascade do |t|
     t.string "name", default: "", null: false
     t.decimal "price", precision: 8, scale: 2
-    t.datetime "created_at", precision: nil
-    t.datetime "updated_at", precision: nil
+    t.datetime "created_at"
+    t.datetime "updated_at"
     t.index ["name"], name: "index_movies_on_name", unique: true
   end
 
@@ -31,8 +31,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_11_070115) do
     t.decimal "price", precision: 6, scale: 2
     t.boolean "is_discounted", default: false
     t.integer "owner_id"
-    t.datetime "created_at", precision: nil
-    t.datetime "updated_at", precision: nil
+    t.datetime "created_at"
+    t.datetime "updated_at"
     t.index ["name"], name: "index_things_on_name", unique: true
     t.index ["owner_id"], name: "index_things_on_owner_id"
   end
@@ -42,8 +42,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_11_070115) do
     t.boolean "is_admin", default: false
     t.integer "age"
     t.decimal "balance", precision: 8, scale: 2
-    t.datetime "created_at", precision: nil
-    t.datetime "updated_at", precision: nil
+    t.datetime "created_at"
+    t.datetime "updated_at"
     t.index ["login"], name: "index_users_on_login", unique: true
   end
 
