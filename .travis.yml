@@ -24,6 +24,7 @@ install:
 - rm Gemfile.lock
 - bundle install
 script:
+- bin/rails db:migrate
 - BACKTRACE=1 bin/rails test
 
 jobs:
