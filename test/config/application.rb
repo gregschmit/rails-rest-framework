@@ -34,12 +34,11 @@ class Application < Rails::Application
   config.cache_classes = false
   config.action_controller.perform_caching = false
 
-  config.active_record.legacy_connection_handling = false
-
   RESTFramework.config.freeze_config = true
 
   if Rails::VERSION::MAJOR >= 7
     config.active_support.remove_deprecated_time_with_zone_name = true
+    config.active_record.legacy_connection_handling = false
   end
 
   if USE_SPROCKETS
