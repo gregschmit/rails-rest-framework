@@ -168,8 +168,8 @@ module RESTFramework::Utils
       ref.belongs_to? || (
         # Exclude reverse association ids for large tables.
         !ref.has_one? &&
-        RESTFramework.config.large_tables &&
-        ref.table_name.in?(RESTFramework.config.large_tables)
+        RESTFramework.config.large_reverse_association_tables &&
+        ref.table_name.in?(RESTFramework.config.large_reverse_association_tables)
       )
     }.map { |name, ref|
       if ref.has_one?

@@ -34,8 +34,9 @@ module RESTFramework
     # Freeze configuration attributes during finalization to prevent accidental mutation.
     attr_accessor :freeze_config
 
-    # Large tables are not included when adding reverse association IDs to default fields.
-    attr_accessor :large_tables
+    # Specify reverse association tables that are typically very large, andd therefore should not be
+    # added to fields by default.
+    attr_accessor :large_reverse_association_tables
   end
 
   def self.config
