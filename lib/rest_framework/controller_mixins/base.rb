@@ -21,7 +21,7 @@ module RESTFramework::BaseControllerMixin
     # Options related to metadata and display.
     title: nil,
     description: nil,
-    inflect_acronyms: ["ID", "REST", "API"].freeze,
+    inflect_acronyms: ["ID", "IDs", "REST", "API", "APIs"].freeze,
 
     # Options related to serialization.
     rescue_unknown_format_with: :json,

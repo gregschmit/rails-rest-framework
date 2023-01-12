@@ -43,6 +43,12 @@ module RESTFramework::BaseModelControllerMixin
 
     # Control if filtering is done before find.
     filter_recordset_before_find: true,
+
+    # Control if reverse association IDs are excluded (they are included by default).
+    exclude_reverse_association_ids: nil,
+
+    # Control if filtering reverse associations is done with `joins + distinct` or `includes`.
+    filter_reverse_association_ids_with_includes: nil,
   }
 
   module ClassMethods
@@ -276,10 +282,18 @@ module RESTFramework::BaseModelControllerMixin
   # Get fields without any action context. Always fallback to columns at the class level.
   def self.get_fields
     if self.fields.is_a?(Hash)
-      return RESTFramework::Utils.parse_fields_hash(self.fields, self.get_model)
+      return RESTFramework::Utils.parse_fields_hash(
+        self.fields,
+        self.get_model,
+        exclude_reverse_association_ids: self.exclude_reverse_association_ids,
+      )
     end
 
-    return self.fields || self.get_model&.column_names || []
+    return self.fields || (
+      self.get_model ? RESTFramework::Utils.fields_for(
+        self.get_model, exclude_reverse_association_ids: self.exclude_reverse_association_ids
+      ) : []
+    )
   end
 
   # Get a list of fields for the current action. Returning `nil` indicates that anything should be
@@ -290,10 +304,17 @@ module RESTFramework::BaseModelControllerMixin
 
     # If fields is a hash, then parse using columns as a base, respecting `only` and `except`.
     if fields.is_a?(Hash)
-      return RESTFramework::Utils.parse_fields_hash(fields, self.class.get_model)
+      return RESTFramework::Utils.parse_fields_hash(
+        fields,
+        self.class.get_model,
+        exclude_reverse_association_ids: self.class.exclude_reverse_association_ids,
+      )
     elsif !fields && fallback
       # Otherwise, if fields is nil and fallback is true, then fallback to columns.
-      return self.class.get_model&.column_names || []
+      model = self.class.get_model
+      return model ? RESTFramework::Utils.fields_for(
+        model, exclude_reverse_association_ids: self.class.exclude_reverse_association_ids
+      ) : []
     end
 
     return fields

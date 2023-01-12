@@ -139,15 +139,39 @@ module RESTFramework::Utils
   end
 
   # Parse fields hashes.
-  def self.parse_fields_hash(fields_hash, model)
-    parsed_fields = fields_hash[:only] || model&.column_names || []
+  def self.parse_fields_hash(fields_hash, model, exclude_reverse_association_ids: nil)
+    parsed_fields = fields_hash[:only] || (
+      model ? self.fields_for(
+        model, exclude_reverse_association_ids: exclude_reverse_association_ids
+      ) : []
+    )
+    parsed_fields += fields_hash[:include] if fields_hash[:include]
+    parsed_fields += fields_hash[:methods] if fields_hash[:methods]
     parsed_fields -= fields_hash[:except] if fields_hash[:except]
 
     # Warn for any unknown keys.
-    (fields_hash.keys - [:only, :except]).each do |k|
+    (fields_hash.keys - [:only, :include, :methods, :except]).each do |k|
       Rails.logger.warn("RRF: Unknown key in fields hash: #{k}")
     end
 
     return parsed_fields
+  end
+
+  # Get the fields for a given model, including not just columns (which includes
+  # foreign keys), but also reverse association ids.
+  def self.fields_for(model, exclude_reverse_association_ids: nil)
+    if exclude_reverse_association_ids
+      return model.column_names
+    end
+
+    return model.column_names + model.reflections.reject { |_name, ref|
+      ref.belongs_to?
+    }.map { |name, ref|
+      if ref.has_one?
+        next "#{name}_id"
+      end
+
+      next "#{name.singularize}_ids"
+    }
   end
 end

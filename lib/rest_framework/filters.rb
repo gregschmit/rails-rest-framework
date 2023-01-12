@@ -25,10 +25,15 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
     return @controller.request.query_parameters.select { |p, _|
       fields.include?(p) || fields.include?(p.chomp("__in"))
     }.map { |p, v|
-      # Convert fields ending in "__in" to array values.
+      # Convert fields ending in `__in` to array values.
       if p.end_with?("__in")
         p = p.chomp("__in")
         v = v.split(",")
+      end
+
+      # Convert fields ending in `_ids` to association filters.
+      if p.end_with?("_ids")
+        p = "#{p.chomp("_ids").pluralize}.id"
       end
 
       [p, v]
@@ -37,8 +42,22 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
 
   # Filter data according to the request query parameters.
   def get_filtered_data(data)
-    filter_params = self._get_filter_params
-    unless filter_params.blank?
+    if filter_params = self._get_filter_params.presence
+      # Include any reverse association ID filters.
+      associations = filter_params.map { |p, _|
+        p = p.to_s
+        ".".in?(p) ? p.split(".").first.to_sym : nil
+      }.compact.presence
+      if associations
+        # If we are directed to use includes, then do that here.
+        if @controller.class.filter_reverse_association_ids_with_includes
+          return data.includes(*associations).where(**filter_params)
+        end
+
+        # By default, use `joins` and `distinct`.
+        return data.joins(*associations).where(**filter_params).distinct
+      end
+
       return data.where(**filter_params)
     end
 
@@ -62,7 +81,7 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
     fields = self._get_fields&.map(&:to_s)
     order_string = @controller.params[@controller.class.ordering_query_param]
 
-    if order_string.present? && fields
+    if order_string.present?
       ordering = {}.with_indifferent_access
       order_string.split(",").each do |field|
         if field[0] == "-"

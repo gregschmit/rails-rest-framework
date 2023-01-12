@@ -181,8 +181,13 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
           cfg[:only] = self.class.filter_subcfg(cfg[:only], fields: only, only: true)
         elsif cfg[:except]
           # For the `except` part of the serializer, we need to append any columns not in `only`.
-          model = @controller.class.get_model
-          except_cols = model&.column_names&.map(&:to_sym)&.reject { |c| c.in?(only) }
+          fields = @controller&.get_fields(fallback: true)
+          fields ||= RESTFramework::Utils.fields_for(
+            @model,
+            exclude_reverse_association_ids: @controller.try(:exclude_reverse_association_ids),
+          ) if @model
+          fields ||= []
+          except_cols = fields.map(&:to_sym)&.reject { |c| c.in?(only) }
           cfg[:except] = self.class.filter_subcfg(cfg[:except], fields: except_cols, add: true)
         else
           cfg[:only] = only
@@ -212,7 +217,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     end
 
     # If the config wasn't determined, build a serializer config from controller fields.
-    if fields = @controller&.get_fields
+    if fields = @controller&.get_fields(fallback: true)
       fields = fields.deep_dup
 
       columns = []
