@@ -44,11 +44,9 @@ module RESTFramework::BaseModelControllerMixin
     # Control if filtering is done before find.
     filter_recordset_before_find: true,
 
-    # Control if reverse association IDs are excluded (they are included by default).
-    exclude_reverse_association_ids: nil,
-
-    # Control if filtering reverse associations is done with `joins + distinct` or `includes`.
-    filter_reverse_association_ids_with_includes: nil,
+    # Options for reverse association IDs.
+    exclude_reverse_association_ids: false,
+    filter_reverse_association_ids_with_includes: false,
   }
 
   module ClassMethods

@@ -28,11 +28,14 @@ module RESTFramework
     # in:
     #  - Model delegation, for the helper methods to be defined dynamically.
     #  - Websockets, for `::Channel` class to be defined dynamically.
-    #  - Controller configuration finalization.
+    #  - Controller configuration freezing.
     attr_accessor :disable_auto_finalize
 
     # Freeze configuration attributes during finalization to prevent accidental mutation.
     attr_accessor :freeze_config
+
+    # Large tables are not included when adding reverse association IDs to default fields.
+    attr_accessor :large_tables
   end
 
   def self.config

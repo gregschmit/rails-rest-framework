@@ -146,11 +146,10 @@ module RESTFramework::Utils
       ) : []
     )
     parsed_fields += fields_hash[:include] if fields_hash[:include]
-    parsed_fields += fields_hash[:methods] if fields_hash[:methods]
-    parsed_fields -= fields_hash[:except] if fields_hash[:except]
+    parsed_fields -= fields_hash[:exclude] if fields_hash[:exclude]
 
     # Warn for any unknown keys.
-    (fields_hash.keys - [:only, :include, :methods, :except]).each do |k|
+    (fields_hash.keys - [:only, :include, :exclude]).each do |k|
       Rails.logger.warn("RRF: Unknown key in fields hash: #{k}")
     end
 
@@ -164,8 +163,14 @@ module RESTFramework::Utils
       return model.column_names
     end
 
-    return model.column_names + model.reflections.reject { |_name, ref|
-      ref.belongs_to?
+    # Add reverse association ids in addition to normal columns.
+    return model.column_names + model.reflections.reject { |_, ref|
+      ref.belongs_to? || (
+        # Exclude reverse association ids for large tables.
+        !ref.has_one? &&
+        RESTFramework.config.large_tables &&
+        ref.table_name.in?(RESTFramework.config.large_tables)
+      )
     }.map { |name, ref|
       if ref.has_one?
         next "#{name}_id"
