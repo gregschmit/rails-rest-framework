@@ -12,6 +12,7 @@ module RESTFramework::BaseModelControllerMixin
 
     # Attributes for configuring record fields.
     fields: nil,
+    fields_options: nil,
     action_fields: nil,
 
     # Attributes for finding records.
@@ -47,6 +48,14 @@ module RESTFramework::BaseModelControllerMixin
     # Options for reverse association IDs.
     exclude_reverse_association_ids: false,
     filter_reverse_association_ids_with_includes: false,
+
+    # Control if bulk operations are done in a transaction and rolled back on error, or if all bulk
+    # operations are attempted and errors simply returned in the response.
+    bulk_transactional: false,
+
+    # Control if bulk operations should be done in "batch" mode, using efficient queries, but also
+    # skipping model validations/callbacks.
+    bulk_batch_mode: false,
   }
 
   module ClassMethods
@@ -351,16 +360,16 @@ module RESTFramework::BaseModelControllerMixin
   end
 
   # Filter the request body for keys in current action's allowed_parameters/fields config.
-  def get_body_params(request_parameters: nil)
-    request_parameters ||= request.request_parameters
+  def get_body_params(data: nil)
+    data ||= request.request_parameters
 
     # Filter the request body and map to strings. Return all params if we cannot resolve a list of
     # allowed parameters or fields.
     allowed_params = self.get_allowed_parameters&.map(&:to_s)
     body_params = if allowed_params
-      request_parameters.select { |p| allowed_params.include?(p) }
+      data.select { |p| allowed_params.include?(p) }
     else
-      request_parameters
+      data
     end
 
     # Add query params in place of missing body params, if configured.
@@ -434,6 +443,16 @@ module RESTFramework::BaseModelControllerMixin
     # Return the record. Route key is always `:id` by Rails convention.
     return @record = recordset.find_by!(find_by_key => params[:id])
   end
+
+  # Create a transaction around the passed block, if configured. This is used primarily for bulk
+  # actions, but we include it here so it's always available.
+  def self._rrf_bulk_transaction(&block)
+    if self.bulk_transactional
+      ActiveRecord::Base.transaction(&block)
+    else
+      yield
+    end
+  end
 end
 
 # Mixin for listing records.
@@ -479,15 +498,17 @@ module RESTFramework::CreateModelMixin
 
   # Perform the `create!` call and return the created record.
   def create!
-    if self.get_recordset.respond_to?(:create!) && self.create_from_recordset
+    create_from = if self.get_recordset.respond_to?(:create!) && self.create_from_recordset
       # Create with any properties inherited from the recordset. We exclude any `select` clauses in
       # case model callbacks need to call `count` on this collection, which typically raises a SQL
       # `SyntaxError`.
-      return self.get_recordset.except(:select).create!(self.get_create_params)
+      self.get_recordset.except(:select)
     else
       # Otherwise, perform a "bare" create.
-      return self.class.get_model.create!(self.get_create_params)
+      self.class.get_model
     end
+
+    return create_from.create!(self.get_create_params)
   end
 end
 

@@ -170,11 +170,16 @@ module RESTFramework::BaseControllerMixin
     end
 
     # Handle some common exceptions.
-    base.rescue_from(ActiveRecord::RecordNotFound, with: :record_not_found)
-    base.rescue_from(ActiveRecord::RecordInvalid, with: :record_invalid)
-    base.rescue_from(ActiveRecord::RecordNotSaved, with: :record_not_saved)
-    base.rescue_from(ActiveRecord::RecordNotDestroyed, with: :record_not_destroyed)
-    base.rescue_from(ActiveModel::UnknownAttributeError, with: :unknown_attribute_error)
+    base.rescue_from(
+      ActiveRecord::RecordNotFound,
+      ActiveRecord::RecordInvalid,
+      ActiveRecord::RecordNotSaved,
+      ActiveRecord::RecordNotDestroyed,
+      ActiveRecord::RecordNotUnique,
+      ActiveModel::UnknownAttributeError,
+      ActiveRecord::StatementInvalid,
+      with: :rrf_error_handler,
+    )
 
     # Use `TracePoint` hook to automatically call `rrf_finalize`.
     unless RESTFramework.config.disable_auto_finalize
@@ -234,48 +239,21 @@ module RESTFramework::BaseControllerMixin
     return self.class.get_options_metadata
   end
 
-  def record_invalid(e)
-    return api_response(
-      {
-        message: "Record invalid.", errors: e.record&.errors
-      }.merge(self.class.show_backtrace ? {exception: e.full_message} : {}),
-      status: 400,
-    )
-  end
+  def rrf_error_handler(e)
+    status = case e
+    when ActiveRecord::RecordNotFound
+      404
+    else
+      400
+    end
 
-  def record_not_found(e)
     return api_response(
       {
-        message: "Record not found.",
-      }.merge(self.class.show_backtrace ? {exception: e.full_message} : {}),
-      status: 404,
-    )
-  end
-
-  def record_not_saved(e)
-    return api_response(
-      {
-        message: "Record not saved.", errors: e.record&.errors
-      }.merge(self.class.show_backtrace ? {exception: e.full_message} : {}),
-      status: 400,
-    )
-  end
-
-  def record_not_destroyed(e)
-    return api_response(
-      {
-        message: "Record not destroyed.", errors: e.record&.errors
-      }.merge(self.class.show_backtrace ? {exception: e.full_message} : {}),
-      status: 400,
-    )
-  end
-
-  def unknown_attribute_error(e)
-    return api_response(
-      {
-        message: e.message.capitalize,
-      }.merge(self.class.show_backtrace ? {exception: e.full_message} : {}),
-      status: 400,
+        message: e.message,
+        errors: e.try(:record).try(:errors),
+        exception: self.class.show_backtrace ? e.full_message : nil,
+      }.compact,
+      status: status,
     )
   end
 
