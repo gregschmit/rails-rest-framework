@@ -168,7 +168,7 @@ module RESTFramework::Utils
     return model.column_names.reject { |c|
       c.in?(foreign_keys)
     } + model.reflections.map { |association, ref|
-      if ref.macro.in?([:has_one, :has_many]) &&
+      if ref.macro.in?([:has_many, :has_and_belongs_to_many]) &&
           RESTFramework.config.large_reverse_association_tables&.include?(ref.table_name)
         next nil
       end
