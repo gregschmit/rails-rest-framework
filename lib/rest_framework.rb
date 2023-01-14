@@ -37,6 +37,16 @@ module RESTFramework
     # Specify reverse association tables that are typically very large, andd therefore should not be
     # added to fields by default.
     attr_accessor :large_reverse_association_tables
+
+    # Whether the backtrace should be shown in rescued errors.
+    attr_accessor :show_backtrace
+
+    # Option to disable `rescue_from` on the controller mixins.
+    attr_accessor :disable_rescue_from
+
+    def initialize
+      self.show_backtrace = Rails.env.development?
+    end
   end
 
   def self.config

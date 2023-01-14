@@ -148,16 +148,14 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return subcfg
   end
 
-  # Filter out configuration properties based on the :except query parameter.
-  def filter_except(cfg)
+  # Filter out configuration properties based on the :except/:only query parameters.
+  def filter_from_request(cfg)
     return cfg unless @controller
 
     except_param = @controller.class.try(:native_serializer_except_query_param)
     only_param = @controller.class.try(:native_serializer_only_query_param)
     if except_param && except = @controller.request.query_parameters[except_param].presence
-      except = except.split(",").map(&:strip).map(&:to_sym)
-
-      unless except.empty?
+      if except = except.split(",").map(&:strip).map(&:to_sym).presence
         # Filter `only`, `except` (additive), `include`, `methods`, and `serializer_methods`.
         if cfg[:only]
           cfg[:only] = self.class.filter_subcfg(cfg[:only], fields: except)
@@ -166,6 +164,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
         else
           cfg[:except] = except
         end
+
         cfg[:include] = self.class.filter_subcfg(cfg[:include], fields: except)
         cfg[:methods] = self.class.filter_subcfg(cfg[:methods], fields: except)
         cfg[:serializer_methods] = self.class.filter_subcfg(
@@ -173,25 +172,15 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
         )
       end
     elsif only_param && only = @controller.request.query_parameters[only_param].presence
-      only = only.split(",").map(&:strip).map(&:to_sym)
-
-      unless only.empty?
-        # Filter `only`, `except` (additive), `include`, and `methods`.
+      if only = only.split(",").map(&:strip).map(&:to_sym).presence
+        # Filter `only`, `include`, and `methods`. Adding anything to `except` is not needed,
+        # because any configuration there takes precedence over `only`.
         if cfg[:only]
           cfg[:only] = self.class.filter_subcfg(cfg[:only], fields: only, only: true)
-        elsif cfg[:except]
-          # For the `except` part of the serializer, we need to append any columns not in `only`.
-          fields = @controller&.get_fields(fallback: true)
-          fields ||= RESTFramework::Utils.fields_for(
-            @model,
-            exclude_reverse_association_ids: @controller.try(:exclude_reverse_association_ids),
-          ) if @model
-          fields ||= []
-          except_cols = fields.map(&:to_sym)&.reject { |c| c.in?(only) }
-          cfg[:except] = self.class.filter_subcfg(cfg[:except], fields: except_cols, add: true)
         else
           cfg[:only] = only
         end
+
         cfg[:include] = self.class.filter_subcfg(cfg[:include], fields: only, only: true)
         cfg[:methods] = self.class.filter_subcfg(cfg[:methods], fields: only, only: true)
         cfg[:serializer_methods] = self.class.filter_subcfg(
@@ -221,14 +210,24 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
       fields = fields.deep_dup
 
       columns = []
-      includes = []
+      includes = {}
       methods = []
       if @model
         fields.each do |f|
           if f.in?(@model.column_names)
             columns << f
           elsif @model.reflections.key?(f)
-            includes << f
+            sub_columns = []
+            sub_methods = []
+            RESTFramework::Utils.sub_fields_for(@controller.class, f).each do |sf|
+              sub_model = @model.reflections[f].klass
+              if sf.in?(sub_model.column_names)
+                sub_columns << sf
+              elsif sub_model.method_defined?(sf)
+                sub_methods << sf
+              end
+            end
+            includes[f] = {only: sub_columns, methods: sub_methods}
           elsif @model.method_defined?(f)
             methods << f
           end
@@ -246,7 +245,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
   # Get a configuration passable to `serializable_hash` for the object, filtered if required.
   def get_serializer_config
-    return filter_except(self._get_raw_serializer_config)
+    return filter_from_request(self._get_raw_serializer_config)
   end
 
   # Serialize a single record and merge results of `serializer_methods`.

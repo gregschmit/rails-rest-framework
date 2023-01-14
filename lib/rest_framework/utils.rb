@@ -1,5 +1,6 @@
 module RESTFramework::Utils
   HTTP_METHOD_ORDERING = %w(GET POST PUT PATCH DELETE OPTIONS HEAD)
+  LABEL_FIELDS = %w(name label login title email username)
 
   # Convert `extra_actions` hash to a consistent format: `{path:, methods:, kwargs:}`, and
   # additional metadata fields.
@@ -139,11 +140,9 @@ module RESTFramework::Utils
   end
 
   # Parse fields hashes.
-  def self.parse_fields_hash(fields_hash, model, exclude_reverse_association_ids: nil)
+  def self.parse_fields_hash(fields_hash, model, exclude_associations: nil)
     parsed_fields = fields_hash[:only] || (
-      model ? self.fields_for(
-        model, exclude_reverse_association_ids: exclude_reverse_association_ids
-      ) : []
+      model ? self.fields_for(model, exclude_associations: exclude_associations) : []
     )
     parsed_fields += fields_hash[:include] if fields_hash[:include]
     parsed_fields -= fields_hash[:exclude] if fields_hash[:exclude]
@@ -157,26 +156,53 @@ module RESTFramework::Utils
   end
 
   # Get the fields for a given model, including not just columns (which includes
-  # foreign keys), but also reverse association ids.
-  def self.fields_for(model, exclude_reverse_association_ids: nil)
-    if exclude_reverse_association_ids
-      return model.column_names
+  # foreign keys), but also associations.
+  def self.fields_for(model, exclude_associations: nil)
+    foreign_keys = model.reflect_on_all_associations(:belongs_to).map(&:foreign_key)
+
+    if exclude_associations
+      return model.column_names.reject { |c| c.in?(foreign_keys) }
     end
 
-    # Add reverse association ids in addition to normal columns.
-    return model.column_names + model.reflections.reject { |_, ref|
-      ref.belongs_to? || (
-        # Exclude reverse association ids for large tables.
-        !ref.has_one? &&
-        RESTFramework.config.large_reverse_association_tables &&
-        ref.table_name.in?(RESTFramework.config.large_reverse_association_tables)
-      )
-    }.map { |name, ref|
-      if ref.has_one?
-        next "#{name}_id"
+    # Add associations in addition to normal columns.
+    return model.column_names.reject { |c|
+      c.in?(foreign_keys)
+    } + model.reflections.map { |association, ref|
+      if ref.macro.in?([:has_one, :has_many]) &&
+          RESTFramework.config.large_reverse_association_tables&.include?(ref.table_name)
+        next nil
       end
 
-      next "#{name.singularize}_ids"
-    }
+      next association
+    }.compact
+  end
+
+  # Get the default sub-fields for a model, which should include by default the primary key(s), and
+  # a set of default label-like fields (name, label, login, etc).
+  def self._default_sub_fields_for(model)
+    sub_fields = [model.primary_key].flatten.compact
+
+    # Preferrably find a database column to use as label.
+    if match = LABEL_FIELDS.find { |f| f.in?(model.column_names) }
+      return sub_fields + [match]
+    end
+
+    # Otherwise, find a method.
+    if match = LABEL_FIELDS.find { |f| model.method_defined?(f) }
+      return sub_fields + [match]
+    end
+
+    return sub_fields
+  end
+
+  # Get the sub-fields that may be serialized and filtered/ordered for a controller association
+  # field.
+  def self.sub_fields_for(controller_class, f)
+    model = controller_class.get_model.reflections[f].klass
+    return (
+      controller_class.field_config&.dig(f.to_sym, :sub_fields) ||
+      model ? self._default_sub_fields_for(model) : nil ||
+      ["id", "name"]
+    ).map(&:to_s)
   end
 end

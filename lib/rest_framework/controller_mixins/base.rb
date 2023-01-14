@@ -12,7 +12,6 @@ module RESTFramework::BaseControllerMixin
       :created_at, :created_by, :created_by_id, :updated_at, :updated_by, :updated_by_id
     ].freeze,
     accept_generic_params_as_body_params: false,
-    show_backtrace: false,
     extra_actions: nil,
     extra_member_actions: nil,
     filter_backends: nil,
@@ -170,16 +169,17 @@ module RESTFramework::BaseControllerMixin
     end
 
     # Handle some common exceptions.
-    base.rescue_from(
-      ActiveRecord::RecordNotFound,
-      ActiveRecord::RecordInvalid,
-      ActiveRecord::RecordNotSaved,
-      ActiveRecord::RecordNotDestroyed,
-      ActiveRecord::RecordNotUnique,
-      ActiveModel::UnknownAttributeError,
-      ActiveRecord::StatementInvalid,
-      with: :rrf_error_handler,
-    )
+    unless RESTFramework.config.disable_rescue_from
+      base.rescue_from(
+        ActiveRecord::RecordNotFound,
+        ActiveRecord::RecordInvalid,
+        ActiveRecord::RecordNotSaved,
+        ActiveRecord::RecordNotDestroyed,
+        ActiveRecord::RecordNotUnique,
+        ActiveModel::UnknownAttributeError,
+        with: :rrf_error_handler,
+      )
+    end
 
     # Use `TracePoint` hook to automatically call `rrf_finalize`.
     unless RESTFramework.config.disable_auto_finalize
@@ -227,6 +227,7 @@ module RESTFramework::BaseControllerMixin
 
   # Filter an arbitrary data set over all configured filter backends.
   def get_filtered_data(data)
+    # Apply each filter sequentially.
     self.get_filter_backends.each do |filter_class|
       filter = filter_class.new(controller: self)
       data = filter.get_filtered_data(data)
@@ -251,7 +252,7 @@ module RESTFramework::BaseControllerMixin
       {
         message: e.message,
         errors: e.try(:record).try(:errors),
-        exception: self.class.show_backtrace ? e.full_message : nil,
+        exception: RESTFramework.config.show_backtrace ? e.full_message : nil,
       }.compact,
       status: status,
     )

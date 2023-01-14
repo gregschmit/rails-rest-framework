@@ -12,7 +12,7 @@ module RESTFramework::BaseModelControllerMixin
 
     # Attributes for configuring record fields.
     fields: nil,
-    fields_options: nil,
+    field_config: nil,
     action_fields: nil,
 
     # Attributes for finding records.
@@ -45,9 +45,8 @@ module RESTFramework::BaseModelControllerMixin
     # Control if filtering is done before find.
     filter_recordset_before_find: true,
 
-    # Options for reverse association IDs.
-    exclude_reverse_association_ids: false,
-    filter_reverse_association_ids_with_includes: false,
+    # Option to exclude associations from default fields.
+    exclude_associations: false,
 
     # Control if bulk operations are done in a transaction and rolled back on error, or if all bulk
     # operations are attempted and errors simply returned in the response.
@@ -92,14 +91,29 @@ module RESTFramework::BaseModelControllerMixin
       return self.get_model.human_attribute_name(s, default: super)
     end
 
+    # Get fields without any action context. Always fallback to columns at the class level.
+    def get_fields
+      if self.fields.is_a?(Hash)
+        return RESTFramework::Utils.parse_fields_hash(
+          self.fields, self.get_model, exclude_associations: self.exclude_associations
+        )
+      end
+
+      return self.fields || (
+        self.get_model ? RESTFramework::Utils.fields_for(
+          self.get_model, exclude_associations: self.exclude_associations
+        ) : []
+      )
+    end
+
     # Get metadata about the resource's fields.
-    def get_fields_metadata(fields: nil)
+    def get_fields_metadata
       # Get metadata sources.
       model = self.get_model
-      fields ||= self.get_fields
-      fields = fields.map(&:to_s)
+      fields = self.get_fields.map(&:to_s)
       columns = model.columns_hash
       column_defaults = model.column_defaults
+      reflections = model.reflections
       attributes = model._default_attributes
 
       return fields.map { |f|
@@ -120,9 +134,9 @@ module RESTFramework::BaseModelControllerMixin
 
         # Determine `type`, `required`, `label`, and `kind` based on schema.
         if column = columns[f]
+          metadata[:kind] = "column"
           metadata[:type] = column.type
           metadata[:required] = true unless column.null
-          metadata[:kind] = "column"
         end
 
         # Determine `default` based on schema; we use `column_defaults` rather than `columns_hash`
@@ -139,18 +153,31 @@ module RESTFramework::BaseModelControllerMixin
             metadata[:default] = default unless default.nil?
           end
 
-          unless metadata[:kind]
-            metadata[:kind] = "attribute"
-          end
+          metadata[:kind] ||= "attribute"
         end
 
-        # Determine if `kind` is a association or method if not determined already.
-        unless metadata[:kind]
-          if association = model.reflections[f]
-            metadata[:kind] = "association.#{association.macro}"
-          elsif model.method_defined?(f)
-            metadata[:kind] = "method"
+        # Get association metadata.
+        if ref = reflections[f]
+          metadata[:kind] = "association"
+          begin
+            pk = ref.active_record_primary_key
+          rescue ActiveRecord::UnknownPrimaryKey
           end
+          metadata[:association] = {
+            macro: ref.macro,
+            class_name: ref.class_name,
+            foreign_key: ref.foreign_key,
+            primary_key: pk,
+            polymorphic: ref.polymorphic?,
+            table_name: ref.table_name,
+            options: ref.options.presence,
+            sub_fields: RESTFramework::Utils.sub_fields_for(self, f),
+          }.compact
+        end
+
+        # Determine if this is just a method.
+        if model.method_defined?(f)
+          metadata[:kind] ||= "method"
         end
 
         # Collect validator options into a hash on their type, while also updating `required` based
@@ -175,33 +202,11 @@ module RESTFramework::BaseModelControllerMixin
       }.to_h
     end
 
-    # Get metadata about the resource's associations (reflections).
-    def get_associations_metadata
-      return self.get_model.reflections.map { |k, v|
-        begin
-          pk = v.active_record_primary_key
-        rescue ActiveRecord::UnknownPrimaryKey
-        end
-
-        next [k, {
-          macro: v.macro,
-          label: self.get_label(k),
-          class_name: v.class_name,
-          foreign_key: v.foreign_key,
-          primary_key: pk,
-          polymorphic: v.polymorphic?,
-          table_name: v.table_name,
-          options: v.options.presence,
-        }.compact]
-      }.to_h
-    end
-
     # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
-    def get_options_metadata(fields: nil)
+    def get_options_metadata
       return super().merge(
         {
-          fields: self.get_fields_metadata(fields: fields),
-          associations: self.get_associations_metadata,
+          fields: self.get_fields_metadata,
         },
       )
     end
@@ -286,41 +291,22 @@ module RESTFramework::BaseModelControllerMixin
     return (action_config[action] if action) || self.class.send(generic_config_key)
   end
 
-  # Get fields without any action context. Always fallback to columns at the class level.
-  def self.get_fields
-    if self.fields.is_a?(Hash)
-      return RESTFramework::Utils.parse_fields_hash(
-        self.fields,
-        self.get_model,
-        exclude_reverse_association_ids: self.exclude_reverse_association_ids,
-      )
-    end
-
-    return self.fields || (
-      self.get_model ? RESTFramework::Utils.fields_for(
-        self.get_model, exclude_reverse_association_ids: self.exclude_reverse_association_ids
-      ) : []
-    )
-  end
-
   # Get a list of fields for the current action. Returning `nil` indicates that anything should be
   # accepted unless `fallback` is true, in which case we should fallback to this controller's model
   # columns, or en empty array.
   def get_fields(fallback: false)
     fields = _get_specific_action_config(:action_fields, :fields)
 
-    # If fields is a hash, then parse using columns as a base, respecting `only` and `except`.
+    # If fields is a hash, then parse it.
     if fields.is_a?(Hash)
       return RESTFramework::Utils.parse_fields_hash(
-        fields,
-        self.class.get_model,
-        exclude_reverse_association_ids: self.class.exclude_reverse_association_ids,
+        fields, self.class.get_model, exclude_associations: self.class.exclude_associations
       )
     elsif !fields && fallback
       # Otherwise, if fields is nil and fallback is true, then fallback to columns.
       model = self.class.get_model
       return model ? RESTFramework::Utils.fields_for(
-        model, exclude_reverse_association_ids: self.class.exclude_reverse_association_ids
+        model, exclude_associations: self.class.exclude_associations
       ) : []
     end
 
@@ -329,7 +315,7 @@ module RESTFramework::BaseModelControllerMixin
 
   # Pass fields to get dynamic metadata based on which fields are available.
   def get_options_metadata
-    return self.class.get_options_metadata(fields: self.get_fields(fallback: true))
+    return self.class.get_options_metadata
   end
 
   # Get a list of find_by fields for the current action. Do not fallback to columns in case the user
@@ -441,7 +427,7 @@ module RESTFramework::BaseModelControllerMixin
     end
 
     # Return the record. Route key is always `:id` by Rails convention.
-    return @record = recordset.find_by!(find_by_key => params[:id])
+    return @record = recordset.find_by!(find_by_key => request.path_parameters[:id])
   end
 
   # Create a transaction around the passed block, if configured. This is used primarily for bulk
