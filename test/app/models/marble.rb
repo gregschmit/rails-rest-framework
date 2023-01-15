@@ -21,17 +21,15 @@
 #  user_id  (user_id => users.id) ON DELETE => cascade
 #
 class Marble < ActiveRecord::Base
-  if Rails::VERSION::MAJOR >= 5
-    belongs_to :user, optional: true
-  else
-    belongs_to :user
-  end
+  belongs_to :user
 
   before_destroy :check_undestroyable
 
   validates_numericality_of :price, greater_than: 0, allow_nil: true
 
   accepts_nested_attributes_for :user, allow_destroy: true
+
+  has_one_attached :picture
 
   # An example of a "calculated" property method.
   def calculated_property

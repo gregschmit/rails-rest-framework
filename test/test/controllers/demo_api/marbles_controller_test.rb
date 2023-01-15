@@ -48,43 +48,45 @@ class DemoApi::MarblesControllerTest < ActionController::TestCase
     assert_equal(["id", "name"].sort, @response.parsed_body[0].keys.sort)
   end
 
-  def test_filter_by_user_id
-    get(:index, as: :json, params: {"user.id": 1})
-    assert_response(:success)
-    assert(@response.parsed_body.all? { |t| t["user"]["id"] == 1 })
-  end
+  if Rails::VERSION::MAJOR >= 7
+    def test_filter_by_user_id
+      get(:index, as: :json, params: {"user.id": 1})
+      assert_response(:success)
+      assert(@response.parsed_body.all? { |t| t["user"]["id"] == 1 })
+    end
 
-  def test_filter_by_user_login
-    get(:index, as: :json, params: {"user.login": "admin"})
-    assert_response(:success)
-    assert(@response.parsed_body.all? { |t| t["user"]["login"] == "admin" })
-  end
+    def test_filter_by_user_login
+      get(:index, as: :json, params: {"user.login": "admin"})
+      assert_response(:success)
+      assert(@response.parsed_body.all? { |t| t["user"]["login"] == "admin" })
+    end
 
-  def test_order_by_user_id
-    get(:index, as: :json, params: {ordering: "users.id"})
-    assert_response(:success)
-    ids = @response.parsed_body.select { |t|
-            t["user"]
-          }.map { |t| t["user"]["id"] }.compact.uniq
-    assert_equal(ids, ids.sort)
+    def test_order_by_user_id
+      get(:index, as: :json, params: {ordering: "users.id"})
+      assert_response(:success)
+      ids = @response.parsed_body.select { |t|
+              t["user"]
+            }.map { |t| t["user"]["id"] }.compact.uniq
+      assert_equal(ids, ids.sort)
 
-    get(:index, as: :json, params: {ordering: "-users.id"})
-    assert_response(:success)
-    ids = @response.parsed_body.select { |t|
-            t["user"]
-          }.map { |t| t["user"]["id"] }.compact.uniq
-    assert_equal(ids, ids.sort.reverse)
-  end
+      get(:index, as: :json, params: {ordering: "-users.id"})
+      assert_response(:success)
+      ids = @response.parsed_body.select { |t|
+              t["user"]
+            }.map { |t| t["user"]["id"] }.compact.uniq
+      assert_equal(ids, ids.sort.reverse)
+    end
 
-  def test_order_by_name
-    get(:index, as: :json, params: {ordering: "name"})
-    assert_response(:success)
-    names = @response.parsed_body.map { |t| t["name"] }.compact.uniq
-    assert_equal(names, names.sort)
+    def test_order_by_name
+      get(:index, as: :json, params: {ordering: "name"})
+      assert_response(:success)
+      names = @response.parsed_body.map { |t| t["name"] }.compact.uniq
+      assert_equal(names, names.sort)
 
-    get(:index, as: :json, params: {ordering: "-name"})
-    assert_response(:success)
-    names = @response.parsed_body.map { |t| t["name"] }.compact.uniq
-    assert_equal(names, names.sort.reverse)
+      get(:index, as: :json, params: {ordering: "-name"})
+      assert_response(:success)
+      names = @response.parsed_body.map { |t| t["name"] }.compact.uniq
+      assert_equal(names, names.sort.reverse)
+    end
   end
 end

@@ -30,6 +30,8 @@ class Application < Rails::Application
   config.cache_classes = false
   config.action_controller.perform_caching = false
 
+  config.active_storage.service = :local
+
   RESTFramework.config.freeze_config = true
 
   if Rails::VERSION::MAJOR >= 7
