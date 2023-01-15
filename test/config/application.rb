@@ -5,17 +5,13 @@ require "uri"
 require "rails"
 [
   "active_record/railtie",
+  "active_storage/engine",
   "action_controller/railtie",
   "action_view/railtie",
   "active_job/railtie",
   "rails/test_unit/railtie",
 ].each do |railtie|
   require railtie
-end
-
-# Sprockets was removed in Rails 7.
-if USE_SPROCKETS = (Rails::VERSION::MAJOR < 7)
-  require "sprockets/railtie"
 end
 
 # Require the gems listed in Gemfile.
@@ -39,11 +35,6 @@ class Application < Rails::Application
   if Rails::VERSION::MAJOR >= 7
     config.active_support.remove_deprecated_time_with_zone_name = true
     config.active_record.legacy_connection_handling = false
-  end
-
-  if USE_SPROCKETS
-    config.assets.debug = false
-    config.assets.check_precompiled_asset = false
   end
 
   config.session_store(:cookie_store, key: "_session")
