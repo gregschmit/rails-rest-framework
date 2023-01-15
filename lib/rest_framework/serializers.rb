@@ -219,7 +219,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
           elsif @model.reflections.key?(f)
             sub_columns = []
             sub_methods = []
-            RESTFramework::Utils.sub_fields_for(@controller.class, f).each do |sf|
+            @controller.class.get_field_config(f)[:sub_fields].each do |sf|
               sub_model = @model.reflections[f].klass
               if sf.in?(sub_model.column_names)
                 sub_columns << sf

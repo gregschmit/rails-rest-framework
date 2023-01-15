@@ -106,6 +106,31 @@ module RESTFramework::BaseModelControllerMixin
       )
     end
 
+    # Get a field's config, including defaults.
+    def get_field_config(f)
+      config = self.field_config&.dig(f.to_sym) || {}
+
+      # Default sub-fields if field is an association.
+      if ref = self.get_model.reflections[f]
+        model = ref.klass
+        columns = model.columns_hash
+        config[:sub_fields] ||= RESTFramework::Utils.sub_fields_for(ref)
+
+        # Serialize very basic metadata about sub-fields.
+        config[:sub_fields_metadata] = config[:sub_fields].map { |sf|
+          v = {}
+
+          if columns[sf]
+            v[:kind] = "column"
+          end
+
+          next [sf, v]
+        }.to_h.compact.presence
+      end
+
+      return config.compact
+    end
+
     # Get metadata about the resource's fields.
     def get_fields_metadata
       # Get metadata sources.
@@ -146,14 +171,23 @@ module RESTFramework::BaseModelControllerMixin
           metadata[:default] = column_default
         end
 
-        # Determine `default` and `kind` based on attribute only if not determined by the DB.
+        # Extract details from the model's attributes hash.
         if attributes.key?(f) && attribute = attributes[f]
           unless metadata.key?(:default)
             default = attribute.value_before_type_cast
             metadata[:default] = default unless default.nil?
           end
-
           metadata[:kind] ||= "attribute"
+
+          # Get any type information from the attribute.
+          if type = attribute.type
+            metadata[:type] ||= type.type
+
+            # Get enum variants.
+            if type.is_a?(ActiveRecord::Enum::EnumType)
+              metadata[:enum_variants] = type.send(:mapping)
+            end
+          end
         end
 
         # Get association metadata.
@@ -171,7 +205,6 @@ module RESTFramework::BaseModelControllerMixin
             polymorphic: ref.polymorphic?,
             table_name: ref.table_name,
             options: ref.options.presence,
-            sub_fields: RESTFramework::Utils.sub_fields_for(self, f),
           }.compact
         end
 
@@ -197,6 +230,9 @@ module RESTFramework::BaseModelControllerMixin
           metadata[:validators][kind] ||= []
           metadata[:validators][kind] << options
         end
+
+        # Serialize any field config.
+        metadata[:config] = self.get_field_config(f).presence
 
         next [f, metadata.compact]
       }.to_h

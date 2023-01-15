@@ -177,32 +177,26 @@ module RESTFramework::Utils
     }.compact
   end
 
-  # Get the default sub-fields for a model, which should include by default the primary key(s), and
-  # a set of default label-like fields (name, label, login, etc).
-  def self._default_sub_fields_for(model)
-    sub_fields = [model.primary_key].flatten.compact
+  # Get the sub-fields that may be serialized and filtered/ordered for a reflection.
+  def self.sub_fields_for(ref)
+    model = ref.klass
 
-    # Preferrably find a database column to use as label.
-    if match = LABEL_FIELDS.find { |f| f.in?(model.column_names) }
-      return sub_fields + [match]
+    if model
+      sub_fields = [model.primary_key].flatten.compact
+
+      # Preferrably find a database column to use as label.
+      if match = LABEL_FIELDS.find { |f| f.in?(model.column_names) }
+        return sub_fields + [match]
+      end
+
+      # Otherwise, find a method.
+      if match = LABEL_FIELDS.find { |f| model.method_defined?(f) }
+        return sub_fields + [match]
+      end
+
+      return sub_fields
     end
 
-    # Otherwise, find a method.
-    if match = LABEL_FIELDS.find { |f| model.method_defined?(f) }
-      return sub_fields + [match]
-    end
-
-    return sub_fields
-  end
-
-  # Get the sub-fields that may be serialized and filtered/ordered for a controller association
-  # field.
-  def self.sub_fields_for(controller_class, f)
-    model = controller_class.get_model.reflections[f].klass
-    return (
-      controller_class.field_config&.dig(f.to_sym, :sub_fields) ||
-      model ? self._default_sub_fields_for(model) : nil ||
-      ["id", "name"]
-    ).map(&:to_s)
+    return ["id", "name"]
   end
 end

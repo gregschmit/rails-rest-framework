@@ -4,6 +4,8 @@ example = User.create!(
   login: "example",
   age: 23,
   balance: 20.34,
+  state: "pending",
+  status: "online",
   things_attributes: [
     {name: "Example Thing 1", shape: "Square", price: 4},
     {name: "Example Thing 2", shape: "Hexagon", price: 8},

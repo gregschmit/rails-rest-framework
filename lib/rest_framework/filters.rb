@@ -35,7 +35,8 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
         field, sub_field = match[1..2]
         next false unless field.in?(fields)
 
-        if sub_field.in?(RESTFramework::Utils.sub_fields_for(@controller.class, field))
+        sub_fields = @controller.class.get_field_config(field)[:sub_fields]
+        if sub_field.in?(sub_fields)
           @associations << field.to_sym
           next true
         end

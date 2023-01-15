@@ -5,6 +5,8 @@ class All < ActiveRecord::Migration[6.0]
       t.boolean(:is_admin, default: false)
       t.integer(:age)
       t.decimal(:balance, precision: 8, scale: 2)
+      t.integer(:state, null: false, default: 0)
+      t.string(:status, null: false, default: "")
 
       t.timestamps(null: true)
     end
