@@ -77,17 +77,17 @@ class DemoApi::ThingsControllerTest < ActionController::TestCase
             }.map { |t| t["owner"]["id"] }.compact.uniq
       assert_equal(ids, ids.sort.reverse)
     end
-  end
 
-  def test_order_by_name
-    get(:index, as: :json, params: {ordering: "name"})
-    assert_response(:success)
-    names = @response.parsed_body.map { |t| t["name"] }.compact.uniq
-    assert_equal(names, names.sort)
+    def test_order_by_name
+      get(:index, as: :json, params: {ordering: "name"})
+      assert_response(:success)
+      names = @response.parsed_body.map { |t| t["name"] }.compact.uniq
+      assert_equal(names, names.sort)
 
-    get(:index, as: :json, params: {ordering: "-name"})
-    assert_response(:success)
-    names = @response.parsed_body.map { |t| t["name"] }.compact.uniq
-    assert_equal(names, names.sort.reverse)
+      get(:index, as: :json, params: {ordering: "-name"})
+      assert_response(:success)
+      names = @response.parsed_body.map { |t| t["name"] }.compact.uniq
+      assert_equal(names, names.sort.reverse)
+    end
   end
 end
