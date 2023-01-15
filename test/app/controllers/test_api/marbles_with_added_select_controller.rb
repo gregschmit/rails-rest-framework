@@ -1,7 +1,7 @@
-class TestApi::ThingsWithAddedSelectController < TestApiController
+class TestApi::MarblesWithAddedSelectController < TestApiController
   include RESTFramework::ModelControllerMixin
 
-  self.model = Thing
+  self.model = Marble
   self.native_serializer_config = {except: [:price]}
 
   def get_recordset

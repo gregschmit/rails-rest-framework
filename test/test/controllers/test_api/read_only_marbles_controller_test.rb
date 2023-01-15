@@ -1,21 +1,21 @@
 require_relative "base"
 
-class TestApi::ReadOnlyThingsControllerTest < ActionController::TestCase
+class TestApi::ReadOnlyMarblesControllerTest < ActionController::TestCase
   include BaseTestApiControllerTests
 
   def test_list
     get(:index, as: :json)
     assert_response(:success)
     assert(@response.parsed_body[0]["name"])
-    assert(@response.parsed_body[0]["owner"])
+    assert(@response.parsed_body[0]["user"])
     refute(@response.parsed_body[0]["calculated_property"])
   end
 
   def test_show
-    t = Thing.create!(name: "test", owner_attributes: {login: "test"})
+    t = Marble.create!(name: "test", user_attributes: {login: "test"})
     get(:show, as: :json, params: {id: t.id})
     assert_response(:success)
-    assert(@response.parsed_body["owner"])
+    assert(@response.parsed_body["user"])
     assert_in_delta(@response.parsed_body["calculated_property"], 9.234, 0.01)
   end
 end

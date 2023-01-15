@@ -9,10 +9,10 @@ class DemoApiRoutingTest < ActionDispatch::IntegrationTest
     assert_response(:success)
   end
 
-  def test_can_get_things
-    get("/demo_api/things")
+  def test_can_get_marbles
+    get("/demo_api/marbles")
     assert_response(:success)
-    get("/demo_api/things.json")
+    get("/demo_api/marbles.json")
     assert_response(:success)
   end
 

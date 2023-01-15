@@ -11,6 +11,18 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[7.0].define(version: 2023_01_11_070115) do
+  create_table "marbles", force: :cascade do |t|
+    t.string "name", default: "", null: false
+    t.integer "radius_mm", default: 1, null: false
+    t.decimal "price", precision: 6, scale: 2
+    t.boolean "is_discounted", default: false
+    t.integer "user_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["name"], name: "index_marbles_on_name", unique: true
+    t.index ["user_id"], name: "index_marbles_on_user_id"
+  end
+
   create_table "movies", force: :cascade do |t|
     t.string "name", default: "", null: false
     t.decimal "price", precision: 8, scale: 2
@@ -25,18 +37,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_11_070115) do
     t.index ["user_id", "movie_id"], name: "index_movies_users_on_user_id_and_movie_id", unique: true
   end
 
-  create_table "things", force: :cascade do |t|
-    t.string "name", default: "", null: false
-    t.string "shape"
-    t.decimal "price", precision: 6, scale: 2
-    t.boolean "is_discounted", default: false
-    t.integer "owner_id"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.index ["name"], name: "index_things_on_name", unique: true
-    t.index ["owner_id"], name: "index_things_on_owner_id"
-  end
-
   create_table "users", force: :cascade do |t|
     t.string "login", default: "", null: false
     t.boolean "is_admin", default: false
@@ -44,12 +44,15 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_11_070115) do
     t.decimal "balance", precision: 8, scale: 2
     t.integer "state", default: 0, null: false
     t.string "status", default: "", null: false
+    t.integer "manager_id"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["login"], name: "index_users_on_login", unique: true
+    t.index ["manager_id"], name: "index_users_on_manager_id"
   end
 
+  add_foreign_key "marbles", "users", on_delete: :cascade
   add_foreign_key "movies_users", "movies", on_delete: :cascade
   add_foreign_key "movies_users", "users", on_delete: :cascade
-  add_foreign_key "things", "users", column: "owner_id", on_delete: :cascade
+  add_foreign_key "users", "users", column: "manager_id", on_delete: :nullify
 end

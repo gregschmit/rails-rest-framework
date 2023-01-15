@@ -6,9 +6,9 @@ example = User.create!(
   balance: 20.34,
   state: "pending",
   status: "online",
-  things_attributes: [
-    {name: "Example Thing 1", shape: "Square", price: 4},
-    {name: "Example Thing 2", shape: "Hexagon", price: 8},
+  marbles_attributes: [
+    {name: "Example Marble 1", radius_mm: 10, price: 4},
+    {name: "Example Marble 2", radius_mm: 8, price: 8},
   ],
 )
 admin = User.create!(
@@ -16,14 +16,14 @@ admin = User.create!(
   is_admin: true,
   age: 34,
   balance: 230.34,
-  things_attributes: [
-    {name: "Admin Thing 1", shape: "Circle", price: 9.23},
-    {name: "Admin Thing 2", shape: "Triangle", price: 149.23},
+  marbles_attributes: [
+    {name: "Admin Marble 1", radius_mm: 11, price: 9.23},
+    {name: "Admin Marble 2", radius_mm: 20, price: 149.23},
   ],
 )
 
-Thing.create!(name: "Orphan Thing 1", shape: "Mobius Strip", price: 4000)
-Thing.create!(name: "Orphan Thing 2", shape: "Umbilic Torus", price: 5000)
+Marble.create!(name: "Orphan Marble 1", radius_mm: 300, price: 4000)
+Marble.create!(name: "Orphan Marble 2", radius_mm: 314, price: 5000)
 
 star_wars = Movie.create!(name: "Star Wars IV: A New Hope", price: 14.99)
 dark_knight = Movie.create!(name: "The Dark Knight", price: 13.99)

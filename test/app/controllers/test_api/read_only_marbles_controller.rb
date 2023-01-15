@@ -1,14 +1,14 @@
-class TestApi::ReadOnlyThingsController < TestApiController
+class TestApi::ReadOnlyMarblesController < TestApiController
   include RESTFramework::ReadOnlyModelControllerMixin
 
   class SingularOwnerSerializer < RESTFramework::NativeSerializer
     self.config = {only: [:login, :age, :balance]}
   end
 
-  self.model = Thing
-  self.native_serializer_config = {include: {owner: {only: [:login, :age, :balance]}}}
+  self.model = Marble
+  self.native_serializer_config = {include: {user: {only: [:login, :age, :balance]}}}
   self.native_serializer_singular_config = {
-    include: {owner: SingularOwnerSerializer},
+    include: {user: SingularOwnerSerializer},
     methods: [:calculated_property],
   }
 end

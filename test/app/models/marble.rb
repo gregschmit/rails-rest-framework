@@ -1,37 +1,37 @@
 # == Schema Information
 #
-# Table name: things
+# Table name: marbles
 #
 #  id            :integer          not null, primary key
 #  is_discounted :boolean          default(FALSE)
 #  name          :string           default(""), not null
 #  price         :decimal(6, 2)
-#  shape         :string
+#  radius_mm     :integer          default(1), not null
 #  created_at    :datetime
 #  updated_at    :datetime
-#  owner_id      :integer
+#  user_id       :integer
 #
 # Indexes
 #
-#  index_things_on_name      (name) UNIQUE
-#  index_things_on_owner_id  (owner_id)
+#  index_marbles_on_name     (name) UNIQUE
+#  index_marbles_on_user_id  (user_id)
 #
 # Foreign Keys
 #
-#  owner_id  (owner_id => users.id) ON DELETE => cascade
+#  user_id  (user_id => users.id) ON DELETE => cascade
 #
-class Thing < ActiveRecord::Base
+class Marble < ActiveRecord::Base
   if Rails::VERSION::MAJOR >= 5
-    belongs_to :owner, class_name: "User", optional: true
+    belongs_to :user, optional: true
   else
-    belongs_to :owner, class_name: "User"
+    belongs_to :user
   end
 
   before_destroy :check_undestroyable
 
   validates_numericality_of :price, greater_than: 0, allow_nil: true
 
-  accepts_nested_attributes_for :owner, allow_destroy: true
+  accepts_nested_attributes_for :user, allow_destroy: true
 
   # An example of a "calculated" property method.
   def calculated_property

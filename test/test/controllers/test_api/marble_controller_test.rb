@@ -1,13 +1,13 @@
 require_relative "base"
 
-class TestApi::ThingControllerTest < ActionController::TestCase
+class TestApi::MarbleControllerTest < ActionController::TestCase
   include BaseTestApiControllerTests
 
   def test_show
     get(:show, as: :json)
     assert_response(:success)
     assert(@response.parsed_body["name"])
-    assert_nil(@response.parsed_body["shape"])
+    assert_nil(@response.parsed_body["radius_mm"])
   end
 
   def test_changed_action

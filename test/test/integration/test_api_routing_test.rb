@@ -11,10 +11,10 @@ class TestApiRoutingTest < ActionDispatch::IntegrationTest
     assert_response(:success)
   end
 
-  def test_can_get_things
-    get("/test_api/things")
+  def test_can_get_marbles
+    get("/test_api/marbles")
     assert_response(:success)
-    get("/test_api/things.json")
+    get("/test_api/marbles.json")
     assert_response(:success)
   end
 
@@ -25,17 +25,17 @@ class TestApiRoutingTest < ActionDispatch::IntegrationTest
     assert_response(:success)
   end
 
-  def test_thing_changed_action
-    get("/test_api/thing/changed")
+  def test_marble_changed_action
+    get("/test_api/marble/changed")
     assert_response(:success)
-    get("/test_api/thing/changed.json")
+    get("/test_api/marble/changed.json")
     assert_response(:success)
   end
 
-  def test_thing_another_changed_action
-    get("/test_api/thing/another_changed")
+  def test_marble_another_changed_action
+    get("/test_api/marble/another_changed")
     assert_response(:success)
-    get("/test_api/thing/another_changed.json")
+    get("/test_api/marble/another_changed.json")
     assert_response(:success)
   end
 end

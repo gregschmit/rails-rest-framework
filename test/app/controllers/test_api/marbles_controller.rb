@@ -1,11 +1,11 @@
-class TestApi::ThingsController < TestApiController
+class TestApi::MarblesController < TestApiController
   include RESTFramework::ModelControllerMixin
 
-  class ThingsSerializer < RESTFramework::NativeSerializer
+  class MarblesSerializer < RESTFramework::NativeSerializer
     self.action_config = {list: {only: [:id, :name, :price]}}
     self.singular_config = {
-      only: [:id, :name, :shape],
-      include: {owner: TestApi::UserController::UsersSerializer.new(many: false)},
+      only: [:id, :name, :radius_mm],
+      include: {user: TestApi::UserController::UsersSerializer.new(many: false)},
       serializer_methods: :id_plus_one,
     }
     self.plural_config = {only: [:id, :name]}
@@ -20,7 +20,7 @@ class TestApi::ThingsController < TestApiController
   self.action_fields = {create: %w(name), update: %w(name)}
   self.paginator_class = RESTFramework::PageNumberPaginator
   self.page_size = 2
-  self.serializer_class = ThingsSerializer
+  self.serializer_class = MarblesSerializer
   self.extra_actions = {alternate_list: :get}
   self.extra_member_actions = {description: :get}
   self.filter_backends = [

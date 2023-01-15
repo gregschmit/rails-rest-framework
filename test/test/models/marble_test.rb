@@ -1,5 +1,5 @@
 require_relative "base"
 
-class ThingTest < ActiveSupport::TestCase
+class MarbleTest < ActiveSupport::TestCase
   include BaseModelTests
 end

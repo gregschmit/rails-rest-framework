@@ -10,20 +10,20 @@ class TestApi::UserControllerTest < ActionController::TestCase
     assert_not_nil(@response.parsed_body["is_admin"])
     assert(@response.parsed_body["age"])
     assert_nil(@response.parsed_body["balance"])
-    assert_nil(@response.parsed_body["things"])
+    assert_nil(@response.parsed_body["marbles"])
   end
 
-  def test_with_things
-    get(:with_things, as: :json)
+  def test_with_marbles
+    get(:with_marbles, as: :json)
     assert_response(:success)
     assert(@response.parsed_body["login"])
     assert_nil(@response.parsed_body["age"])
     assert_not_nil(@response.parsed_body["is_admin"])
     assert_nil(@response.parsed_body["balance"])
-    assert(@response.parsed_body["things"])
-    assert(@response.parsed_body["things"][0]["name"])
-    assert_nil(@response.parsed_body["things"][0]["shape"])
-    assert_nil(@response.parsed_body["things"][0]["price"])
+    assert(@response.parsed_body["marbles"])
+    assert(@response.parsed_body["marbles"][0]["name"])
+    assert_nil(@response.parsed_body["marbles"][0]["radius_mm"])
+    assert_nil(@response.parsed_body["marbles"][0]["price"])
   end
 
   def test_delegated_method

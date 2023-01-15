@@ -8,15 +8,18 @@ class All < ActiveRecord::Migration[6.0]
       t.integer(:state, null: false, default: 0)
       t.string(:status, null: false, default: "")
 
+      t.references(:manager, foreign_key: {on_delete: :nullify, to_table: :users})
+
       t.timestamps(null: true)
     end
 
-    create_table(:things) do |t|
+    create_table(:marbles) do |t|
       t.string(:name, null: false, default: "", index: {unique: true})
-      t.string(:shape)
+      t.integer(:radius_mm, null: false, default: 1)
       t.decimal(:price, precision: 6, scale: 2)
       t.boolean(:is_discounted, default: false)
-      t.references(:owner, index: true, foreign_key: {to_table: :users, on_delete: :cascade})
+
+      t.references(:user, foreign_key: {on_delete: :cascade})
 
       t.timestamps(null: true)
     end

@@ -4,20 +4,20 @@ class TestApi::UserController < TestApiController
   class UsersSerializer < RESTFramework::NativeSerializer
     self.config = {only: [:id, :login, :is_admin, :age]}
     self.action_config = {
-      with_things: {
+      with_marbles: {
         only: [:id, :login, :is_admin],
-        include: {things: TestApi::ThingsController::ThingsSerializer.new(many: true)},
+        include: {marbles: TestApi::MarblesController::MarblesSerializer.new(many: true)},
       },
     }
   end
 
   self.singleton_controller = true
   self.fields = %w(login is_admin balance)
-  self.extra_actions = {with_things: :get}
+  self.extra_actions = {with_marbles: :get}
   self.extra_member_actions = {delegated: {methods: :get, delegate: true}}
   self.serializer_class = UsersSerializer
 
-  def with_things
+  def with_marbles
     self.show
   end
 

@@ -1,4 +1,4 @@
-class TestApi::ThingController < TestApiController
+class TestApi::MarbleController < TestApiController
   include RESTFramework::ReadOnlyModelControllerMixin
 
   self.fields = ["id", "name"]
@@ -20,6 +20,6 @@ class TestApi::ThingController < TestApiController
   end
 
   def get_record
-    return Thing.first
+    return Marble.first
   end
 end

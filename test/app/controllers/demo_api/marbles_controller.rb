@@ -1,4 +1,4 @@
-class DemoApi::ThingsController < DemoApiController
+class DemoApi::MarblesController < DemoApiController
   include RESTFramework::ModelControllerMixin
 
   self.extra_member_actions = {adjust_price: :patch, toggle_is_discounted: :patch}
@@ -9,8 +9,8 @@ class DemoApi::ThingsController < DemoApiController
   end
 
   def toggle_is_discounted
-    thing = self.get_record
-    thing.update!(is_discounted: !thing.is_discounted)
-    return api_response({message: "Is discounted toggled to #{thing.is_discounted}."})
+    marble = self.get_record
+    marble.update!(is_discounted: !marble.is_discounted)
+    return api_response({message: "Is discounted toggled to #{marble.is_discounted}."})
   end
 end

@@ -1,6 +1,6 @@
 require_relative "base"
 
-class TestApi::ThingsWithAddedSelectControllerTest < ActionController::TestCase
+class TestApi::MarblesWithAddedSelectControllerTest < ActionController::TestCase
   include BaseTestApiControllerTests
 
   def test_only_works
@@ -14,7 +14,13 @@ class TestApi::ThingsWithAddedSelectControllerTest < ActionController::TestCase
     assert_response(:success)
     assert_equal(
       [
-        "created_at", "is_discounted", "name", "owner_id", "selected_value", "shape", "updated_at"
+        "created_at",
+        "is_discounted",
+        "name",
+        "user_id",
+        "selected_value",
+        "radius_mm",
+        "updated_at",
       ].sort,
       @response.parsed_body[0].keys.sort,
     )
