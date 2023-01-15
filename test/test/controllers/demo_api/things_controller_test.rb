@@ -48,28 +48,35 @@ class DemoApi::ThingsControllerTest < ActionController::TestCase
     assert_equal(["id", "name"].sort, @response.parsed_body[0].keys.sort)
   end
 
-  def test_filter_by_owner_id
-    get(:index, as: :json, params: {"owner.id": 1})
-    assert_response(:success)
-    assert(@response.parsed_body.all? { |t| t["owner"]["id"] == 1 })
-  end
+  # Rails <7 doesn't support ordering/filtering on join table alias.
+  if Rails::VERSION::MAJOR >= 7
+    def test_filter_by_owner_id
+      get(:index, as: :json, params: {"owner.id": 1})
+      assert_response(:success)
+      assert(@response.parsed_body.all? { |t| t["owner"]["id"] == 1 })
+    end
 
-  def test_filter_by_owner_login
-    get(:index, as: :json, params: {"owner.login": "admin"})
-    assert_response(:success)
-    assert(@response.parsed_body.all? { |t| t["owner"]["login"] == "admin" })
-  end
+    def test_filter_by_owner_login
+      get(:index, as: :json, params: {"owner.login": "admin"})
+      assert_response(:success)
+      assert(@response.parsed_body.all? { |t| t["owner"]["login"] == "admin" })
+    end
 
-  def test_order_by_owner_id
-    get(:index, as: :json, params: {ordering: "users.id"})
-    assert_response(:success)
-    ids = @response.parsed_body.select { |t| t["owner"] }.map { |t| t["owner"]["id"] }.compact.uniq
-    assert_equal(ids, ids.sort)
+    def test_order_by_owner_id
+      get(:index, as: :json, params: {ordering: "users.id"})
+      assert_response(:success)
+      ids = @response.parsed_body.select { |t|
+              t["owner"]
+            }.map { |t| t["owner"]["id"] }.compact.uniq
+      assert_equal(ids, ids.sort)
 
-    get(:index, as: :json, params: {ordering: "-users.id"})
-    assert_response(:success)
-    ids = @response.parsed_body.select { |t| t["owner"] }.map { |t| t["owner"]["id"] }.compact.uniq
-    assert_equal(ids, ids.sort.reverse)
+      get(:index, as: :json, params: {ordering: "-users.id"})
+      assert_response(:success)
+      ids = @response.parsed_body.select { |t|
+              t["owner"]
+            }.map { |t| t["owner"]["id"] }.compact.uniq
+      assert_equal(ids, ids.sort.reverse)
+    end
   end
 
   def test_order_by_name
