@@ -23,25 +23,18 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
   def _get_filter_params
     # Map filterset fields to strings because query parameter keys are strings.
     fields = self._get_fields
-    @associations = []
 
     return @controller.request.query_parameters.select { |p, _|
       # Remove any trailing `__in` from the field name.
       field = p.chomp("__in")
 
-      # Remove any associations whose sub-fields are not filterable. Also populate `@associations`
-      # so the caller can include them.
+      # Remove any associations whose sub-fields are not filterable.
       if match = /(.*)\.(.*)/.match(field)
         field, sub_field = match[1..2]
         next false unless field.in?(fields)
 
         sub_fields = @controller.class.get_field_config(field)[:sub_fields]
-        if sub_field.in?(sub_fields)
-          @associations << field.to_sym
-          next true
-        end
-
-        next false
+        next sub_field.in?(sub_fields)
       end
 
       next field.in?(fields)
@@ -64,9 +57,6 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
   # Filter data according to the request query parameters.
   def get_filtered_data(data)
     if filter_params = self._get_filter_params.presence
-      # Include any associations.
-      data = data.includes(*@associations) unless @associations.empty?
-
       return data.where(**filter_params)
     end
 
@@ -88,8 +78,6 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
   def _get_ordering
     return nil if @controller.class.ordering_query_param.blank?
 
-    @associations = []
-
     # Ensure ordering_fields are strings since the split param will be strings.
     fields = self._get_fields
     order_string = @controller.params[@controller.class.ordering_query_param]
@@ -106,16 +94,6 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
         end
         next unless !fields || column.in?(fields)
 
-        # Populate any `@associations` so the caller can include them.
-        if match = /(.*)\.(.*)/.match(column)
-          association, sub_field = match[1..2]
-          @associations << association.to_sym
-
-          # Also, due to Rails weirdness, we need to convert the association name to the table name.
-          table_name = @controller.class.get_model.reflections[association].table_name
-          column = "#{table_name}.#{sub_field}"
-        end
-
         ordering[column] = direction
       end
       return ordering
@@ -130,9 +108,6 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
     reorder = !@controller.class.ordering_no_reorder
 
     if ordering && !ordering.empty?
-      # Include any associations.
-      data = data.includes(*@associations) unless @associations.empty?
-
       return data.send(reorder ? :reorder : :order, ordering)
     end
 

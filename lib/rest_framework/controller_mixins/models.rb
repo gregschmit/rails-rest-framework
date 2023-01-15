@@ -430,11 +430,23 @@ module RESTFramework::BaseModelControllerMixin
     return @recordset = nil
   end
 
+  # Get the recordset but with any associations included to avoid N+1 queries.
+  def get_recordset_with_includes
+    reflections = self.class.get_model.reflections.keys
+    associations = self.get_fields(fallback: true).select { |f| f.in?(reflections) }
+
+    if associations.any?
+      return self.get_recordset.includes(associations)
+    end
+
+    return self.get_recordset
+  end
+
   # Get the records this controller has access to *after* any filtering is applied.
   def get_records
     return @records if instance_variable_defined?(:@records)
 
-    return @records = self.get_filtered_data(self.get_recordset)
+    return @records = self.get_filtered_data(self.get_recordset_with_includes)
   end
 
   # Get a single record by primary key or another column, if allowed. The return value is cached and
