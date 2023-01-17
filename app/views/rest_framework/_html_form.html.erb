@@ -1,0 +1,7 @@
+<div style="max-width: 60em; margin: auto">
+  <%= render partial: "rest_framework/form_routes" %>
+
+  <%= form_for @ do |f| %>
+    <%= f.file_field :picture %>
+  <% end %>
+</div>

@@ -223,7 +223,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
               sub_model = @model.reflections[f].klass
               if sf.in?(sub_model.column_names)
                 sub_columns << sf
-              elsif sub_model.method_defined?(sf)
+              else
                 sub_methods << sf
               end
             end

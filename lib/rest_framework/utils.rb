@@ -168,6 +168,11 @@ module RESTFramework::Utils
     return model.column_names.reject { |c|
       c.in?(foreign_keys)
     } + model.reflections.map { |association, ref|
+      # Exclude certain associations (by default, active storage and action text associations).
+      if ref.class_name.in?(RESTFramework.config.exclude_association_classes)
+        next nil
+      end
+
       if ref.macro.in?([:has_many, :has_and_belongs_to_many]) &&
           RESTFramework.config.large_reverse_association_tables&.include?(ref.table_name)
         next nil

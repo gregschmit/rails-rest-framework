@@ -1,14 +1,5 @@
 <div style="max-width: 60em; margin: auto">
-  <div class="mb-2">
-    <label class="form-label w-100">Route
-      <select class="form-control" id="rawFormRoute">
-        <% raw_form_routes.each do |route| %>
-          <% path = @route_props[:with_path_args].call(route[:route]) %>
-          <option value="<%= route[:verb] %>:<%= path %>"><%= route[:verb] %> <%= route[:relative_path] %></option>
-        <% end %>
-      </select>
-    </label>
-  </div>
+  <%= render partial: "rest_framework/form_routes" %>
 
   <div class="mb-2">
     <label class="form-label w-100">Media Type

@@ -15,6 +15,11 @@ module RESTFramework::BaseModelControllerMixin
     field_config: nil,
     action_fields: nil,
 
+    # Options for what should be included/excluded from default fields.
+    exclude_associations: false,
+    include_active_storage: false,
+    include_action_text: false,
+
     # Attributes for finding records.
     find_by_fields: nil,
     find_by_query_param: "find_by",
@@ -44,9 +49,6 @@ module RESTFramework::BaseModelControllerMixin
 
     # Control if filtering is done before find.
     filter_recordset_before_find: true,
-
-    # Option to exclude associations from default fields.
-    exclude_associations: false,
 
     # Control if bulk operations are done in a transaction and rolled back on error, or if all bulk
     # operations are attempted and errors simply returned in the response.
@@ -91,19 +93,26 @@ module RESTFramework::BaseModelControllerMixin
       return self.get_model.human_attribute_name(s, default: super)
     end
 
-    # Get fields without any action context. Always fallback to columns at the class level.
-    def get_fields
-      if self.fields.is_a?(Hash)
+    # Get the available fields. Returning `nil` indicates that anything should be accepted. If
+    # `fallback` is true, then we should fallback to this controller's model columns, or an empty
+    # array.
+    def get_fields(input_fields: nil, fallback: true)
+      input_fields ||= self.fields
+
+      # If fields is a hash, then parse it.
+      if input_fields.is_a?(Hash)
         return RESTFramework::Utils.parse_fields_hash(
-          self.fields, self.get_model, exclude_associations: self.exclude_associations
+          input_fields, self.get_model, exclude_associations: self.exclude_associations
         )
+      elsif !input_fields && fallback
+        # Otherwise, if fields is nil and fallback is true, then fallback to columns.
+        model = self.get_model
+        return model ? RESTFramework::Utils.fields_for(
+          model, exclude_associations: self.exclude_associations
+        ) : []
       end
 
-      return self.fields || (
-        self.get_model ? RESTFramework::Utils.fields_for(
-          self.get_model, exclude_associations: self.exclude_associations
-        ) : []
-      )
+      return input_fields
     end
 
     # Get a field's config, including defaults.
@@ -327,26 +336,10 @@ module RESTFramework::BaseModelControllerMixin
     return (action_config[action] if action) || self.class.send(generic_config_key)
   end
 
-  # Get a list of fields for the current action. Returning `nil` indicates that anything should be
-  # accepted unless `fallback` is true, in which case we should fallback to this controller's model
-  # columns, or en empty array.
+  # Get a list of fields, taking into account the current action.
   def get_fields(fallback: false)
-    fields = _get_specific_action_config(:action_fields, :fields)
-
-    # If fields is a hash, then parse it.
-    if fields.is_a?(Hash)
-      return RESTFramework::Utils.parse_fields_hash(
-        fields, self.class.get_model, exclude_associations: self.class.exclude_associations
-      )
-    elsif !fields && fallback
-      # Otherwise, if fields is nil and fallback is true, then fallback to columns.
-      model = self.class.get_model
-      return model ? RESTFramework::Utils.fields_for(
-        model, exclude_associations: self.class.exclude_associations
-      ) : []
-    end
-
-    return fields
+    fields = self._get_specific_action_config(:action_fields, :fields)
+    return self.class.get_fields(input_fields: fields, fallback: fallback)
   end
 
   # Pass fields to get dynamic metadata based on which fields are available.

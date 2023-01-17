@@ -29,6 +29,8 @@ class User < ActiveRecord::Base
     "offline" => "Offline",
     "busy" => "Busy",
   }
+  belongs_to :manager, class_name: "User"
+  has_many :managed_users, class_name: "User", foreign_key: "manager_id"
   has_many :marbles, foreign_key: "user_id"
   has_and_belongs_to_many :movies
 

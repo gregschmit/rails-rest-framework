@@ -9,6 +9,7 @@ require "rails"
   "action_controller/railtie",
   "action_view/railtie",
   "active_job/railtie",
+  "action_text/engine",
   "rails/test_unit/railtie",
 ].each do |railtie|
   require railtie

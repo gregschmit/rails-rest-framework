@@ -21,6 +21,12 @@ module RESTFramework
   # Global configuration should be kept minimal, as controller-level configurations allows multiple
   # APIs to be defined to behave differently.
   class Config
+    DEFAULT_EXCLUDE_ASSOCIATION_CLASSES = %w(
+      ActionText::RichText
+      ActiveStorage::Attachment
+      ActiveStorage::Blob
+    ).freeze
+
     # Do not run `rrf_finalize` on controllers automatically using a `TracePoint` hook. This is a
     # performance option and must be global because we have to determine this before any
     # controller-specific configuration is set. If this is set to `true`, then you must manually
@@ -44,8 +50,12 @@ module RESTFramework
     # Option to disable `rescue_from` on the controller mixins.
     attr_accessor :disable_rescue_from
 
+    # Options to exclude certain classes from being added by default as association fields.
+    attr_accessor :exclude_association_classes
+
     def initialize
       self.show_backtrace = Rails.env.development?
+      self.exclude_association_classes = DEFAULT_EXCLUDE_ASSOCIATION_CLASSES
     end
   end
 
@@ -55,6 +65,12 @@ module RESTFramework
 
   def self.configure
     yield(self.config)
+  end
+
+  def self.features
+    return @features ||= {
+      html_forms: false,
+    }
   end
 end
 
