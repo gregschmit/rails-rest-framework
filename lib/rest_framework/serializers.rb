@@ -192,6 +192,83 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return cfg
   end
 
+  # Get the associations limit from the controller.
+  def _get_associations_limit
+    return @_get_associations_limit if defined?(@_get_associations_limit)
+
+    limit = @controller.class.native_serializer_associations_limit
+
+    # Extract the limit from the query parameters if it's set.
+    if query_param = @controller.class.native_serializer_associations_limit_query_param
+      if @controller.request.query_parameters.key?(query_param)
+        query_limit = @controller.request.query_parameters[query_param].to_i
+        if query_limit > 0
+          limit = query_limit
+        else
+          limit = nil
+        end
+      end
+    end
+
+    return @_get_associations_limit = limit
+  end
+
+  # Get a serializer configuration from the controller. `@controller` and `@model` must be set.
+  def _get_controller_serializer_config(fields)
+    columns = []
+    includes = {}
+    methods = []
+    serializer_methods = {}
+    fields.each do |f|
+      if f.in?(@model.column_names)
+        columns << f
+      elsif ref = @model.reflections[f]
+        sub_columns = []
+        sub_methods = []
+        @controller.class.get_field_config(f)[:sub_fields].each do |sf|
+          if sf.in?(ref.klass.column_names)
+            sub_columns << sf
+          else
+            sub_methods << sf
+          end
+        end
+        sub_config = {only: sub_columns, methods: sub_methods}
+
+        # Apply certain rules regarding collection associations.
+        if ref.collection?
+          # If we need to limit the number of serialized association records, then dynamically add a
+          # serializer method to do so.
+          if limit = self._get_associations_limit
+            method_name = "__rrf_limit_method_#{f}"
+            serializer_methods[method_name] = f
+            self.define_singleton_method(method_name) do |record|
+              next record.send(f).limit(limit).as_json(**sub_config)
+            end
+          else
+            includes[f] = sub_config
+          end
+
+          # If we need to include the association count, then add it here.
+          if @controller.class.native_serializer_include_associations_count
+            method_name = "__rrf_count_method_#{f}"
+            serializer_methods[method_name] = "#{f}.count"
+            self.define_singleton_method(method_name) do |record|
+              next record.send(f).count
+            end
+          end
+        else
+          includes[f] = sub_config
+        end
+      elsif @model.method_defined?(f)
+        methods << f
+      end
+    end
+
+    return {
+      only: columns, include: includes, methods: methods, serializer_methods: serializer_methods
+    }
+  end
+
   # Get the raw serializer config. Use `deep_dup` on any class mutables (array, hash, etc) to avoid
   # mutating class state.
   def _get_raw_serializer_config
@@ -206,40 +283,11 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     end
 
     # If the config wasn't determined, build a serializer config from controller fields.
-    if fields = @controller&.get_fields(fallback: true)
-      fields = fields.deep_dup
-
-      columns = []
-      includes = {}
-      methods = []
-      if @model
-        fields.each do |f|
-          if f.in?(@model.column_names)
-            columns << f
-          elsif @model.reflections.key?(f)
-            sub_columns = []
-            sub_methods = []
-            @controller.class.get_field_config(f)[:sub_fields].each do |sf|
-              sub_model = @model.reflections[f].klass
-              if sf.in?(sub_model.column_names)
-                sub_columns << sf
-              else
-                sub_methods << sf
-              end
-            end
-            includes[f] = {only: sub_columns, methods: sub_methods}
-          elsif @model.method_defined?(f)
-            methods << f
-          end
-        end
-      else
-        columns = fields
-      end
-
-      return {only: columns, include: includes, methods: methods}
+    if @model && fields = @controller&.get_fields(fallback: true)
+      return self._get_controller_serializer_config(fields.deep_dup)
     end
 
-    # By default, pass an empty configuration, allowing the serialization of all columns.
+    # By default, pass an empty configuration, using the default Rails serializer.
     return {}
   end
 
@@ -250,14 +298,14 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
   # Serialize a single record and merge results of `serializer_methods`.
   def _serialize(record, config, serializer_methods)
-    # Ensure serializer_methods is either falsy, or an array.
-    if serializer_methods && !serializer_methods.respond_to?(:to_ary)
-      serializer_methods = [serializer_methods]
+    # Ensure serializer_methods is either falsy, or a hash.
+    if serializer_methods && !serializer_methods.is_a?(Hash)
+      serializer_methods = [serializer_methods].flatten.map { |m| [m, m] }.to_h
     end
 
     # Merge serialized record with any serializer method results.
     return record.serializable_hash(config).merge(
-      serializer_methods&.map { |m| [m.to_sym, self.send(m, record)] }.to_h,
+      serializer_methods&.map { |m, k| [k.to_sym, self.send(m, record)] }.to_h,
     )
   end
 

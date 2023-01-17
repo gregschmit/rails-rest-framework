@@ -1,6 +1,6 @@
 module RESTFramework::Utils
   HTTP_METHOD_ORDERING = %w(GET POST PUT PATCH DELETE OPTIONS HEAD)
-  LABEL_FIELDS = %w(name label login title email username)
+  LABEL_FIELDS = %w(name label login title email username url)
 
   # Convert `extra_actions` hash to a consistent format: `{path:, methods:, kwargs:}`, and
   # additional metadata fields.
@@ -173,8 +173,9 @@ module RESTFramework::Utils
         next nil
       end
 
-      if ref.macro.in?([:has_many, :has_and_belongs_to_many]) &&
-          RESTFramework.config.large_reverse_association_tables&.include?(ref.table_name)
+      if ref.collection? && RESTFramework.config.large_reverse_association_tables&.include?(
+        ref.table_name,
+      )
         next nil
       end
 

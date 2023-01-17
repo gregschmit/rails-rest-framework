@@ -34,6 +34,9 @@ module RESTFramework::BaseModelControllerMixin
     native_serializer_plural_config: nil,
     native_serializer_only_query_param: "only",
     native_serializer_except_query_param: "except",
+    native_serializer_associations_limit: nil,
+    native_serializer_associations_limit_query_param: "associations_limit",
+    native_serializer_include_associations_count: false,
 
     # Attributes for default model filtering, ordering, and searching.
     filterset_fields: nil,
