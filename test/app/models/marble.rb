@@ -23,13 +23,15 @@
 class Marble < ActiveRecord::Base
   belongs_to :user
 
-  before_destroy :check_undestroyable
+  has_one_attached :picture
 
-  validates_numericality_of :price, greater_than: 0, allow_nil: true
+  has_rich_text :description
 
   accepts_nested_attributes_for :user, allow_destroy: true
 
-  has_one_attached :picture
+  validates_numericality_of :price, greater_than: 0, allow_nil: true
+
+  before_destroy :check_undestroyable
 
   # An example of a "calculated" property method.
   def calculated_property

@@ -36,13 +36,13 @@ class User < ActiveRecord::Base
 
   enum state: {default: 0, pending: 1, banned: 2, archived: 3}
 
-  validates_numericality_of :balance, greater_than: 0, allow_nil: true
-  validates_inclusion_of :state, in: states.keys
-  validates_inclusion_of :status, in: STATUS_OPTS.keys
+  attribute :secret_number, :integer
 
   accepts_nested_attributes_for :marbles, allow_destroy: true
 
-  attribute :secret_number, :integer
+  validates_numericality_of :balance, greater_than: 0, allow_nil: true
+  validates_inclusion_of :state, in: states.keys
+  validates_inclusion_of :status, in: STATUS_OPTS.keys
 
   # An example of a "calculated" property method.
   def calculated_property

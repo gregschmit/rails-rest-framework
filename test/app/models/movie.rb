@@ -15,7 +15,7 @@
 class Movie < ActiveRecord::Base
   has_and_belongs_to_many :users
 
-  validates_numericality_of :price, greater_than: 0, allow_nil: true
-
   has_many_attached :pictures
+
+  validates_numericality_of :price, greater_than: 0, allow_nil: true
 end
