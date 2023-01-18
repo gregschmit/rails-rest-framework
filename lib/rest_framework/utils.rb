@@ -185,9 +185,7 @@ module RESTFramework::Utils
 
   # Get the sub-fields that may be serialized and filtered/ordered for a reflection.
   def self.sub_fields_for(ref)
-    model = ref.klass
-
-    if model
+    if !ref.polymorphic? && model = ref.klass
       sub_fields = [model.primary_key].flatten.compact
 
       # Preferrably find a database column to use as label.
