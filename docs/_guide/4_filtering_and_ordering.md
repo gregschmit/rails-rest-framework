@@ -30,4 +30,4 @@ separated list, like: `ordering=director,-name`.
 If you include `ModelControllerMixin` into your controller, `ModelOrderingFilter` is included in the
 filter backends by default. You can use `ordering_fields` to controller which fields are allowed to
 be ordered by. To adjust the parameter that the user passes, adjust `ordering_query_param`; the
-default is 'ordering'.
+default is `"ordering"`.

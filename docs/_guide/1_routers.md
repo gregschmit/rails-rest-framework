@@ -27,14 +27,14 @@ app/controllers/
 ├── api
 │   ├── groups_controller.rb
 │   ├── movies_controller.rb
-│   ├── things_controller.rb
+│   ├── marbles_controller.rb
 │   └── users_controller.rb
 ├── api_controller.rb
 └── application_controller.rb
 ```
 
-If your controllers in the `api` directory inherit from `APIController` and you want root actions on
-`APIController`, then you would setup your root route in the top-level namespace, like this:
+If your controllers in the `api` directory inherit from `ApiController` and you want root actions on
+`ApiController`, then you would setup your root route in the top-level namespace, like this:
 
 ```ruby
 Rails.application.routes.draw do
@@ -45,13 +45,14 @@ Rails.application.routes.draw do
 end
 ```
 
-However, note that actions defined on `APIController` are defined on all sub-controllers, so if
+However, note that actions defined on `ApiController` are defined on all sub-controllers, so if
 you're using `match` rules to route controllers, then this may lead to undesired behavior.
 
 ### Dedicated API Root
 
-A better way might be to dedicate a controller for the API root. You would add a `RootController` so
-your directory would look like this:
+A better way might be to dedicate a controller for the API root, which would prevent actions and
+properties defined on the root API from propagating to the rest of the namespace through
+inheritance. You would add a `RootController` so your directory would look like this:
 
 ```shell
 app/controllers/
@@ -59,7 +60,7 @@ app/controllers/
 │   ├── groups_controller.rb
 │   ├── movies_controller.rb
 │   ├── root_controller.rb
-│   ├── things_controller.rb
+│   ├── marbles_controller.rb
 │   └── users_controller.rb
 ├── api_controller.rb
 └── application_controller.rb
@@ -70,7 +71,7 @@ Now you can route the root in the `:api` namespace, like this:
 ```ruby
 Rails.application.routes.draw do
   namespace :api do
-    rest_root  # by default this will find and route RootController
+    rest_root  # By default this will find and route `Api::RootController`.
     ...
   end
 end

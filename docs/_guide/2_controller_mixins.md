@@ -9,14 +9,14 @@ slug: controller-mixins
 This is the core of the REST Framework. Generally speaking, projects already have an existing
 controller inheritance hierarchy, so we want developers to be able to maintain that project
 structure while leveraging the power of the REST Framework. Also, different controllers which
-inherit from the same parent often need different REST Framework mix-ins. For these reasons, REST
+inherit from the same parent often need different REST Framework mixins. For these reasons, REST
 Framework provides the controller functionality as modules that you mix into your controllers.
 
 ## Response Rendering
 
 Before we go into the various controller mixins, one of the core capabilities of the REST Framework
-is to provide consistent, format-independent responses along side a browsable API. While you can use
-Rails' builtin rendering tools, such as `render`, the REST Framework provides a rendering helper
+is to provide system-consumable responses along side a browsable API for developers. While you can
+use Rails' builtin rendering tools, such as `render`, the REST Framework provides a rendering helper
 called `api_response`. This helper allows you to return a browsable API response for the `html`
 format which shows you what the JSON/XML response would look like, along with faster and lighter
 responses for `json` and `xml` formats.
@@ -34,10 +34,10 @@ class ApiController < ApplicationController
 end
 ```
 
-## BaseControllerMixin
+## `BaseControllerMixin`
 
 To transform a controller into the simplest possible RESTful controller, you can include
-`BaseControllerMixin`, which provides a `root` action so it can be used at the API root.
+`BaseControllerMixin`, which provides a simple `root` action so it can be used at the API root.
 
 ```ruby
 class ApiController < ApplicationController
@@ -50,7 +50,7 @@ end
 You can customize the behavior of `BaseControllerMixin` by setting or mutating various class
 attributes.
 
-#### singleton_controller
+#### `singleton_controller`
 
 This property primarily controls the routes that are generated for a RESTful controller. If you use
 `api_resource`/`api_resources` to define whether the generates routes are for a collection or for
@@ -60,18 +60,7 @@ routers, then `singleton_controller` will tell REST Framework whether to provide
 read more about singular vs plural routing, see Rails' documentation here:
 https://guides.rubyonrails.org/routing.html#singular-resources.
 
-```ruby
-class ApiController < ApplicationController
-  include RESTFramework::BaseControllerMixin
-  self.extra_actions = {test: :get}
-
-  def test
-    api_response({message: "Test successful!"})
-  end
-end
-```
-
-#### extra_actions
+#### `extra_actions`
 
 This property defines extra actions on the controller to be routed. It is a hash of
 `endpoint -> method(s)` (where `method(s)` can be a method symbol or an array of method symbols).
@@ -100,7 +89,23 @@ class ApiController < ApplicationController
 end
 ```
 
-## ModelControllerMixin
+If your action conflicts with a builtin method, then you can also override the path:
+
+```ruby
+class ApiController < ApplicationController
+  include RESTFramework::BaseControllerMixin
+
+  # This will route `test_action` to `/test`, in case there is already a `test` method that cannot
+  # be overridden.
+  self.extra_actions = {test_action: {path: :test, methods: :get}}
+
+  def test_action
+    api_response({message: "Test successful!"})
+  end
+end
+```
+
+## `ModelControllerMixin`
 
 `ModelControllerMixin` assists with providing the standard model CRUD (create, read, update,
 destroy) for your controller. This is the most commonly used mixin since it provides default
@@ -117,7 +122,7 @@ end
 You can customize the behavior of `ModelControllerMixin` by setting or mutating various class
 attributes.
 
-#### model
+#### `model`
 
 The `model` property allows you to define the model if it is not obvious from the controller name.
 
@@ -129,7 +134,7 @@ class Api::CoolMoviesController < ApiController
 end
 ```
 
-#### recordset
+#### `recordset`
 
 The `recordset` property allows you to define the set of records this API should be limited to. If
 you need to change the recordset based on properties of the request, then you can override the
@@ -143,7 +148,7 @@ class Api::CoolMoviesController < ApiController
 end
 ```
 
-#### extra_member_actions
+#### `extra_member_actions`
 
 The `extra_member_actions` property allows you to define additional actions on individual records.
 
