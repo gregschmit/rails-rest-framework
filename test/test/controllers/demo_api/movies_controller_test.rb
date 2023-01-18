@@ -1,7 +1,7 @@
-require_relative "base_crud"
+require_relative "base"
 
 class DemoApi::MoviesControllerTest < ActionController::TestCase
-  include DemoApi::BaseCRUD
+  include DemoApi::Base
 
   self.create_params = {name: "mutation_test"}
   self.update_params = {name: "mutation_test"}

@@ -47,6 +47,10 @@ module RESTFramework::BaseModelControllerMixin
     search_query_param: "search",
     search_ilike: false,
 
+    # Options for association assignment.
+    permit_id_assignment: true,
+    permit_nested_attributes_assignment: true,
+
     # Option for `recordset.create` vs `Model.create` behavior.
     create_from_recordset: true,
 
@@ -100,7 +104,7 @@ module RESTFramework::BaseModelControllerMixin
     # `fallback` is true, then we should fallback to this controller's model columns, or an empty
     # array.
     def get_fields(input_fields: nil, fallback: true)
-      input_fields ||= self.fields
+      input_fields ||= self.fields if fallback
 
       # If fields is a hash, then parse it.
       if input_fields.is_a?(Hash)
@@ -205,12 +209,31 @@ module RESTFramework::BaseModelControllerMixin
         # Get association metadata.
         if ref = reflections[f]
           metadata[:kind] = "association"
+
+          # Determine if we render id/ids fields.
+          if self.permit_id_assignment
+            if ref.collection?
+              metadata[:id_field] = "#{f.singularize}_ids"
+            else
+              metadata[:id_field] = "#{f}_id"
+            end
+          end
+
+          # Determine if we render nested attributes options.
+          if self.permit_nested_attributes_assignment
+            if nested_opts = model.nested_attributes_options[f.to_sym].presence
+              nested_opts[:field] = "#{f}_attributes"
+              metadata[:nested_attributes_options] = nested_opts
+            end
+          end
+
           begin
             pk = ref.active_record_primary_key
           rescue ActiveRecord::UnknownPrimaryKey
           end
           metadata[:association] = {
             macro: ref.macro,
+            collection: ref.collection?,
             class_name: ref.class_name,
             foreign_key: ref.foreign_key,
             primary_key: pk,
@@ -385,18 +408,19 @@ module RESTFramework::BaseModelControllerMixin
     # allowed parameters or fields.
     allowed_params = self.get_allowed_parameters&.map(&:to_s)
     body_params = if allowed_params
-      data.select { |p| allowed_params.include?(p) }
+      data.select { |p|
+        p.in?(allowed_params) || (
+          self.class.permit_id_assignment && (
+            p.chomp("_id").in?(allowed_params) || p.chomp("_ids").pluralize.in?(allowed_params)
+          )
+        ) || (
+          self.class.permit_nested_attributes_assignment &&
+            p.chomp("_attributes").in?(allowed_params)
+
+        )
+      }
     else
       data
-    end
-
-    # Add query params in place of missing body params, if configured.
-    if self.class.accept_generic_params_as_body_params && allowed_params
-      (allowed_params - body_params.keys).each do |k|
-        if value = params[k].presence
-          body_params[k] = value
-        end
-      end
     end
 
     # Filter primary key if configured.
@@ -404,7 +428,7 @@ module RESTFramework::BaseModelControllerMixin
       body_params.delete(self.class.get_model&.primary_key)
     end
 
-    # Filter fields in exclude_body_fields.
+    # Filter fields in `exclude_body_fields`.
     (self.class.exclude_body_fields || []).each { |f| body_params.delete(f) }
 
     return body_params

@@ -22,17 +22,19 @@
 #
 #  manager_id  (manager_id => users.id) ON DELETE => nullify
 #
-class User < ActiveRecord::Base
+class User < ApplicationRecord
   STATUS_OPTS = {
     "" => "Unknown",
     "online" => "Online",
     "offline" => "Offline",
     "busy" => "Busy",
   }
-  belongs_to :manager, class_name: "User"
+  belongs_to :manager, class_name: "User", optional: true
+  has_and_belongs_to_many :movies
+  has_many :emails
   has_many :managed_users, class_name: "User", foreign_key: "manager_id"
   has_many :marbles, foreign_key: "user_id"
-  has_and_belongs_to_many :movies
+  has_one :phone_number
 
   enum state: {default: 0, pending: 1, banned: 2, archived: 3}
 

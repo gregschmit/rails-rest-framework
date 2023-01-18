@@ -1,12 +1,6 @@
 require "test_helper"
 
-module PlainApi::BaseCRUD
-  def self.included(base)
-    base.class_attribute(:create_params)
-    base.class_attribute(:update_params)
-    base.setup { Rails.application.load_seed }
-  end
-
+module BaseCRUD
   def _get_model
     return @_get_model ||= self.class.name.match(
       /([a-zA-Z]+)ControllerTest$/,
@@ -21,14 +15,6 @@ module PlainApi::BaseCRUD
       get(:index, as: fmt)
       assert_response(:success)
     end
-  end
-
-  def test_index_with_filtering
-    filter_key = self.class.create_params.keys[0]
-    filter_value = self._get_model.first.send(filter_key)
-    get(:index, as: :json, params: {"#{filter_key}": filter_value})
-    assert_response(:success)
-    assert(@response.parsed_body.all? { |r| r[filter_key.to_s] == filter_value })
   end
 
   if Rails::VERSION::MAJOR >= 7

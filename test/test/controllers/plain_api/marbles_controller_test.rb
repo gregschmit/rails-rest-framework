@@ -1,7 +1,7 @@
-require_relative "base_crud"
+require_relative "base"
 
 class PlainApi::MarblesControllerTest < ActionController::TestCase
-  include PlainApi::BaseCRUD
+  include PlainApi::Base
 
   self.create_params = {name: "mutation_test"}
   self.update_params = {name: "mutation_test"}

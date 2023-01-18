@@ -49,6 +49,26 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_15_233930) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "emails", force: :cascade do |t|
+    t.string "email", default: "", null: false
+    t.boolean "is_primary", default: false, null: false
+    t.integer "user_id", null: false
+    t.index ["email"], name: "index_emails_on_email", unique: true
+    t.index ["user_id"], name: "index_emails_on_user_id"
+  end
+
+  create_table "genres", force: :cascade do |t|
+    t.string "name", default: "", null: false
+    t.string "description", default: "", null: false
+    t.index ["name"], name: "index_genres_on_name", unique: true
+  end
+
+  create_table "genres_movies", id: false, force: :cascade do |t|
+    t.integer "movie_id", null: false
+    t.integer "genre_id", null: false
+    t.index ["movie_id", "genre_id"], name: "index_genres_movies_on_movie_id_and_genre_id", unique: true
+  end
+
   create_table "marbles", force: :cascade do |t|
     t.string "name", default: "", null: false
     t.integer "radius_mm", default: 1, null: false
@@ -64,8 +84,10 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_15_233930) do
   create_table "movies", force: :cascade do |t|
     t.string "name", default: "", null: false
     t.decimal "price", precision: 8, scale: 2
+    t.integer "main_genre_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.index ["main_genre_id"], name: "index_movies_on_main_genre_id"
     t.index ["name"], name: "index_movies_on_name", unique: true
   end
 
@@ -73,6 +95,13 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_15_233930) do
     t.integer "user_id", null: false
     t.integer "movie_id", null: false
     t.index ["user_id", "movie_id"], name: "index_movies_users_on_user_id_and_movie_id", unique: true
+  end
+
+  create_table "phone_numbers", force: :cascade do |t|
+    t.string "number", default: "", null: false
+    t.integer "user_id", null: false
+    t.index ["number"], name: "index_phone_numbers_on_number", unique: true
+    t.index ["user_id"], name: "index_phone_numbers_on_user_id", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -91,8 +120,13 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_15_233930) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "emails", "users", on_delete: :cascade
+  add_foreign_key "genres_movies", "genres", on_delete: :cascade
+  add_foreign_key "genres_movies", "movies", on_delete: :cascade
   add_foreign_key "marbles", "users", on_delete: :cascade
+  add_foreign_key "movies", "genres", column: "main_genre_id", on_delete: :nullify
   add_foreign_key "movies_users", "movies", on_delete: :cascade
   add_foreign_key "movies_users", "users", on_delete: :cascade
+  add_foreign_key "phone_numbers", "users", on_delete: :cascade
   add_foreign_key "users", "users", column: "manager_id", on_delete: :nullify
 end

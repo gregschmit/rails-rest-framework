@@ -73,8 +73,8 @@ code {
 // What to do when document loads.
 document.addEventListener("DOMContentLoaded", (event) => {
   // Pretty-print JSON.
-  [...document.getElementsByClassName("language-json")].forEach((element, index) => {
-    element.innerHTML = neatJSON(JSON.parse(element.innerText), {
+  [...document.getElementsByClassName("language-json")].forEach((el, index) => {
+    el.innerHTML = neatJSON(JSON.parse(el.innerText), {
       wrap: 80,
       afterComma: 1,
       afterColon: 1,
@@ -84,14 +84,24 @@ document.addEventListener("DOMContentLoaded", (event) => {
   // Then highlight it.
   hljs.highlightAll();
 
+  // Replace all text nodes with anchor tag links.
+  [...document.querySelectorAll(".rrf-copy code")].forEach((el, index) => {
+    el.innerHTML = rrfLinkify(el.innerHTML)
+  });
+
   // Insert copy link and callback to copy contents of `<code>` element.
-  [...document.getElementsByClassName("rrf-copy")].forEach((element, index) => {
-    element.insertAdjacentHTML(
+  [...document.querySelectorAll("rrf-copy")].forEach((el, index) => {
+    el.insertAdjacentHTML(
       "afterbegin",
       "<a class=\"rrf-copy-link\" onclick=\"return rrfCopyToClipboard(this)\" href=\"#\">Copy to Clipboard</a>",
     )
-  })
+  });
 })
+
+// Convert plain-text links to anchor tag links.
+function rrfLinkify(text) {
+  return text.replace(/(https?:\/\/[^\s<>"]+)/g, "<a href=\"$1\" target=\"_blank\">$1</a>")
+}
 
 // Replace the document when doing form submission (mainly to support PUT/PATCH/DELETE).
 function rrfReplaceDocument(content) {

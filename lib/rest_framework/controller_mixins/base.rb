@@ -11,7 +11,6 @@ module RESTFramework::BaseControllerMixin
     exclude_body_fields: [
       :created_at, :created_by, :created_by_id, :updated_at, :updated_by, :updated_by_id
     ].freeze,
-    accept_generic_params_as_body_params: false,
     extra_actions: nil,
     extra_member_actions: nil,
     filter_backends: nil,
