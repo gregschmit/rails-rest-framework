@@ -1,7 +1,12 @@
 Rails.application.routes.draw do
-  root to: redirect("/demo_api")
+  rest_root
 
-  post :dev_test, to: "application#dev_test"
+  namespace :plain_api do
+    rest_root
+    rest_resources :marbles
+    rest_resources :movies
+    rest_resources :users
+  end
 
   namespace :demo_api do
     rest_root

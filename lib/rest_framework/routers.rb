@@ -157,7 +157,7 @@ module ActionDispatch::Routing
       public_send(:resource, name, only: [], **kwargs) do
         # Route a root for this resource.
         if route_root_to
-          get("", action: route_root_to)
+          get("", action: route_root_to, as: "")
         end
 
         collection do

@@ -2,7 +2,7 @@ class DemoApi::RootController < DemoApiController
   self.extra_actions = {nil: :get, blank: :get, echo: :post}
 
   def root
-    api_response({message: "Welcome to the Rails REST Framework Demo API."})
+    api_response({message: DemoApiController::DESCRIPTION})
   end
 
   def nil

@@ -1,15 +1,11 @@
-# This API should test advanced and edge-case functionality of the REST framework.
 class TestApiController < ApplicationController
+  DESCRIPTION = <<~TEXT.lines.map(&:strip).join(" ")
+    The test API contains a lot of really weird controllers for unit testing specific features.
+  TEXT
+
   include RESTFramework::BaseControllerMixin
 
   before_action do
     @template_logo_text = "Rails REST Framework Test API"
-  end
-
-  def root
-    api_response({message: <<~TXT.lines.map(&:strip).join(" ")})
-      Welcome to the Rails REST Framework Test API. This API is for unit tests for features not
-      covered by the Demo API.
-    TXT
   end
 end
