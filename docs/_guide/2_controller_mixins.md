@@ -109,13 +109,17 @@ end
 
 `ModelControllerMixin` assists with providing the standard model CRUD (create, read, update,
 destroy) for your controller. This is the most commonly used mixin since it provides default
-behavior which matches Rails' default routing.
+behavior for models which matches Rails' default routing.
 
 ```ruby
 class Api::MoviesController < ApiController
   include RESTFramework::ModelControllerMixin
 end
 ```
+
+By default, all columns and associations are included in `self.fields`, which can be helpful when
+developing an administrative API. For user-facing APIs, however, `self.fields` should always be
+explicitly defined.
 
 ### Controller Attributes
 
@@ -169,7 +173,7 @@ class Api::MoviesController < ApiController
 end
 ```
 
-#### fields
+#### `fields`
 
 The `fields` property defines the default fields for serialization and for parameters allowed from
 the body or query string.
@@ -182,7 +186,7 @@ class Api::MoviesController < ApiController
 end
 ```
 
-#### action_fields
+#### `action_fields`
 
 The `action_fields` property is similar to `fields`, but allows you to define different fields for
 different actions. A good example is to serialize expensive computed properties only in the `show`
@@ -199,7 +203,7 @@ class Api::MoviesController < ApiController
 end
 ```
 
-#### native_serializer_config
+#### `native_serializer_config`
 
 These properties define the serializer configuration if you are using the native `ActiveModel`
 serializer. You can also specify serializers for singular/plural
@@ -240,7 +244,7 @@ class Api::MoviesController < ApiController
 end
 ```
 
-#### allowed_parameters / allowed_action_parameters
+#### `allowed_parameters` / `allowed_action_parameters`
 
 These properties define the permitted parameters to be used in the request body for create/update
 actions. If you need different allowed parameters, then you can also override the
@@ -254,7 +258,7 @@ class Api::MoviesController < ApiController
 end
 ```
 
-#### create_from_recordset (default: `true`)
+#### `create_from_recordset` (default: `true`)
 
 The `create_from_recordset` attribute (`true` by default) is a boolean to control the behavior in
 the `create` action. If it is disabled, records will not be created from the filtered recordset, but
@@ -275,7 +279,7 @@ end
 Then if you hit the `create` action with the payload `{name: "Superman"}`, it will also set `cool`
 to `true` on the new record, because that property is inherited from the recordset.
 
-## ReadOnlyModelControllerMixin
+## `ReadOnlyModelControllerMixin`
 
 `ReadOnlyModelControllerMixin` only enables list/show actions. In this example, since we're naming
 this controller in a way that doesn't make the model obvious, we can set that explicitly:
