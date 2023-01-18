@@ -128,6 +128,8 @@ module RESTFramework::BaseModelControllerMixin
 
       # Default sub-fields if field is an association.
       if ref = self.get_model.reflections[f]
+        next if ref.polymorphic?
+
         model = ref.klass
         columns = model.columns_hash
         config[:sub_fields] ||= RESTFramework::Utils.sub_fields_for(ref)
