@@ -50,6 +50,7 @@ module RESTFramework::BaseModelControllerMixin
     # Options for association assignment.
     permit_id_assignment: true,
     permit_nested_attributes_assignment: true,
+    allow_all_nested_attributes: false,
 
     # Option for `recordset.create` vs `Model.create` behavior.
     create_from_recordset: true,
@@ -386,19 +387,19 @@ module RESTFramework::BaseModelControllerMixin
   # Get a list of parameters allowed for the current action. By default we do not fallback to
   # columns so arbitrary fields can be submitted if no fields are defined.
   def get_allowed_parameters
-    return @allowed_parameters if defined?(@allowed_parameters)
+    return @_get_allowed_parameters if defined?(@_get_allowed_parameters)
 
-    @allowed_parameters = self._get_specific_action_config(
+    @_get_allowed_parameters = self._get_specific_action_config(
       :allowed_action_parameters,
       :allowed_parameters,
     )
-    return @allowed_parameters if @allowed_parameters
-    return @allowed_parameters = nil unless fields = self.get_fields
+    return @_get_allowed_parameters if @_get_allowed_parameters
+    return @_get_allowed_parameters = nil unless fields = self.get_fields
 
     # For fields, automatically add `_id`/`_ids` and `_attributes` variations for associations.
     id_variations = []
     variations = {}
-    @allowed_parameters = fields.map { |f|
+    @_get_allowed_parameters = fields.map { |f|
       f = f.to_s
       next f unless ref = self.class.get_model.reflections[f]
 
@@ -411,14 +412,18 @@ module RESTFramework::BaseModelControllerMixin
       end
 
       if self.class.permit_nested_attributes_assignment
-        variations["#{f}_attributes"] = self.class.get_field_config(f)[:sub_fields] || {}
+        if self.class.allow_all_nested_attributes
+          variations["#{f}_attributes"] = {}
+        else
+          variations["#{f}_attributes"] = self.class.get_field_config(f)[:sub_fields]
+        end
       end
 
       next f
     }.flatten
-    @allowed_parameters += id_variations
-    @allowed_parameters << variations
-    return @allowed_parameters
+    @_get_allowed_parameters += id_variations
+    @_get_allowed_parameters << variations
+    return @_get_allowed_parameters
   end
 
   # Get the configured serializer class, or `NativeSerializer` as a default.
