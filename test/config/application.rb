@@ -33,6 +33,8 @@ class Application < Rails::Application
 
   config.active_storage.service = :local
 
+  config.action_controller.action_on_unpermitted_parameters = :raise
+
   RESTFramework.config.freeze_config = true
 
   if Rails::VERSION::MAJOR >= 7

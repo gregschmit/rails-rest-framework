@@ -170,6 +170,10 @@ module RESTFramework::BaseControllerMixin
     # Handle some common exceptions.
     unless RESTFramework.config.disable_rescue_from
       base.rescue_from(
+        ActionController::ParameterMissing,
+        ActionController::UnpermittedParameters,
+        ActiveRecord::AssociationTypeMismatch,
+        ActiveRecord::NotNullViolation,
         ActiveRecord::RecordNotFound,
         ActiveRecord::RecordInvalid,
         ActiveRecord::RecordNotSaved,

@@ -79,6 +79,7 @@ module RESTFramework::Utils
   def self.get_routes(application_routes, request, current_route: nil)
     current_route ||= self.get_request_route(application_routes, request)
     current_path = current_route.path.spec.to_s.gsub("(.:format)", "")
+    current_path = "" if current_path == "/"
     current_levels = current_path.count("/")
     current_comparable_path = %r{^#{Regexp.quote(self.comparable_path(current_path))}(/|$)}
 
@@ -112,7 +113,7 @@ module RESTFramework::Utils
         verb: r.verb,
         path: path,
         # Starts at the number of levels in current path, and removes the `(.:format)` at the end.
-        relative_path: path.split("/")[current_levels..]&.join("/"),
+        relative_path: path.split("/")[current_levels..]&.join("/").presence || "/",
         controller: r.defaults[:controller].presence,
         action: r.defaults[:action].presence,
         matches_path: matches_path,
@@ -125,8 +126,8 @@ module RESTFramework::Utils
       # by the path, and finally by the HTTP verb.
       [r[:_levels], r[:_path], HTTP_METHOD_ORDERING.index(r[:verb]) || 99]
     }.group_by { |r| r[:controller] }.sort_by { |c, _r|
-      # Sort the controller groups by current controller first, then depth, then alphanumerically.
-      [request.params[:controller] == c ? 0 : 1, c.count("/"), c]
+      # Sort the controller groups by current controller first, then alphanumerically.
+      [request.params[:controller] == c ? 0 : 1, c]
     }.to_h
   end
 

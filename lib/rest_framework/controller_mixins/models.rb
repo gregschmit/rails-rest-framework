@@ -386,10 +386,36 @@ module RESTFramework::BaseModelControllerMixin
   # Get a list of parameters allowed for the current action. By default we do not fallback to
   # columns so arbitrary fields can be submitted if no fields are defined.
   def get_allowed_parameters
-    return _get_specific_action_config(
+    return @allowed_parameters if defined?(@allowed_parameters)
+
+    @allowed_parameters = self._get_specific_action_config(
       :allowed_action_parameters,
       :allowed_parameters,
-    ) || self.get_fields
+    )
+    return @allowed_parameters if @allowed_parameters
+    return @allowed_parameters = nil unless fields = self.get_fields
+
+    # For fields, automatically add `_id`/`_ids` and `_attributes` variations for associations.
+    return @allowed_parameters = fields.map { |f|
+      f = f.to_s
+      next f unless ref = self.class.get_model.reflections[f]
+
+      variations = [f]
+
+      if self.class.permit_id_assignment
+        if ref.collection?
+          variations << "#{f.singularize}_ids"
+        else
+          variations << "#{f}_id"
+        end
+      end
+
+      if self.class.permit_nested_attributes_assignment
+        variations << "#{f}_attributes"
+      end
+
+      next variations
+    }.flatten
   end
 
   # Get the configured serializer class, or `NativeSerializer` as a default.
@@ -404,25 +430,15 @@ module RESTFramework::BaseModelControllerMixin
     ]
   end
 
-  # Filter the request body for keys in current action's allowed_parameters/fields config.
+  # Use strong parameters to filter the request body using the configured allowed parameters.
   def get_body_params(data: nil)
     data ||= request.request_parameters
 
     # Filter the request body and map to strings. Return all params if we cannot resolve a list of
     # allowed parameters or fields.
-    allowed_params = self.get_allowed_parameters&.map(&:to_s)
-    body_params = if allowed_params
-      data.select { |p|
-        p.in?(allowed_params) || (
-          self.class.permit_id_assignment && (
-            p.chomp("_id").in?(allowed_params) || p.chomp("_ids").pluralize.in?(allowed_params)
-          )
-        ) || (
-          self.class.permit_nested_attributes_assignment &&
-            p.chomp("_attributes").in?(allowed_params)
-
-        )
-      }
+    body_params = if allowed_parameters = self.get_allowed_parameters
+      data = ActionController::Parameters.new(data)
+      data.permit(*allowed_parameters)
     else
       data
     end

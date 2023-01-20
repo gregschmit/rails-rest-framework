@@ -1,7 +1,11 @@
 class RootController < ApplicationController
   include RESTFramework::BaseControllerMixin
 
-  self.extra_actions = {dev_test: :get}
+  self.extra_actions = {dev_test: :get, dev_test_post: :post}
+
+  def dev_test_post
+    return api_response({message: request.request_parameters.require(:id)})
+  end
 
   def root
     return api_response(

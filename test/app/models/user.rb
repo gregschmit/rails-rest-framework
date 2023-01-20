@@ -40,7 +40,8 @@ class User < ApplicationRecord
 
   attribute :secret_number, :integer
 
-  accepts_nested_attributes_for :marbles, allow_destroy: true
+  accepts_nested_attributes_for :marbles, :phone_number, allow_destroy: true
+  accepts_nested_attributes_for :phone_number, allow_destroy: true
 
   validates_numericality_of :balance, greater_than: 0, allow_nil: true
   validates_inclusion_of :state, in: states.keys
