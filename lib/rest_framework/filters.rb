@@ -33,7 +33,7 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
         field, sub_field = match[1..2]
         next false unless field.in?(fields)
 
-        sub_fields = @controller.class.get_field_config(field)[:sub_fields]
+        sub_fields = @controller.class.get_field_config(field)[:sub_fields] || []
         next sub_field.in?(sub_fields)
       end
 

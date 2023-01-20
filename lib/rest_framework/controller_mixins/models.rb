@@ -127,7 +127,7 @@ module RESTFramework::BaseModelControllerMixin
       config = self.field_config&.dig(f.to_sym) || {}
 
       # Default sub-fields if field is an association.
-      if ref = self.get_model.reflections[f]
+      if ref = self.get_model.reflections[f.to_s]
         if ref.polymorphic?
           columns = {}
         else
@@ -218,7 +218,7 @@ module RESTFramework::BaseModelControllerMixin
           if self.permit_id_assignment
             if ref.collection?
               metadata[:id_field] = "#{f.singularize}_ids"
-            else
+            elsif ref.belongs_to?
               metadata[:id_field] = "#{f}_id"
             end
           end
@@ -396,26 +396,29 @@ module RESTFramework::BaseModelControllerMixin
     return @allowed_parameters = nil unless fields = self.get_fields
 
     # For fields, automatically add `_id`/`_ids` and `_attributes` variations for associations.
-    return @allowed_parameters = fields.map { |f|
+    id_variations = []
+    variations = {}
+    @allowed_parameters = fields.map { |f|
       f = f.to_s
       next f unless ref = self.class.get_model.reflections[f]
 
-      variations = [f]
-
       if self.class.permit_id_assignment
         if ref.collection?
-          variations << "#{f.singularize}_ids"
-        else
-          variations << "#{f}_id"
+          variations["#{f.singularize}_ids"] = []
+        elsif ref.belongs_to?
+          id_variations << "#{f}_id"
         end
       end
 
       if self.class.permit_nested_attributes_assignment
-        variations << "#{f}_attributes"
+        variations["#{f}_attributes"] = self.class.get_field_config(f)[:sub_fields] || {}
       end
 
-      next variations
+      next f
     }.flatten
+    @allowed_parameters += id_variations
+    @allowed_parameters << variations
+    return @allowed_parameters
   end
 
   # Get the configured serializer class, or `NativeSerializer` as a default.
