@@ -32,8 +32,9 @@ group :development do
 end
 
 group :test do
-  gem "coveralls_reborn", require: false
   gem "minitest", ">= 5.0"
+  gem "simplecov"
+  gem "simplecov-lcov", "0.8.0", require: false
 end
 
 group :development, :test do

@@ -1,2 +1,2 @@
-class RESTFramework::Engine < ::Rails::Engine
+class RESTFramework::Engine < Rails::Engine
 end
