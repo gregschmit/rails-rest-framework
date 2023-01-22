@@ -580,7 +580,7 @@ module RESTFramework::CreateModelMixin
 
   # Perform the `create!` call and return the created record.
   def create!
-    create_from = if self.get_recordset.respond_to?(:create!) && self.create_from_recordset
+    create_from = if self.create_from_recordset && self.get_recordset.respond_to?(:create!)
       # Create with any properties inherited from the recordset. We exclude any `select` clauses in
       # case model callbacks need to call `count` on this collection, which typically raises a SQL
       # `SyntaxError`.
