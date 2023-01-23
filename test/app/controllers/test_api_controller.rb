@@ -1,6 +1,6 @@
 class TestApiController < ApplicationController
   DESCRIPTION = <<~TEXT.lines.map(&:strip).join(" ")
-    The test API contains a lot of really weird controllers for unit testing specific features.
+    The test API contains a lot of really weird controllers for testing specific features.
   TEXT
 
   include RESTFramework::BaseControllerMixin

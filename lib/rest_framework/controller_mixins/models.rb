@@ -266,6 +266,13 @@ module RESTFramework::BaseModelControllerMixin
           # Update `required` if we find a presence validator.
           metadata[:required] = true if kind == :presence
 
+          # Resolve procs (and lambdas), and symbols for certain arguments.
+          if options[:in].is_a?(Proc)
+            options = options.merge(in: options[:in].call)
+          elsif options[:in].is_a?(Symbol)
+            options = options.merge(in: model.send(options[:in]))
+          end
+
           metadata[:validators] ||= {}
           metadata[:validators][kind] ||= []
           metadata[:validators][kind] << options

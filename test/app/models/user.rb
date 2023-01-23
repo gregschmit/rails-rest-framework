@@ -45,7 +45,16 @@ class User < ApplicationRecord
 
   validates_numericality_of :balance, greater_than: 0, allow_nil: true
   validates_inclusion_of :state, in: states.keys
-  validates_inclusion_of :status, in: STATUS_OPTS.keys
+  validates_inclusion_of :status, in: :status_keys
+
+  # Adding this class method to test serializing inclusion symbol in `OPTIONS` endpoint.
+  def self.status_keys
+    return STATUS_OPTS.keys
+  end
+
+  def status_keys
+    return self.class.status_keys
+  end
 
   # An example of a "calculated" property method.
   def calculated_property
