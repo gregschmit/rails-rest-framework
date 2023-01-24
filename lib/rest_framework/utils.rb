@@ -16,15 +16,14 @@ module RESTFramework::Utils
         v = v.symbolize_keys
         methods = v.delete(:methods)
 
-        # First, remove any metadata keys.
-        delegate = v.delete(:delegate)
-        fields = v.delete(:fields)
+        # First, remove the route metadata.
+        metadata = v.delete(:metadata) || {}
 
         # Add label to fields.
-        if controller && fields
-          fields = fields.map { |f| [f, {}] }.to_h if f.is_a?(Array)
-          fields&.each do |field, cfg|
-            cfg[:label] = controller.get_label(field)
+        if controller && metadata[:fields]
+          metadata[:fields] = metadata[:fields].map { |f| [f, {}] }.to_h if f.is_a?(Array)
+          metadata[:fields]&.each do |field, cfg|
+            cfg[:label] = controller.get_label(field) unless cfg[:label]
           end
         end
 
@@ -47,8 +46,7 @@ module RESTFramework::Utils
           path: path,
           methods: methods,
           kwargs: kwargs,
-          delegate: delegate,
-          fields: fields,
+          metadata: metadata.presence,
           type: :extra,
         }.compact,
       ]

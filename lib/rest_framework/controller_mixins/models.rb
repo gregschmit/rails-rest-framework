@@ -297,7 +297,7 @@ module RESTFramework::BaseModelControllerMixin
     def setup_delegation
       # Delegate extra actions.
       self.extra_actions&.each do |action, config|
-        next unless config.is_a?(Hash) && config[:delegate]
+        next unless config.is_a?(Hash) && config.dig(:metadata, :delegate)
         next unless self.get_model.respond_to?(action)
 
         self.define_method(action) do
@@ -313,7 +313,7 @@ module RESTFramework::BaseModelControllerMixin
 
       # Delegate extra member actions.
       self.extra_member_actions&.each do |action, config|
-        next unless config.is_a?(Hash) && config[:delegate]
+        next unless config.is_a?(Hash) && config.dig(:metadata, :delegate)
         next unless self.get_model.method_defined?(action)
 
         self.define_method(action) do
