@@ -290,6 +290,7 @@ module RESTFramework::BaseModelControllerMixin
       return super().merge(
         {
           fields: self.get_fields_metadata,
+          callbacks: self._process_action_callbacks.as_json,
         },
       )
     end
