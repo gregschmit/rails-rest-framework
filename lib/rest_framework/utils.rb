@@ -1,6 +1,5 @@
 module RESTFramework::Utils
   HTTP_METHOD_ORDERING = %w(GET POST PUT PATCH DELETE OPTIONS HEAD)
-  LABEL_FIELDS = %w(name label login title email username url)
 
   # Convert `extra_actions` hash to a consistent format: `{path:, methods:, kwargs:}`, and
   # additional metadata fields.
@@ -186,14 +185,15 @@ module RESTFramework::Utils
   def self.sub_fields_for(ref)
     if !ref.polymorphic? && model = ref.klass
       sub_fields = [model.primary_key].flatten.compact
+      label_fields = RESTFramework.config.label_fields
 
       # Preferrably find a database column to use as label.
-      if match = LABEL_FIELDS.find { |f| f.in?(model.column_names) }
+      if match = label_fields.find { |f| f.in?(model.column_names) }
         return sub_fields + [match]
       end
 
       # Otherwise, find a method.
-      if match = LABEL_FIELDS.find { |f| model.method_defined?(f) }
+      if match = label_fields.find { |f| model.method_defined?(f) }
         return sub_fields + [match]
       end
 

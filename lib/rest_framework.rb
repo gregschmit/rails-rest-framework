@@ -26,6 +26,8 @@ module RESTFramework
       ActiveStorage::Attachment
       ActiveStorage::Blob
     ).freeze
+    DEFAULT_LABEL_FIELDS = %w(name label login title email username url).freeze
+    DEFAULT_SEARCH_COLUMNS = DEFAULT_LABEL_FIELDS + %w(description note).freeze
 
     # Do not run `rrf_finalize` on controllers automatically using a `TracePoint` hook. This is a
     # performance option and must be global because we have to determine this before any
@@ -50,12 +52,20 @@ module RESTFramework
     # Option to disable `rescue_from` on the controller mixins.
     attr_accessor :disable_rescue_from
 
-    # Options to exclude certain classes from being added by default as association fields.
+    # Option to exclude certain classes from being added by default as association fields.
     attr_accessor :exclude_association_classes
+
+    # Option for the default label fields to use when generating labels for `has_many` associations.
+    attr_accessor :label_fields
+
+    # Option for the default search columns to use when generating search filters.
+    attr_accessor :search_columns
 
     def initialize
       self.show_backtrace = Rails.env.development?
       self.exclude_association_classes = DEFAULT_EXCLUDE_ASSOCIATION_CLASSES
+      self.label_fields = DEFAULT_LABEL_FIELDS
+      self.search_columns = DEFAULT_SEARCH_COLUMNS
     end
   end
 
