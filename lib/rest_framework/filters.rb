@@ -117,25 +117,35 @@ end
 
 # Multi-field text searching on models.
 class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
-  # Get a list of search fields for the current action. Fallback to columns because we need an
-  # explicit list of columns to search on, so `nil` is useless in this context.
+  DEFAULT_SEARCH_COLUMNS = %w[name email title description note]
+
+  # Get a list of search fields for the current action. Fallback to columns but only grab a few
+  # common string-like columns by default.
   def _get_fields
-    return @controller.class.search_fields || @controller.get_fields(fallback: true)
+    if search_fields = @controller.class.search_fields
+      return search_fields
+    end
+
+    columns = @controller.class.get_model.columns_hash.keys
+    return @controller.get_fields(fallback: true).select { |f|
+      f.in?(DEFAULT_SEARCH_COLUMNS) && f.in?(columns)
+    }
   end
 
   # Filter data according to the request query parameters.
   def get_filtered_data(data)
-    fields = self._get_fields
     search = @controller.request.query_parameters[@controller.class.search_query_param]
 
-    # Ensure we use array conditions to prevent SQL injection.
-    if search.present? && !fields.empty?
-      return data.where(
-        fields.map { |f|
-          "CAST(#{f} AS VARCHAR) #{@controller.class.search_ilike ? "ILIKE" : "LIKE"} ?"
-        }.join(" OR "),
-        *(["%#{search}%"] * fields.length),
-      )
+    if search.present?
+      if fields = self._get_fields.presence
+        # Ensure we pass user input as arguments to prevent SQL injection.
+        return data.where(
+          fields.map { |f|
+            "CAST(#{f} AS VARCHAR) #{@controller.class.search_ilike ? "ILIKE" : "LIKE"} ?"
+          }.join(" OR "),
+          *(["%#{search}%"] * fields.length),
+        )
+      end
     end
 
     return data

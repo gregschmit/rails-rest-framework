@@ -439,10 +439,13 @@ module RESTFramework::BaseModelControllerMixin
     return super || RESTFramework::NativeSerializer
   end
 
-  # Get filtering backends, defaulting to using `ModelFilter` and `ModelOrderingFilter`.
+  # Get filtering backends, defaulting to using `ModelFilter`, `ModelOrderingFilter`, and
+  # `ModelSearchFilter`.
   def get_filter_backends
     return self.class.filter_backends || [
-      RESTFramework::ModelFilter, RESTFramework::ModelOrderingFilter
+      RESTFramework::ModelFilter,
+      RESTFramework::ModelOrderingFilter,
+      RESTFramework::ModelSearchFilter,
     ]
   end
 
