@@ -49,16 +49,16 @@ module RESTFramework
     # Whether the backtrace should be shown in rescued errors.
     attr_accessor :show_backtrace
 
-    # Option to disable `rescue_from` on the controller mixins.
+    # Disable `rescue_from` on the controller mixins.
     attr_accessor :disable_rescue_from
 
-    # Option to exclude certain classes from being added by default as association fields.
+    # Exclude certain classes from being added by default as association fields.
     attr_accessor :exclude_association_classes
 
-    # Option for the default label fields to use when generating labels for `has_many` associations.
+    # The default label fields to use when generating labels for `has_many` associations.
     attr_accessor :label_fields
 
-    # Option for the default search columns to use when generating search filters.
+    # The default search columns to use when generating search filters.
     attr_accessor :search_columns
 
     def initialize
