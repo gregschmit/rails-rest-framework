@@ -285,9 +285,9 @@ module RESTFramework::BaseModelControllerMixin
       }.to_h
     end
 
-    # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
+    # Get a hash of metadata to be rendered in the `OPTIONS` response.
     def get_options_metadata
-      return super().merge(
+      return super.merge(
         {
           fields: self.get_fields_metadata,
           callbacks: self._process_action_callbacks.as_json,

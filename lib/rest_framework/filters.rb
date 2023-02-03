@@ -14,7 +14,7 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
   # Get a list of filterset fields for the current action. Fallback to columns because we don't want
   # to try filtering by any query parameter because that could clash with other query parameters.
   def _get_fields
-    return @_get_fields ||= (
+    return (
       @controller.class.filterset_fields || @controller.get_fields(fallback: true)
     ).map(&:to_s)
   end
@@ -69,9 +69,7 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
   # Get a list of ordering fields for the current action. Do not fallback to columns in case the
   # user wants to order by a virtual column.
   def _get_fields
-    return @_get_fields ||= (
-      @controller.class.ordering_fields || @controller.get_fields
-    )&.map(&:to_s)
+    return (@controller.class.ordering_fields || @controller.get_fields)&.map(&:to_s)
   end
 
   # Convert ordering string to an ordering configuration.
@@ -138,10 +136,18 @@ class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
 
     if search.present?
       if fields = self._get_fields.presence
+        # MySQL doesn't support casting to VARCHAR, so we need to use CHAR instead.
+        data_type = if data.connection.adapter_name =~ /mysql/i
+          "CHAR"
+        else
+          # Sufficient for both PostgreSQL and SQLite.
+          "VARCHAR"
+        end
+
         # Ensure we pass user input as arguments to prevent SQL injection.
         return data.where(
           fields.map { |f|
-            "CAST(#{f} AS VARCHAR) #{@controller.class.search_ilike ? "ILIKE" : "LIKE"} ?"
+            "CAST(#{f} AS #{data_type}) #{@controller.class.search_ilike ? "ILIKE" : "LIKE"} ?"
           }.join(" OR "),
           *(["%#{search}%"] * fields.length),
         )

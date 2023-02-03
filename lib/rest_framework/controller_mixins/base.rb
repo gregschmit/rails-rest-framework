@@ -112,7 +112,7 @@ module RESTFramework::BaseControllerMixin
 
     # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
     def get_options_metadata
-      return @_base_options_metadata ||= {
+      return {
         title: self.get_title,
         description: self.description,
         renders: [
