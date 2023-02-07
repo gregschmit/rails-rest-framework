@@ -115,8 +115,6 @@ end
 
 # Multi-field text searching on models.
 class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
-  DEFAULT_SEARCH_COLUMNS = %w[name email title description note]
-
   # Get a list of search fields for the current action. Fallback to columns but only grab a few
   # common string-like columns by default.
   def _get_fields
@@ -126,7 +124,7 @@ class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
 
     columns = @controller.class.get_model.columns_hash.keys
     return @controller.get_fields(fallback: true).select { |f|
-      f.in?(DEFAULT_SEARCH_COLUMNS) && f.in?(columns)
+      f.in?(RESTFramework.config.search_columns) && f.in?(columns)
     }
   end
 
