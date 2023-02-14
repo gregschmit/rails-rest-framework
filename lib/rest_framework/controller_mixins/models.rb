@@ -207,6 +207,12 @@ module RESTFramework::BaseModelControllerMixin
             # Get enum variants.
             if type.is_a?(ActiveRecord::Enum::EnumType)
               metadata[:enum_variants] = type.send(:mapping)
+
+              # Custom integration with `translate_enum`.
+              translate_method = "translated_#{f.pluralize}"
+              if model.respond_to?(translate_method)
+                metadata[:enum_translations] = model.send(translate_method)
+              end
             end
           end
         end

@@ -16,10 +16,13 @@ if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3")
   gem "webrick"
 end
 
-# Include gem active_model_serializers so we can test against their interface (Rails >=6 only).
+# Include `active_model_serializers` for custom integration (Rails >=6 only).
 if RAILS_VERSION > Gem::Version.new("6")
   gem "active_model_serializers", "0.10.13"
 end
+
+# Include `translate_enum` for custom integration.
+gem "translate_enum"
 
 group :development do
   gem "annotate"

@@ -29,6 +29,8 @@ class User < ApplicationRecord
     "offline" => "Offline",
     "busy" => "Busy",
   }
+  include TranslateEnum
+
   belongs_to :manager, class_name: "User", optional: true
   has_and_belongs_to_many :movies
   has_many :emails
@@ -37,6 +39,7 @@ class User < ApplicationRecord
   has_one :phone_number
 
   enum state: {default: 0, pending: 1, banned: 2, archived: 3}
+  translate_enum :state
 
   attribute :secret_number, :integer
 

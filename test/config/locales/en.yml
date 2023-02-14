@@ -1,0 +1,6 @@
+en:
+  activerecord:
+    attributes:
+      user:
+        state_list:
+          banned: BANNED

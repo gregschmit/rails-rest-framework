@@ -199,6 +199,8 @@ GEM
     sqlite3 (1.4.4)
     thor (1.2.1)
     timeout (0.3.1)
+    translate_enum (0.2.0)
+      activesupport
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.4.2)
@@ -232,6 +234,7 @@ DEPENDENCIES
   simplecov
   simplecov-lcov (= 0.8.0)
   sqlite3 (~> 1.4.0)
+  translate_enum
   web-console
   webrick
 
