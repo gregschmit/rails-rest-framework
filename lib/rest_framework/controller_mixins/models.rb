@@ -1,8 +1,6 @@
 require_relative "base"
 require_relative "../filters"
 
-require "action_controller/test_case"
-
 # This module provides the core functionality for controllers based on models.
 module RESTFramework::BaseModelControllerMixin
   include RESTFramework::BaseControllerMixin
@@ -73,7 +71,7 @@ module RESTFramework::BaseModelControllerMixin
     IGNORE_VALIDATORS_WITH_KEYS = [:if, :unless].freeze
 
     # Get the model for this controller.
-    def get_model(from_get_recordset: false)
+    def get_model
       return @model if @model
       return (@model = self.model) if self.model
 
@@ -83,19 +81,7 @@ module RESTFramework::BaseModelControllerMixin
       rescue NameError
       end
 
-      # Delegate to the recordset's model, if it's defined. This option prevents infinite recursion.
-      unless from_get_recordset
-        # Instantiate a new controller to get the recordset.
-        controller = self.new
-        controller.request = ActionController::TestRequest.new({}, {}, controller)
-        controller.params = {}
-
-        if (recordset = controller.get_recordset)
-          return @model = recordset.klass
-        end
-      end
-
-      return nil
+      raise RESTFramework::UnknownModelError, self
     end
 
     # Override `get_label` to include ActiveRecord i18n-translated column names.
@@ -490,7 +476,7 @@ module RESTFramework::BaseModelControllerMixin
     return (@recordset = self.class.recordset) if self.class.recordset
 
     # If there is a model, return that model's default scope (all records by default).
-    if (model = self.class.get_model(from_get_recordset: true))
+    if (model = self.class.get_model)
       return @recordset = model.all
     end
 
