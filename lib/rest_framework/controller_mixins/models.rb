@@ -1,6 +1,8 @@
 require_relative "base"
 require_relative "../filters"
 
+require "action_controller/test_case"
+
 # This module provides the core functionality for controllers based on models.
 module RESTFramework::BaseModelControllerMixin
   include RESTFramework::BaseControllerMixin
@@ -85,7 +87,7 @@ module RESTFramework::BaseModelControllerMixin
       unless from_get_recordset
         # Instantiate a new controller to get the recordset.
         controller = self.new
-        controller.request = ActionController::TestRequest.new
+        controller.request = ActionController::TestRequest.new({}, {}, controller)
         controller.params = {}
 
         if (recordset = controller.get_recordset)
