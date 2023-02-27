@@ -1,6 +1,6 @@
 <tr>
   <td>
-    <% if route[:route].name && route[:verb] == "GET" && route[:matches_params] %>
+    <% if route[:verb] == "GET" && route[:matches_params] %>
       <%= link_to route[:relative_path], @route_props[:with_path_args].call(route[:route]) %>
     <% else %>
       <%= route[:relative_path] %>
