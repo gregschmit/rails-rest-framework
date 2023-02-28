@@ -220,12 +220,15 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     methods = []
     serializer_methods = {}
     fields.each do |f|
+      field_config = @controller.class.get_field_config(f)
+      next if field_config[:write_only]
+
       if f.in?(@model.column_names)
         columns << f
       elsif ref = @model.reflections[f]
         sub_columns = []
         sub_methods = []
-        @controller.class.get_field_config(f)[:sub_fields].each do |sf|
+        field_config[:sub_fields].each do |sf|
           if !ref.polymorphic? && sf.in?(ref.klass.column_names)
             sub_columns << sf
           else

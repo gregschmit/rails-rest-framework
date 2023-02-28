@@ -113,7 +113,11 @@ module RESTFramework::BaseModelControllerMixin
 
     # Get a field's config, including defaults.
     def get_field_config(f)
-      config = self.field_config&.dig(f.to_sym) || {}
+      f = f.to_sym
+      @_get_field_config ||= {}
+      return @_get_field_config[f] if @_get_field_config[f]
+
+      config = self.field_config&.dig(f) || {}
 
       # Default sub-fields if field is an association.
       if ref = self.get_model.reflections[f.to_s]
@@ -137,7 +141,7 @@ module RESTFramework::BaseModelControllerMixin
         }.to_h.compact.presence
       end
 
-      return config.compact
+      return @_get_field_config[f] = config.compact
     end
 
     # Get metadata about the resource's fields.
