@@ -21,7 +21,7 @@ class TestApi::MarblesController < TestApiController
   self.paginator_class = RESTFramework::PageNumberPaginator
   self.page_size = 2
   self.serializer_class = MarblesSerializer
-  self.extra_actions = {alternate_list: :get}
+  self.extra_collection_actions = {alternate_list: :get}
   self.extra_member_actions = {description: :get}
   self.filter_backends = [
     RESTFramework::ModelFilter, RESTFramework::ModelOrderingFilter, RESTFramework::ModelSearchFilter

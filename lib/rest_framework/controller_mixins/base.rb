@@ -156,8 +156,8 @@ module RESTFramework::BaseControllerMixin
 
     # Alias `extra_actions` to `extra_collection_actions`.
     unless base.respond_to?(:extra_collection_actions)
-      base.alias_method(:extra_collection_actions, :extra_actions)
-      base.alias_method(:extra_collection_actions=, :extra_actions=)
+      base.singleton_class.alias_method(:extra_collection_actions, :extra_actions)
+      base.singleton_class.alias_method(:extra_collection_actions=, :extra_actions=)
     end
 
     # Skip CSRF since this is an API.
