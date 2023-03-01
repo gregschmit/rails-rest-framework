@@ -91,9 +91,10 @@ module RESTFramework::BaseModelControllerMixin
 
     # Get the available fields. Returning `nil` indicates that anything should be accepted. If
     # `fallback` is true, then we should fallback to this controller's model columns, or an empty
-    # array.
+    # array. This should always return an array of strings, no symbols, and possibly `nil` (only if
+    # `fallback` is false).
     def get_fields(input_fields: nil, fallback: true)
-      input_fields ||= self.fields if fallback
+      input_fields ||= self.fields&.map(&:to_s) if fallback
 
       # If fields is a hash, then parse it.
       if input_fields.is_a?(Hash)

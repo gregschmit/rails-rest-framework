@@ -150,11 +150,13 @@ module RESTFramework::Utils
       Rails.logger.warn("RRF: Unknown key in fields hash: #{k}")
     end
 
-    return parsed_fields
+    # We should always return strings, not symbols.
+    return parsed_fields.map(&:to_s)
   end
 
   # Get the fields for a given model, including not just columns (which includes
-  # foreign keys), but also associations.
+  # foreign keys), but also associations. Note that we always return an array of
+  # strings, not symbols.
   def self.fields_for(model, exclude_associations: nil)
     foreign_keys = model.reflect_on_all_associations(:belongs_to).map(&:foreign_key)
 

@@ -14,14 +14,12 @@ class RESTFramework::ModelFilter < RESTFramework::BaseFilter
   # Get a list of filterset fields for the current action. Fallback to columns because we don't want
   # to try filtering by any query parameter because that could clash with other query parameters.
   def _get_fields
-    return (
-      @controller.class.filterset_fields || @controller.get_fields(fallback: true)
-    ).map(&:to_s)
+    # Always return a list of strings; `@controller.get_fields` already does this.
+    return @controller.class.filterset_fields&.map(&:to_s) || @controller.get_fields(fallback: true)
   end
 
   # Filter params for keys allowed by the current action's filterset_fields/fields config.
   def _get_filter_params
-    # Map filterset fields to strings because query parameter keys are strings.
     fields = self._get_fields
 
     return @controller.request.query_parameters.select { |p, _|
@@ -69,7 +67,7 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
   # Get a list of ordering fields for the current action. Do not fallback to columns in case the
   # user wants to order by a virtual column.
   def _get_fields
-    return (@controller.class.ordering_fields || @controller.get_fields)&.map(&:to_s)
+    return @controller.class.ordering_fields&.map(&:to_s) || @controller.get_fields
   end
 
   # Convert ordering string to an ordering configuration.
@@ -119,10 +117,10 @@ class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
   # common string-like columns by default.
   def _get_fields
     if search_fields = @controller.class.search_fields
-      return search_fields
+      return search_fields&.map(&:to_s)
     end
 
-    columns = @controller.class.get_model.columns_hash.keys
+    columns = @controller.class.get_model.column_names
     return @controller.get_fields(fallback: true).select { |f|
       f.in?(RESTFramework.config.search_columns) && f.in?(columns)
     }
