@@ -1,5 +1,5 @@
 module RESTFramework::Utils
-  HTTP_METHOD_ORDERING = %w(GET POST PUT PATCH DELETE OPTIONS HEAD)
+  HTTP_VERB_ORDERING = %w(GET POST PUT PATCH DELETE OPTIONS HEAD)
 
   # Convert `extra_actions` hash to a consistent format: `{path:, methods:, kwargs:}`, and
   # additional metadata fields.
@@ -8,6 +8,7 @@ module RESTFramework::Utils
   def self.parse_extra_actions(extra_actions, controller: nil)
     return (extra_actions || {}).map { |k, v|
       path = k
+      metadata = {}
 
       # Convert structure to path/methods/kwargs.
       if v.is_a?(Hash)  # Allow kwargs to be used to define path differently from the key.
@@ -39,14 +40,19 @@ module RESTFramework::Utils
         methods = v
       end
 
+      # Insert action label if it's not provided.
+      if controller
+        metadata[:label] ||= controller.get_label(k)
+      end
+
       next [
         k,
         {
           path: path,
           methods: methods,
           kwargs: kwargs,
-          metadata: metadata.presence,
           type: :extra,
+          metadata: metadata.presence,
         }.compact,
       ]
     }.to_h
@@ -119,9 +125,15 @@ module RESTFramework::Utils
         _levels: levels,
       }
     }.sort_by { |r|
-      # Sort by levels first, so the routes matching closely with current request show first, then
-      # by the path, and finally by the HTTP verb.
-      [r[:_levels], r[:path], HTTP_METHOD_ORDERING.index(r[:verb]) || 99]
+      [
+        # Sort by levels first, so routes matching closely with current request show first.
+        r[:_levels],
+        # Then match by path, but manually sort ':' to the end using knowledge that Ruby sorts the
+        # pipe character '|' after alphanumerics.
+        r[:path].tr(":", "|"),
+        # Finally, match by HTTP verb.
+        HTTP_VERB_ORDERING.index(r[:verb]) || 99,
+      ]
     }.group_by { |r| r[:controller] }.sort_by { |c, _r|
       # Sort the controller groups by current controller first, then alphanumerically.
       [request.params[:controller] == c ? 0 : 1, c]

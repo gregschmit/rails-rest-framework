@@ -60,7 +60,10 @@ module RESTFramework::BaseControllerMixin
 
     # Get a label from a field/column name, titleized and inflected.
     def get_label(s)
-      return RESTFramework::Utils.inflect(s.titleize(keep_id_suffix: true), self.inflect_acronyms)
+      return RESTFramework::Utils.inflect(
+        s.to_s.titleize(keep_id_suffix: true),
+        self.inflect_acronyms,
+      )
     end
 
     # Collect actions (including extra actions) metadata for this controller.
@@ -71,16 +74,20 @@ module RESTFramework::BaseControllerMixin
       RESTFramework::BUILTIN_ACTIONS.merge(
         RESTFramework::RRF_BUILTIN_ACTIONS,
       ).each do |action, methods|
-        if self.method_defined?(action)
-          actions[action] = {path: "", methods: methods, type: :builtin}
-        end
+        next unless self.method_defined?(action)
+
+        actions[action] = {
+          path: "", methods: methods, type: :builtin, metadata: {label: self.get_label(action)}
+        }
       end
 
       # Add builtin bulk actions.
       RESTFramework::RRF_BUILTIN_BULK_ACTIONS.each do |action, methods|
-        if self.method_defined?(action)
-          actions[action] = {path: "", methods: methods, type: :builtin}
-        end
+        next unless self.method_defined?(action)
+
+        actions[action] = {
+          path: "", methods: methods, type: :builtin, metadata: {label: self.get_label(action)}
+        }
       end
 
       # Add extra actions.
@@ -97,9 +104,11 @@ module RESTFramework::BaseControllerMixin
 
       # Start with builtin actions.
       RESTFramework::BUILTIN_MEMBER_ACTIONS.each do |action, methods|
-        if self.method_defined?(action)
-          actions[action] = {path: "", methods: methods, type: :builtin}
-        end
+        next unless self.method_defined?(action)
+
+        actions[action] = {
+          path: "", methods: methods, type: :builtin, metadata: {label: self.get_label(action)}
+        }
       end
 
       # Add extra actions.
