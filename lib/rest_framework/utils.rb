@@ -121,7 +121,7 @@ module RESTFramework::Utils
     }.sort_by { |r|
       # Sort by levels first, so the routes matching closely with current request show first, then
       # by the path, and finally by the HTTP verb.
-      [r[:_levels], r[:_path], HTTP_METHOD_ORDERING.index(r[:verb]) || 99]
+      [r[:_levels], r[:path], HTTP_METHOD_ORDERING.index(r[:verb]) || 99]
     }.group_by { |r| r[:controller] }.sort_by { |c, _r|
       # Sort the controller groups by current controller first, then alphanumerically.
       [request.params[:controller] == c ? 0 : 1, c]
