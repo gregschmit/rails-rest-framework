@@ -290,6 +290,7 @@ module RESTFramework::BaseModelControllerMixin
     def get_options_metadata
       return super.merge(
         {
+          primary_key: self.get_model.primary_key,
           fields: self.get_fields_metadata,
           callbacks: self._process_action_callbacks.as_json,
         },
