@@ -94,7 +94,7 @@ module RESTFramework::BaseModelControllerMixin
     # array. This should always return an array of strings, no symbols, and possibly `nil` (only if
     # `fallback` is false).
     def get_fields(input_fields: nil, fallback: true)
-      input_fields ||= self.fields&.map(&:to_s) if fallback
+      input_fields ||= self.fields if fallback
 
       # If fields is a hash, then parse it.
       if input_fields.is_a?(Hash)
@@ -107,6 +107,8 @@ module RESTFramework::BaseModelControllerMixin
         return model ? RESTFramework::Utils.fields_for(
           model, exclude_associations: self.exclude_associations
         ) : []
+      elsif input_fields
+        input_fields = input_fields&.map(&:to_s)
       end
 
       return input_fields
