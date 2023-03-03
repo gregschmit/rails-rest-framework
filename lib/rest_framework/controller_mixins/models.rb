@@ -108,7 +108,7 @@ module RESTFramework::BaseModelControllerMixin
           model, exclude_associations: self.exclude_associations
         ) : []
       elsif input_fields
-        input_fields = input_fields&.map(&:to_s)
+        input_fields = input_fields.map(&:to_s)
       end
 
       return input_fields
