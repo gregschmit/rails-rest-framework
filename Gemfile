@@ -54,3 +54,7 @@ group :production do
   # Heroku requires Postgres.
   gem "pg"
 end
+
+Gem.post_install do
+  RESTFramework::Version.stamp_version
+end
