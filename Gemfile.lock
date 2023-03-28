@@ -236,7 +236,7 @@ DEPENDENCIES
   pg
   pry-rails
   rack-mini-profiler
-  rails (~> 7.0.4.3)
+  rails (~> 7.0.4)
   rake (>= 12.0)
   rest_framework!
   rubocop-shopify

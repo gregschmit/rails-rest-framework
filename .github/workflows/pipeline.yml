@@ -4,14 +4,14 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Install Ruby and gems
-      uses: ruby/setup-ruby@v1
-      with:
-        bundler-cache: true
-    - name: Run code checks
-      run: bundle exec rubocop
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install Ruby and gems
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Run code checks
+        run: bundle exec rubocop
   test:
     needs: check
     runs-on: ubuntu-latest
@@ -21,50 +21,50 @@ jobs:
         ruby: [2.6.8, 2.7.5, 3.0.4]
         rails: [6.0.6, 6.1.4, 7.0.4]
         exclude:
-        - ruby: 2.6.8
-          rails: 7.0.4
+          - ruby: 2.6.8
+            rails: 7.0.4
     env:
       RAILS_VERSION: ${{ matrix.rails }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Remove `Gemfile.lock` because this is a matrix job
-      run: rm Gemfile.lock
-    - name: Install Ruby and gems
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby }}
-        bundler-cache: true
-    - name: Execute migrations
-      run: bin/rails db:migrate
-    - name: Run tests
-      run: BACKTRACE=1 bin/rails test
-    - name: Check if coverage LCOV file exists
-      id: lcov_exists
-      uses: andstor/file-existence-action@v2
-      with:
-        files: coverage/lcov.info
-    - name: Submit coverage to `coveralls.io` if LCOV file exists
-      uses: coverallsapp/github-action@master
-      if: steps.lcov_exists.outputs.files_exists == 'true'
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Remove `Gemfile.lock` because this is a matrix job
+        run: rm Gemfile.lock
+      - name: Install Ruby and gems
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Execute migrations
+        run: bin/rails db:migrate
+      - name: Run tests
+        run: BACKTRACE=1 bin/rails test
+      - name: Check if coverage LCOV file exists
+        id: lcov_exists
+        uses: andstor/file-existence-action@v2
+        with:
+          files: coverage/lcov.info
+      - name: Submit coverage to `coveralls.io` if LCOV file exists
+        uses: coverallsapp/github-action@master
+        if: steps.lcov_exists.outputs.files_exists == 'true'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
   release:
     needs: test
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Ensure latest tag is fetched
-      run: git fetch --prune --tags --force
-    - name: Install Ruby
-      uses: ruby/setup-ruby@v1
-    - name: Build the gem
-      run: gem build rest_framework.gemspec -o rest_framework.gem
-    - name: Push to RubyGems
-      env:
-        GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-      run: gem push rest_framework.gem
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Ensure latest tag is fetched
+        run: git fetch --prune --tags --force
+      - name: Install Ruby
+        uses: ruby/setup-ruby@v1
+      - name: Build the gem
+        run: gem build rest_framework.gemspec -o rest_framework.gem
+      - name: Push to RubyGems
+        env:
+          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+        run: gem push rest_framework.gem
