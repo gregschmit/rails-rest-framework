@@ -28,7 +28,10 @@ module RESTFramework
     end
 
     def self.stamp_version
-      File.write(VERSION_FILEPATH, RESTFramework::VERSION)
+      # Only stamp the version if it's not unknown.
+      if RESTFramework::VERSION != "0.unknown"
+        File.write(VERSION_FILEPATH, RESTFramework::VERSION)
+      end
     end
 
     def self.unstamp_version
