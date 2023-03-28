@@ -219,13 +219,17 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     includes = {}
     methods = []
     serializer_methods = {}
+
+    column_names = @model.column_names
+    reflections = @model.reflections
+
     fields.each do |f|
       field_config = @controller.class.get_field_config(f)
       next if field_config[:write_only]
 
-      if f.in?(@model.column_names)
+      if f.in?(column_names)
         columns << f
-      elsif ref = @model.reflections[f]
+      elsif ref = reflections[f]
         sub_columns = []
         sub_methods = []
         field_config[:sub_fields].each do |sf|
@@ -242,9 +246,8 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
           # If we need to limit the number of serialized association records, then dynamically add a
           # serializer method to do so.
           if limit = self._get_associations_limit
-            method_name = "__rrf_limit_method_#{f}"
-            serializer_methods[method_name] = f
-            self.define_singleton_method(method_name) do |record|
+            serializer_methods[f] = f
+            self.define_singleton_method(f) do |record|
               next record.send(f).limit(limit).as_json(**sub_config)
             end
           else
@@ -253,14 +256,20 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
           # If we need to include the association count, then add it here.
           if @controller.class.native_serializer_include_associations_count
-            method_name = "__rrf_count_method_#{f}"
-            serializer_methods[method_name] = "#{f}.count"
+            method_name = "#{f}.count"
+            serializer_methods[method_name] = method_name
             self.define_singleton_method(method_name) do |record|
               next record.send(f).count
             end
           end
         else
           includes[f] = sub_config
+        end
+      elsif ref = reflections["rich_text_#{f}"]
+        # Define a rich text serializer method.
+        serializer_methods[f] = f
+        self.define_singleton_method(f) do |record|
+          next record.send(f).to_s
         end
       elsif @model.method_defined?(f)
         methods << f

@@ -74,17 +74,26 @@ code {
 document.addEventListener("DOMContentLoaded", (event) => {
   // Pretty-print JSON.
   [...document.getElementsByClassName("language-json")].forEach((el, index) => {
+    console.log(neatJSON(JSON.parse(el.innerText), {
+      wrap: 80,
+      afterComma: 1,
+      afterColon: 1,
+    }))
     el.innerHTML = neatJSON(JSON.parse(el.innerText), {
       wrap: 80,
       afterComma: 1,
       afterColon: 1,
-    })
+    }).replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;")
   });
 
   // Then highlight it.
   hljs.highlightAll();
 
-  // Replace all text nodes with anchor tag links.
+  // Replace text node links with anchor tag links.
   [...document.querySelectorAll(".rrf-copy code")].forEach((el, index) => {
     el.innerHTML = rrfLinkify(el.innerHTML)
   });

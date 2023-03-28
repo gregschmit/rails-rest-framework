@@ -22,7 +22,6 @@ module RESTFramework
   # APIs to be defined to behave differently.
   class Config
     DEFAULT_EXCLUDE_ASSOCIATION_CLASSES = %w(
-      ActionText::RichText
       ActiveStorage::Attachment
       ActiveStorage::Blob
     ).freeze

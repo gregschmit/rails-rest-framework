@@ -103,17 +103,18 @@
             <div class="tab-content pt-2">
               <div class="tab-pane fade show active" id="tab-json" role="tab">
                 <% if @json_payload.present? %>
-                  <div>
-                    <pre class="rrf-copy"><code class="language-json"><%=
-                      JSON.pretty_generate(
-                        JSON.parse(@json_payload)
-                      ) unless @json_payload == '' %></code></pre>
-                  </div>
+                  <div><pre class="rrf-copy"><code class="language-json"><%=
+                    JSON.pretty_generate(
+                      JSON.parse(@json_payload)
+                    ) unless @json_payload == ''
+                  %></code></pre></div>
                 <% end %>
               </div>
               <div class="tab-pane fade" id="tab-xml" role="tab">
                 <% if @xml_payload.present? %>
-                  <div><pre class="rrf-copy"><code class="language-xml"><%= @xml_payload %></code></pre></div>
+                  <div><pre class="rrf-copy"><code class="language-xml"><%=
+                    CGI.unescapeHTML(@xml_payload)
+                  %></code></pre></div>
                 <% end %>
               </div>
             </div>

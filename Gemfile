@@ -32,6 +32,11 @@ group :development do
   gem "pry-rails"
   gem "rubocop-shopify", require: false
   gem "web-console"
+
+  # Profiling
+  gem "bullet"
+  gem "rack-mini-profiler"
+  gem "stackprof"
 end
 
 group :test do

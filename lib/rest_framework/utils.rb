@@ -180,6 +180,11 @@ module RESTFramework::Utils
     return model.column_names.reject { |c|
       c.in?(foreign_keys)
     } + model.reflections.map { |association, ref|
+      # Ignore ActionText associations because we have a custom integration.
+      if ref.class_name == "ActionText::RichText"
+        next association.delete_prefix("rich_text_")
+      end
+
       # Exclude certain associations (by default, active storage and action text associations).
       if ref.class_name.in?(RESTFramework.config.exclude_association_classes)
         next nil

@@ -249,9 +249,14 @@ module RESTFramework::BaseModelControllerMixin
           }.compact
         end
 
+        # Determine if this is an ActionText "rich text".
+        if !metadata[:kind] && reflections["rich_text_#{f}"]
+          metadata[:kind] = "rich_text"
+        end
+
         # Determine if this is just a method.
-        if model.method_defined?(f)
-          metadata[:kind] ||= "method"
+        if !metadata[:kind] && model.method_defined?(f)
+          metadata[:kind] = "method"
         end
 
         # Collect validator options into a hash on their type, while also updating `required` based
@@ -494,7 +499,13 @@ module RESTFramework::BaseModelControllerMixin
   # Get the recordset but with any associations included to avoid N+1 queries.
   def get_recordset_with_includes
     reflections = self.class.get_model.reflections.keys
-    associations = self.get_fields(fallback: true).select { |f| f.in?(reflections) }
+    associations = self.get_fields(fallback: true).map { |f|
+      if f.in?(reflections)
+        f.to_sym
+      elsif "rich_text_#{f}".in?(reflections)
+        :"rich_text_#{f}"
+      end
+    }.compact
 
     if associations.any?
       return self.get_recordset.includes(associations)
