@@ -46,7 +46,7 @@ class Application < Rails::Application
   config.secret_token = "a_test_token"
   config.secret_key_base = "a_test_secret"
 
-  if Rails.env.development?
+  if defined?(Bullet)
     config.after_initialize do
       Bullet.enable = true
       Bullet.alert = true
