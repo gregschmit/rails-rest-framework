@@ -148,16 +148,20 @@ module RESTFramework::BaseModelControllerMixin
     end
 
     # Get metadata about the resource's fields.
-    def get_fields_metadata
+    def fields_metadata
+      return @_fields_metadata if @_fields_metadata
+
       # Get metadata sources.
       model = self.get_model
-      fields = self.get_fields.map(&:to_s)
+      fields = self.get_fields(fallback: true).map(&:to_s)
       columns = model.columns_hash
       column_defaults = model.column_defaults
       reflections = model.reflections
       attributes = model._default_attributes
+      readonly_attributes = model.readonly_attributes
+      exclude_body_fields = self.exclude_body_fields.map(&:to_s)
 
-      return fields.map { |f|
+      return @_fields_metadata = fields.map { |f|
         # Initialize metadata to make the order consistent.
         metadata = {
           type: nil,
@@ -171,6 +175,11 @@ module RESTFramework::BaseModelControllerMixin
         # Determine `primary_key` based on model.
         if model.primary_key == f
           metadata[:primary_key] = true
+        end
+
+        # Determine if the field is a read-only attribute.
+        if metadata[:primary_key] || f.in?(readonly_attributes) || f.in?(exclude_body_fields)
+          metadata[:read_only] = true
         end
 
         # Determine `type`, `required`, `label`, and `kind` based on schema.
@@ -296,7 +305,7 @@ module RESTFramework::BaseModelControllerMixin
       return super.merge(
         {
           primary_key: self.get_model.primary_key,
-          fields: self.get_fields_metadata,
+          fields: self.fields_metadata,
           callbacks: self._process_action_callbacks.as_json,
         },
       )

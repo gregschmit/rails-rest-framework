@@ -1,7 +1,55 @@
 <div style="max-width: 60em; margin: auto">
-  <%= render partial: "rest_framework/form_routes" %>
+  <div class="mb-2">
+    <label class="form-label w-100">Route
+      <select class="form-control form-control-sm" id="htmlFormRoute">
+        <% @_rrf_form_routes.each do |route| %>
+          <% path = @route_props[:with_path_args].call(route[:route]) %>
+          <option value="<%= route[:verb] %>:<%= path %>"><%= route[:verb] %> <%= route[:relative_path] %></option>
+        <% end %>
+      </select>
+    </label>
+  </div>
 
-  <%= form_for @ do |f| %>
-    <%= f.file_field :picture %>
+  <%= form_with(
+    model: @record,
+    url: "",
+    method: "PATCH",
+    id: "htmlForm",
+    scope: "",
+  ) do |form| %>
+    <% controller.get_fields(fallback: true).map(&:to_s).each do |f| %>
+      <%
+        # Don't provide form fields for associations or primary keys.
+        metadata = controller.class.fields_metadata[f]
+        next if !metadata || metadata[:kind] == "association" || metadata[:read_only]
+      %>
+      <div class="mb-2">
+        <% if metadata[:kind] == "rich_text" %>
+          <label class="form-label w-100"><%= controller.class.get_label(f) %></label>
+          <%= form.rich_text_area f %>
+        <% else %>
+          <label class="form-label w-100"><%= controller.class.get_label(f) %>
+            <%= form.text_field f, class: "form-control form-control-sm" %>
+          </label>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%= form.submit "Submit", name: "", class: "btn btn-primary", style: "float: right" %>
   <% end %>
+
+  <script>
+    // Update form anytime the route changes.
+    document.getElementById("htmlFormRoute").addEventListener("change", (event) => {
+      const [verb, path] = event.target.value.split(":")
+      const form = document.getElementById("htmlForm")
+      form.action = path
+      form.querySelector("input[name='_method']").value = verb
+    })
+
+    document.addEventListener("DOMContentLoaded", (event) => {
+      // Trigger the change event to update the form initially.
+      document.getElementById("htmlFormRoute").dispatchEvent(new Event("change"))
+    })
+  </script>
 </div>

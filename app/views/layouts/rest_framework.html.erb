@@ -1,14 +1,14 @@
 <!doctype html>
-<html>
+<html data-bs-theme="dark">
   <head>
     <title><%= @title %></title>
     <%= render partial: 'rest_framework/head' %>
   </head>
 
   <body>
-    <div class="bg-dark">
-      <div class="w-100 m-0 p-0" style="height: .3em; background-color: #a00;"></div>
-      <nav class="navbar navbar-dark bg-dark">
+    <div>
+      <div class="w-100 m-0 p-0" style="height: .3em; background-color: #900;"></div>
+      <nav class="navbar navbar-dark" style="background-color: #111">
         <div class="container">
           <span class="navbar-brand p-0">
             <h1 title="RRF v<%= RESTFramework::VERSION %>" class="text-light font-weight-light m-0 p-0" style="font-size: 1em">
@@ -57,7 +57,7 @@
               <% if @route_groups.values[0].any? { |r| r[:matches_path] && r[:verb] == "OPTIONS" } %>
                 <button type="button" class="btn btn-primary" onclick="rrfOptions(this)">OPTIONS</button>
               <% end %>
-              <button type="button" class="btn btn-primary" onclick="rrfRefresh(this)">GET</button>
+              <button type="button" class="btn btn-primary" onclick="rrfGet(this)">GET</button>
             </div>
             <% if @description.present? %>
               <br><br><p style="display: inline-block; margin-bottom: 0"><%= @description %></p>
@@ -68,12 +68,12 @@
         <div class="row">
           <div>
             <pre style="white-space: normal">
-              <code class="language-plaintext">
+              <code>
                 <strong><%= request.method %></strong> <%= request.path %><br>
               </code>
             </pre>
             <pre style="white-space: normal">
-              <code class="language-plaintext">
+              <code>
                 <strong>HTTP <%= response.status %> <%= response.message %></strong><br>
                 <strong>Content-Type:</strong> <%= response.content_type %>
               </code>
@@ -101,18 +101,18 @@
               </ul>
             </div>
             <div class="tab-content pt-2">
-              <div class="tab-pane fade show active" id="tab-json" role="tab">
+              <div class="tab-pane fade show active" id="tab-json" role="tabpanel">
                 <% if @json_payload.present? %>
-                  <div><pre class="rrf-copy"><code class="language-json"><%=
+                  <div><pre class="rrf-copy"><code class="auto-hljs language-json"><%=
                     JSON.pretty_generate(
                       JSON.parse(@json_payload)
                     ) unless @json_payload == ''
                   %></code></pre></div>
                 <% end %>
               </div>
-              <div class="tab-pane fade" id="tab-xml" role="tab">
+              <div class="tab-pane fade" id="tab-xml" role="tabpanel">
                 <% if @xml_payload.present? %>
-                  <div><pre class="rrf-copy"><code class="language-xml"><%=
+                  <div><pre class="rrf-copy"><code class="auto-hljs language-xml"><%=
                     CGI.unescapeHTML(@xml_payload)
                   %></code></pre></div>
                 <% end %>
@@ -121,6 +121,9 @@
           </div>
         <% end %>
         <% if @route_groups.present? %>
+          <%
+            show_html_form = controller.class.included_modules.include?(RESTFramework::ModelControllerMixin)
+          %>
           <div class="row">
             <div>
               <ul class="nav nav-tabs">
@@ -138,9 +141,9 @@
                       Raw Form
                     </a>
                   </li>
-                  <% if RESTFramework.features[:html_forms] %>
+                  <% if show_html_form %>
                     <li class="nav-item">
-                      <a class="nav-link" href="#tab-raw-form" data-bs-toggle="tab" role="tab">
+                      <a class="nav-link" href="#tab-html-form" data-bs-toggle="tab" role="tab">
                         HTML Form
                       </a>
                     </li>
@@ -149,15 +152,15 @@
               </ul>
             </div>
             <div class="tab-content pt-2">
-              <div class="tab-pane fade show active" id="tab-routes" role="tab">
+              <div class="tab-pane fade show active" id="tab-routes" role="tabpanel">
                 <%= render partial: 'rest_framework/routes' %>
               </div>
               <% unless @_rrf_form_routes.empty? %>
-                <div class="tab-pane fade" id="tab-raw-form" role="tab">
+                <div class="tab-pane fade" id="tab-raw-form" role="tabpanel">
                   <%= render partial: 'rest_framework/raw_form' %>
                 </div>
-                <% if RESTFramework.features[:html_forms] %>
-                  <div class="tab-pane fade" id="tab-raw-form" role="tab">
+                <% if show_html_form %>
+                  <div class="tab-pane fade" id="tab-html-form" role="tabpanel">
                     <%= render partial: 'rest_framework/html_form' %>
                   </div>
                 <% end %>

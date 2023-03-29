@@ -8,8 +8,16 @@ require_relative "../utils"
 module RESTFramework::BaseControllerMixin
   RRF_BASE_CONTROLLER_CONFIG = {
     filter_pk_from_request_body: true,
-    exclude_body_fields: [
-      :created_at, :created_by, :created_by_id, :updated_at, :updated_by, :updated_by_id
+    exclude_body_fields: %w[
+      created_at
+      created_by
+      created_by_id
+      updated_at
+      updated_by
+      updated_by_id
+      _method
+      utf8
+      authenticity_token
     ].freeze,
     extra_actions: nil,
     extra_member_actions: nil,
@@ -323,7 +331,6 @@ module RESTFramework::BaseControllerMixin
             @json_payload = payload.to_json if self.class.serialize_to_json
             @xml_payload = payload.to_xml if self.class.serialize_to_xml
           end
-          @template_logo_text ||= "Rails REST Framework"
           @title ||= self.class.get_title
           @description ||= self.class.description
           @route_props, @route_groups = RESTFramework::Utils.get_routes(

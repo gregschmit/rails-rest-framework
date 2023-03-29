@@ -34,7 +34,6 @@ group :development do
   gem "web-console"
 
   # Profiling
-  gem "bullet"
   gem "rack-mini-profiler"
   gem "stackprof"
 end

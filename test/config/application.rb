@@ -45,15 +45,4 @@ class Application < Rails::Application
   config.session_store(:cookie_store, key: "_session")
   config.secret_token = "a_test_token"
   config.secret_key_base = "a_test_secret"
-
-  if defined?(Bullet)
-    config.after_initialize do
-      Bullet.enable = true
-      Bullet.alert = true
-      Bullet.bullet_logger = true
-      Bullet.console = true
-      Bullet.rails_logger = true
-      Bullet.add_footer = true
-    end
-  end
 end

@@ -77,9 +77,7 @@ module RESTFramework
   end
 
   def self.features
-    return @features ||= {
-      html_forms: false,
-    }
+    return @features ||= {}
   end
 end
 

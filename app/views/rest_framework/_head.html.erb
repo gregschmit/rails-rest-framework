@@ -3,18 +3,25 @@
 <%= csrf_meta_tags %>
 <%= csp_meta_tag rescue nil %>
 
+<!-- ActiveStorage -->
+<script src="https://cdn.jsdelivr.net/npm/activestorage@5.2.8-1/app/assets/javascripts/activestorage.min.js"></script>
+
 <!-- Bootstrap -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js" integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N" crossorigin="anonymous"></script>
 
 <!-- Highlight.js -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/vs.min.css" integrity="sha512-AVoZ71dJLtHRlsgWwujPT1hk2zxtFWsPlpTPCc/1g0WgpbmlzkqlDFduAvnOV4JJWKUquPc1ZyMc5eq4fRnKOQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-dark.min.css" integrity="sha512-Vj6gPCk8EZlqnoveEyuGyYaWZ1+jyjMPg8g4shwyyNlRQl6d3L9At02ZHQr5K6s5duZl/+YKMnM3/8pDhoUphg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js" integrity="sha512-bgHRAiTjGrzHzLyKOnpFvaEpGzJet3z4tZnXGjpsCcqOnAH6VGUx9frc5bcIhKTVLEiCO6vEhNAgx5jtLUYrfA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/json.min.js" integrity="sha512-0xYvyncS9OLE7GOpNBZFnwyh9+bq4HVgk4yVVYI678xRvE22ASicF1v6fZ1UiST+M6pn17MzFZdvVCI3jTHSyw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/xml.min.js" integrity="sha512-5zBcw+OKRkaNyvUEPlTSfYylVzgpi7KpncY36b0gRudfxIYIH0q0kl2j26uCUB3YBRM6ytQQEZSgRg+ZlBTmdA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <!-- NeatJSON -->
 <script src="https://cdn.jsdelivr.net/npm/neatjson@0.10.5/javascript/neatjson.min.js"></script>
+
+<!-- Trix -->
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.0/dist/trix.css">
+<script type="text/javascript" src="https://unpkg.com/trix@2.0.0/dist/trix.umd.min.js"></script>
 
 <!-- Custom Style -->
 <style>
@@ -28,19 +35,34 @@ h5 { font-size: 1.1rem; }
 h6 { font-size: 1rem; }
 
 /* Make code and code blocks a little nicer looking. */
+pre code {
+  display: block;
+  overflow-x: auto;
+}
 code {
   padding: .5em !important;
-  background-color: #f3f3f3 !important;
+  background-color: #2b2b2b !important;
   border: 1px solid #aaa;
   border-radius: 3px;
 }
 
-/* Make route group expansion obvious to the user. */
-.rrf-routes .rrf-route-group-header {
+/* Reduce label font size. */
+label.form-label {
+  font-size: .8em;
+}
+
+trix-editor:empty:not(:focus)::before {
+  pointer-events: none;
+}
+
+/* Make Trix buttons visible in the dark mode. */
+trix-toolbar .trix-button-group {
   background-color: #f8f8f8;
 }
+
+/* Make route group expansion obvious to the user. */
 .rrf-routes .rrf-route-group-header:hover {
-  background-color: #f0f0f0;
+  background-color: #333;
 }
 .rrf-routes .rrf-route-group-header td {
   cursor: pointer;
@@ -74,11 +96,6 @@ code {
 document.addEventListener("DOMContentLoaded", (event) => {
   // Pretty-print JSON.
   [...document.getElementsByClassName("language-json")].forEach((el, index) => {
-    console.log(neatJSON(JSON.parse(el.innerText), {
-      wrap: 80,
-      afterComma: 1,
-      afterColon: 1,
-    }))
     el.innerHTML = neatJSON(JSON.parse(el.innerText), {
       wrap: 80,
       afterComma: 1,
@@ -88,23 +105,24 @@ document.addEventListener("DOMContentLoaded", (event) => {
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;")
-  });
+  })
 
   // Then highlight it.
-  hljs.highlightAll();
+  hljs.configure({cssSelector: "pre code.auto-hljs"})
+  hljs.highlightAll()
 
   // Replace text node links with anchor tag links.
-  [...document.querySelectorAll(".rrf-copy code")].forEach((el, index) => {
+  ;[...document.querySelectorAll(".rrf-copy code")].forEach((el, index) => {
     el.innerHTML = rrfLinkify(el.innerHTML)
-  });
+  })
 
   // Insert copy link and callback to copy contents of `<code>` element.
-  [...document.querySelectorAll("rrf-copy")].forEach((el, index) => {
+  ;[...document.querySelectorAll("rrf-copy")].forEach((el, index) => {
     el.insertAdjacentHTML(
       "afterbegin",
       "<a class=\"rrf-copy-link\" onclick=\"return rrfCopyToClipboard(this)\" href=\"#\">Copy to Clipboard</a>",
     )
-  });
+  })
 })
 
 // Convert plain-text links to anchor tag links.
@@ -143,10 +161,10 @@ function rrfCopyToClipboard(element) {
   return false
 }
 
-// Refresh the window.
-function rrfRefresh(button) {
+// Refresh the window as a `GET` request.
+function rrfGet(button) {
   button.disabled = true
-  window.location.reload()
+  window.location.replace(window.location.href)
 }
 
 // Call `DELETE` on the current path.
