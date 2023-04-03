@@ -197,7 +197,9 @@ module RESTFramework::Utils
       end
 
       next association
-    }.compact + model.rich_text_association_names.map { |n|
+    }.compact + model.reflect_on_all_associations(:has_one).collect(&:name).select { |n|
+      n.start_with?("rich_text_")
+    }.map { |n|
       n.to_s.delete_prefix("rich_text_")
     } + model.attachment_reflections.keys
   end
