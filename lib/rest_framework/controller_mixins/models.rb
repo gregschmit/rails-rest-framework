@@ -4,6 +4,14 @@ require_relative "../filters"
 # This module provides the core functionality for controllers based on models.
 module RESTFramework::BaseModelControllerMixin
   BASE64_REGEX = /data:(.*);base64,(.*)/
+  BASE64_TRANSLATE = ->(field, value) {
+    _, content_type, payload = value.match(BASE64_REGEX).to_a
+    return {
+      io: StringIO.new(Base64.decode64(payload)),
+      content_type: content_type,
+      filename: "image_#{field}#{Rack::Mime::MIME_TYPES.invert[content_type]}",
+    }
+  }
   include RESTFramework::BaseControllerMixin
 
   RRF_BASE_MODEL_CONTROLLER_CONFIG = {
@@ -506,16 +514,25 @@ module RESTFramework::BaseModelControllerMixin
     # Filter fields in `exclude_body_fields`.
     (self.class.exclude_body_fields || []).each { |f| body_params.delete(f) }
 
-    # Translate base64 encoded attachments to real uploads for custom ActiveStorage integration.
-    self.class.get_model.attachment_reflections.each do |name, _reflection|
-      next unless body_params[name].is_a?(String) && body_params[name].match?(BASE64_REGEX)
+    # ActiveStorage Integration: Translate base64 encoded attachments to upload objects.
+    #
+    # rubocop:disable Layout/LineLength
+    #
+    # Good example base64 image:
+    #   data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAApgAAAKYB3X3/OAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAANCSURBVEiJtZZPbBtFFMZ/M7ubXdtdb1xSFyeilBapySVU8h8OoFaooFSqiihIVIpQBKci6KEg9Q6H9kovIHoCIVQJJCKE1ENFjnAgcaSGC6rEnxBwA04Tx43t2FnvDAfjkNibxgHxnWb2e/u992bee7tCa00YFsffekFY+nUzFtjW0LrvjRXrCDIAaPLlW0nHL0SsZtVoaF98mLrx3pdhOqLtYPHChahZcYYO7KvPFxvRl5XPp1sN3adWiD1ZAqD6XYK1b/dvE5IWryTt2udLFedwc1+9kLp+vbbpoDh+6TklxBeAi9TL0taeWpdmZzQDry0AcO+jQ12RyohqqoYoo8RDwJrU+qXkjWtfi8Xxt58BdQuwQs9qC/afLwCw8tnQbqYAPsgxE1S6F3EAIXux2oQFKm0ihMsOF71dHYx+f3NND68ghCu1YIoePPQN1pGRABkJ6Bus96CutRZMydTl+TvuiRW1m3n0eDl0vRPcEysqdXn+jsQPsrHMquGeXEaY4Yk4wxWcY5V/9scqOMOVUFthatyTy8QyqwZ+kDURKoMWxNKr2EeqVKcTNOajqKoBgOE28U4tdQl5p5bwCw7BWquaZSzAPlwjlithJtp3pTImSqQRrb2Z8PHGigD4RZuNX6JYj6wj7O4TFLbCO/Mn/m8R+h6rYSUb3ekokRY6f/YukArN979jcW+V/S8g0eT/N3VN3kTqWbQ428m9/8k0P/1aIhF36PccEl6EhOcAUCrXKZXXWS3XKd2vc/TRBG9O5ELC17MmWubD2nKhUKZa26Ba2+D3P+4/MNCFwg59oWVeYhkzgN/JDR8deKBoD7Y+ljEjGZ0sosXVTvbc6RHirr2reNy1OXd6pJsQ+gqjk8VWFYmHrwBzW/n+uMPFiRwHB2I7ih8ciHFxIkd/3Omk5tCDV1t+2nNu5sxxpDFNx+huNhVT3/zMDz8usXC3ddaHBj1GHj/As08fwTS7Kt1HBTmyN29vdwAw+/wbwLVOJ3uAD1wi/dUH7Qei66PfyuRj4Ik9is+hglfbkbfR3cnZm7chlUWLdwmprtCohX4HUtlOcQjLYCu+fzGJH2QRKvP3UNz8bWk1qMxjGTOMThZ3kvgLI5AzFfo379UAAAAASUVORK5CYII=
+    #
+    # rubocop:enable Layout/LineLength
+    self.class.get_model.attachment_reflections.keys.each do |k|
+      next unless (body_params[k].is_a?(String) && body_params[k].match?(BASE64_REGEX)) ||
+        (body_params[k].is_a?(Array) && body_params[k].all? { |v|
+          v.is_a?(String) && v.match?(BASE64_REGEX)
+        })
 
-      _, content_type, payload = data[name].match(BASE64_REGEX).to_a
-      body_params[name] = {
-        io: StringIO.new(Base64.decode64(payload)),
-        content_type: content_type,
-        filename: "image_#{name}#{Rack::Mime::MIME_TYPES.invert[content_type]}",
-      }
+      if body_params[k].is_a?(Array)
+        body_params[k] = body_params[k].map { |v| BASE64_TRANSLATE.call(k, v) }
+      else
+        body_params[k] = BASE64_TRANSLATE.call(k, body_params[k])
+      end
     end
 
     return body_params
