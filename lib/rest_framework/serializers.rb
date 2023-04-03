@@ -277,11 +277,11 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
         serializer_methods[f] = f
         if ref.macro == :has_one_attached
           self.define_singleton_method(f) do |record|
-            next record.send(f).url
+            next record.send(f).attachment&.url
           end
         else
           self.define_singleton_method(f) do |record|
-            next record.send(f).map(&:url)
+            next record.send(f).map { |x| x.attachment&.url }
           end
         end
       elsif @model.method_defined?(f)
