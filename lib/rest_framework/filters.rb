@@ -86,7 +86,8 @@ class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
           column = field
           direction = :asc
         end
-        next unless !fields || column.in?(fields)
+
+        next if !column.in?(fields) && column.split(".").first.in?(fields)
 
         ordering[column] = direction
       end
