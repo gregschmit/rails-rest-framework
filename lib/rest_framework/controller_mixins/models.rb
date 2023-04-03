@@ -169,7 +169,7 @@ module RESTFramework::BaseModelControllerMixin
       exclude_body_fields = self.exclude_body_fields.map(&:to_s)
       rich_text_association_names = model.reflect_on_all_associations(:has_one)
         .collect(&:name)
-        .select { |n| n.start_with?("rich_text_") }
+        .select { |n| n.to_s.start_with?("rich_text_") }
       attachment_reflections = model.attachment_reflections
 
       return @_fields_metadata = fields.map { |f|
