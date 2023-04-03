@@ -23,6 +23,9 @@ class Movie < ApplicationRecord
   has_and_belongs_to_many :genres
   has_and_belongs_to_many :users
 
+  has_rich_text :description
+
+  has_one_attached :cover
   has_many_attached :pictures
 
   validates_numericality_of :price, greater_than: 0, allow_nil: true

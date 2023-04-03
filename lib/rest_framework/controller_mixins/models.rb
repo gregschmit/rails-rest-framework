@@ -3,6 +3,7 @@ require_relative "../filters"
 
 # This module provides the core functionality for controllers based on models.
 module RESTFramework::BaseModelControllerMixin
+  BASE64_REGEX = /data:(.*);base64,(.*)/
   include RESTFramework::BaseControllerMixin
 
   RRF_BASE_MODEL_CONTROLLER_CONFIG = {
@@ -89,20 +90,18 @@ module RESTFramework::BaseModelControllerMixin
       return self.get_model.human_attribute_name(s, default: super)
     end
 
-    # Get the available fields. Returning `nil` indicates that anything should be accepted. If
-    # `fallback` is true, then we should fallback to this controller's model columns, or an empty
-    # array. This should always return an array of strings, no symbols, and possibly `nil` (only if
-    # `fallback` is false).
-    def get_fields(input_fields: nil, fallback: true)
-      input_fields ||= self.fields if fallback
+    # Get the available fields. Fallback to this controller's model columns, or an empty array. This
+    # should always return an array of strings.
+    def get_fields(input_fields: nil)
+      input_fields ||= self.fields
 
       # If fields is a hash, then parse it.
       if input_fields.is_a?(Hash)
         return RESTFramework::Utils.parse_fields_hash(
           input_fields, self.get_model, exclude_associations: self.exclude_associations
         )
-      elsif !input_fields && fallback
-        # Otherwise, if fields is nil and fallback is true, then fallback to columns.
+      elsif !input_fields
+        # Otherwise, if fields is nil, then fallback to columns.
         model = self.get_model
         return model ? RESTFramework::Utils.fields_for(
           model, exclude_associations: self.exclude_associations
@@ -153,13 +152,15 @@ module RESTFramework::BaseModelControllerMixin
 
       # Get metadata sources.
       model = self.get_model
-      fields = self.get_fields(fallback: true).map(&:to_s)
+      fields = self.get_fields.map(&:to_s)
       columns = model.columns_hash
       column_defaults = model.column_defaults
       reflections = model.reflections
       attributes = model._default_attributes
       readonly_attributes = model.readonly_attributes
       exclude_body_fields = self.exclude_body_fields.map(&:to_s)
+      rich_text_association_names = model.rich_text_association_names
+      attachment_reflections = model.attachment_reflections
 
       return @_fields_metadata = fields.map { |f|
         # Initialize metadata to make the order consistent.
@@ -259,8 +260,16 @@ module RESTFramework::BaseModelControllerMixin
         end
 
         # Determine if this is an ActionText "rich text".
-        if !metadata[:kind] && reflections["rich_text_#{f}"]
+        if :"rich_text_#{f}".in?(rich_text_association_names)
           metadata[:kind] = "rich_text"
+        end
+
+        # Determine if this is an ActiveStorage attachment.
+        if ref = attachment_reflections[f]
+          metadata[:kind] = "attachment"
+          metadata[:attachment] = {
+            macro: ref.macro,
+          }
         end
 
         # Determine if this is just a method.
@@ -392,9 +401,9 @@ module RESTFramework::BaseModelControllerMixin
   end
 
   # Get a list of fields, taking into account the current action.
-  def get_fields(fallback: false)
+  def get_fields
     fields = self._get_specific_action_config(:action_fields, :fields)
-    return self.class.get_fields(input_fields: fields, fallback: fallback)
+    return self.class.get_fields(input_fields: fields)
   end
 
   # Pass fields to get dynamic metadata based on which fields are available.
@@ -402,14 +411,12 @@ module RESTFramework::BaseModelControllerMixin
     return self.class.get_options_metadata
   end
 
-  # Get a list of find_by fields for the current action. Do not fallback to columns in case the user
-  # wants to find by virtual columns.
+  # Get a list of find_by fields for the current action.
   def get_find_by_fields
-    return self.class.find_by_fields || self.get_fields
+    return self.class.find_by_fields
   end
 
-  # Get a list of parameters allowed for the current action. By default we do not fallback to
-  # columns so arbitrary fields can be submitted if no fields are defined.
+  # Get a list of parameters allowed for the current action.
   def get_allowed_parameters
     return @_get_allowed_parameters if defined?(@_get_allowed_parameters)
 
@@ -418,35 +425,54 @@ module RESTFramework::BaseModelControllerMixin
       :allowed_parameters,
     )
     return @_get_allowed_parameters if @_get_allowed_parameters
-    return @_get_allowed_parameters = nil unless fields = self.get_fields
 
     # For fields, automatically add `_id`/`_ids` and `_attributes` variations for associations.
-    id_variations = []
-    variations = {}
-    @_get_allowed_parameters = fields.map { |f|
+    variations = []
+    hash_variations = {}
+    reflections = self.class.get_model.reflections
+    @_get_allowed_parameters = self.get_fields.map { |f|
       f = f.to_s
-      next f unless ref = self.class.get_model.reflections[f]
+
+      # ActiveStorage Integration: `has_one_attached`.
+      if reflections.key?("#{f}_attachment")
+        next f
+      end
+
+      # ActiveStorage Integration: `has_many_attached`.
+      if reflections.key?("#{f}_attachments")
+        hash_variations[f] = []
+        next nil
+      end
+
+      # ActionText Integration.
+      if reflections.key?("rich_test_#{f}")
+        next f
+      end
+
+      # Return field if it's not an association.
+      next f unless ref = reflections[f]
 
       if self.class.permit_id_assignment
         if ref.collection?
-          variations["#{f.singularize}_ids"] = []
+          hash_variations["#{f.singularize}_ids"] = []
         elsif ref.belongs_to?
-          id_variations << "#{f}_id"
+          variations << "#{f}_id"
         end
       end
 
       if self.class.permit_nested_attributes_assignment
         if self.class.allow_all_nested_attributes
-          variations["#{f}_attributes"] = {}
+          hash_variations["#{f}_attributes"] = {}
         else
-          variations["#{f}_attributes"] = self.class.get_field_config(f)[:sub_fields]
+          hash_variations["#{f}_attributes"] = self.class.get_field_config(f)[:sub_fields]
         end
       end
 
-      next f
-    }.flatten
-    @_get_allowed_parameters += id_variations
-    @_get_allowed_parameters << variations
+      # Associations are not allowed to be submitted in their bare form.
+      next nil
+    }.compact
+    @_get_allowed_parameters += variations
+    @_get_allowed_parameters << hash_variations
     return @_get_allowed_parameters
   end
 
@@ -469,14 +495,8 @@ module RESTFramework::BaseModelControllerMixin
   def get_body_params(data: nil)
     data ||= request.request_parameters
 
-    # Filter the request body and map to strings. Return all params if we cannot resolve a list of
-    # allowed parameters or fields.
-    body_params = if allowed_parameters = self.get_allowed_parameters
-      data = ActionController::Parameters.new(data)
-      data.permit(*allowed_parameters)
-    else
-      data
-    end
+    # Filter the request body with strong params.
+    body_params = ActionController::Parameters.new(data).permit(*self.get_allowed_parameters)
 
     # Filter primary key if configured.
     if self.class.filter_pk_from_request_body
@@ -485,6 +505,18 @@ module RESTFramework::BaseModelControllerMixin
 
     # Filter fields in `exclude_body_fields`.
     (self.class.exclude_body_fields || []).each { |f| body_params.delete(f) }
+
+    # Translate base64 encoded attachments to real uploads for custom ActiveStorage integration.
+    self.class.get_model.attachment_reflections.each do |name, _reflection|
+      next unless body_params[name].is_a?(String) && body_params[name].match?(BASE64_REGEX)
+
+      _, content_type, payload = data[name].match(BASE64_REGEX).to_a
+      body_params[name] = {
+        io: StringIO.new(Base64.decode64(payload)),
+        content_type: content_type,
+        filename: "image_#{name}#{Rack::Mime::MIME_TYPES.invert[content_type]}",
+      }
+    end
 
     return body_params
   end
@@ -507,12 +539,16 @@ module RESTFramework::BaseModelControllerMixin
 
   # Get the recordset but with any associations included to avoid N+1 queries.
   def get_recordset_with_includes
-    reflections = self.class.get_model.reflections.keys
-    associations = self.get_fields(fallback: true).map { |f|
-      if f.in?(reflections)
+    reflections = self.class.get_model.reflections
+    associations = self.get_fields.map { |f|
+      if reflections.key?(f)
         f.to_sym
-      elsif "rich_text_#{f}".in?(reflections)
+      elsif reflections.key?("rich_text_#{f}")
         :"rich_text_#{f}"
+      elsif reflections.key?("#{f}_attachment")
+        :"#{f}_attachment"
+      elsif reflections.key?("#{f}_attachments")
+        :"#{f}_attachments"
       end
     }.compact
 

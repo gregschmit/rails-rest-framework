@@ -11,11 +11,10 @@ end
 # A simple filtering backend that supports filtering a recordset based on fields defined on the
 # controller class.
 class RESTFramework::ModelFilter < RESTFramework::BaseFilter
-  # Get a list of filterset fields for the current action. Fallback to columns because we don't want
-  # to try filtering by any query parameter because that could clash with other query parameters.
+  # Get a list of filterset fields for the current action.
   def _get_fields
     # Always return a list of strings; `@controller.get_fields` already does this.
-    return @controller.class.filterset_fields&.map(&:to_s) || @controller.get_fields(fallback: true)
+    return @controller.class.filterset_fields&.map(&:to_s) || @controller.get_fields
   end
 
   # Filter params for keys allowed by the current action's filterset_fields/fields config.
@@ -64,8 +63,7 @@ end
 
 # A filter backend which handles ordering of the recordset.
 class RESTFramework::ModelOrderingFilter < RESTFramework::BaseFilter
-  # Get a list of ordering fields for the current action. Do not fallback to columns in case the
-  # user wants to order by a virtual column.
+  # Get a list of ordering fields for the current action.
   def _get_fields
     return @controller.class.ordering_fields&.map(&:to_s) || @controller.get_fields
   end
@@ -113,15 +111,14 @@ end
 
 # Multi-field text searching on models.
 class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
-  # Get a list of search fields for the current action. Fallback to columns but only grab a few
-  # common string-like columns by default.
+  # Get a list of search fields for the current action.
   def _get_fields
     if search_fields = @controller.class.search_fields
       return search_fields&.map(&:to_s)
     end
 
     columns = @controller.class.get_model.column_names
-    return @controller.get_fields(fallback: true).select { |f|
+    return @controller.get_fields.select { |f|
       f.in?(RESTFramework.config.search_columns) && f.in?(columns)
     }
   end

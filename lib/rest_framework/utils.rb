@@ -180,12 +180,12 @@ module RESTFramework::Utils
     return model.column_names.reject { |c|
       c.in?(foreign_keys)
     } + model.reflections.map { |association, ref|
-      # Ignore ActionText associations because we have a custom integration.
-      if ref.class_name == "ActionText::RichText"
-        next association.delete_prefix("rich_text_")
+      # Ignore associations for which we have custom integrations.
+      if ref.class_name.in?(%w(ActiveStorage::Attachment ActiveStorage::Blob ActionText::RichText))
+        next nil
       end
 
-      # Exclude certain associations (by default, active storage and action text associations).
+      # Exclude user-specified associations.
       if ref.class_name.in?(RESTFramework.config.exclude_association_classes)
         next nil
       end
@@ -197,7 +197,9 @@ module RESTFramework::Utils
       end
 
       next association
-    }.compact
+    }.compact + model.rich_text_association_names.map { |n|
+      n.to_s.delete_prefix("rich_text_")
+    } + model.attachment_reflections.keys
   end
 
   # Get the sub-fields that may be serialized and filtered/ordered for a reflection.

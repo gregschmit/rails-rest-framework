@@ -18,6 +18,10 @@ end
 # Require the gems listed in Gemfile.
 Bundler.require(*Rails.groups)
 
+URL_OPTIONS = Rails.env.production? ? {
+  host: "https://demo.rails-rest-framework.com",
+} : {host: "http://localhost:3000"}
+
 class Application < Rails::Application
   config.hosts = nil
 
@@ -33,7 +37,9 @@ class Application < Rails::Application
 
   config.active_storage.service = :local
 
-  config.action_controller.action_on_unpermitted_parameters = :raise
+  config.default_url_options = URL_OPTIONS
+  config.action_controller.default_url_options = URL_OPTIONS
+  Rails.application.routes.default_url_options = URL_OPTIONS
 
   RESTFramework.config.freeze_config = true
 

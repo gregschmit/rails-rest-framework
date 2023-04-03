@@ -95,7 +95,7 @@ trix-toolbar .trix-button-group {
 // What to do when document loads.
 document.addEventListener("DOMContentLoaded", (event) => {
   // Pretty-print JSON.
-  [...document.getElementsByClassName("language-json")].forEach((el, index) => {
+  document.querySelectorAll(".language-json").forEach((el, index) => {
     el.innerHTML = neatJSON(JSON.parse(el.innerText), {
       wrap: 80,
       afterComma: 1,
@@ -112,12 +112,12 @@ document.addEventListener("DOMContentLoaded", (event) => {
   hljs.highlightAll()
 
   // Replace text node links with anchor tag links.
-  ;[...document.querySelectorAll(".rrf-copy code")].forEach((el, index) => {
+  document.querySelectorAll(".rrf-copy code").forEach((el, index) => {
     el.innerHTML = rrfLinkify(el.innerHTML)
   })
 
   // Insert copy link and callback to copy contents of `<code>` element.
-  ;[...document.querySelectorAll("rrf-copy")].forEach((el, index) => {
+  document.querySelectorAll("rrf-copy").forEach((el, index) => {
     el.insertAdjacentHTML(
       "afterbegin",
       "<a class=\"rrf-copy-link\" onclick=\"return rrfCopyToClipboard(this)\" href=\"#\">Copy to Clipboard</a>",
@@ -185,11 +185,41 @@ function rrfSubmitRawForm(button) {
 
   // Grab the selected route/method, media type, and the body.
   const [method, path] = document.getElementById("rawFormRoute").value.split(":")
-  const media_type = document.getElementById("rawFormMediaType").value
-  const body = document.getElementById("rawFormContent").value
+  const mediaType = document.getElementById("rawFormMediaType").value
+  let body = document.getElementById("rawFormContent").value
+
+  // If the media type is `multipart/form-data`, then we need to build a FormData object.
+  if (mediaType == "multipart/form-data") {
+    let formData = new FormData()
+
+    // Add body to `formData`.
+    const bodySearchParams = new URLSearchParams(body)
+    bodySearchParams.forEach((value, key) => {
+      formData.append(key, value)
+    })
+
+    // Add file(s) to `formData`.
+    const rawFilesForm = document.getElementById("rawFilesForm")
+    if (rawFilesForm) {
+      rawFilesForm.querySelectorAll("input[type=file]").forEach((el, index) => {
+        const files = el.files
+        for (let i = 0; i < files.length; i++) {
+          formData.append(el.name, files[i])
+        }
+      })
+    }
+
+    // Set body to be the form data.
+    body = formData
+  }
 
   // Perform the API call.
-  rrfAPICall(path, method, {body, headers: {"Content-Type": media_type}})
+  rrfAPICall(path, method, {
+    body,
+    // If the media type is `multipart/form-data`, then we don't want to set the content type
+    // because it must be set by `fetch` to include boundary.
+    headers: mediaType == "multipart/form-data" ? {} : {"Content-Type": mediaType},
+  })
 }
 
 // Make an HTML API call and replace the document with the response.
@@ -200,5 +230,18 @@ function rrfAPICall(path, method, kwargs={}) {
   fetch(path, {method, headers: {"Accept": "text/html", ...headers}, ...kwargs})
     .then((response) => response.text())
     .then((body) => { rrfReplaceDocument(body) })
+}
+
+// Check if `rawFilesFormWrapper` should be displayed when media type is changed.
+function rrfCheckRawFilesFormDisplay(el) {
+  const rawFilesFormWrapper = document.getElementById("rawFilesFormWrapper")
+
+  if (rawFilesFormWrapper) {
+    if (el.value === "multipart/form-data") {
+      rawFilesFormWrapper.style.display = "block"
+    } else {
+      rawFilesFormWrapper.style.display = "none"
+    }
+  }
 }
 </script>

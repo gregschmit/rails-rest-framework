@@ -21,10 +21,7 @@ module RESTFramework
   # Global configuration should be kept minimal, as controller-level configurations allows multiple
   # APIs to be defined to behave differently.
   class Config
-    DEFAULT_EXCLUDE_ASSOCIATION_CLASSES = %w(
-      ActiveStorage::Attachment
-      ActiveStorage::Blob
-    ).freeze
+    DEFAULT_EXCLUDE_ASSOCIATION_CLASSES = [].freeze
     DEFAULT_LABEL_FIELDS = %w(name label login title email username url).freeze
     DEFAULT_SEARCH_COLUMNS = DEFAULT_LABEL_FIELDS + %w(description note).freeze
 

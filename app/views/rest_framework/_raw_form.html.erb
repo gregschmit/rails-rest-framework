@@ -12,7 +12,7 @@
 
   <div class="mb-2">
     <label class="form-label w-100">Media Type
-      <select class="form-control form-control-sm" id="rawFormMediaType">
+      <select class="form-control form-control-sm" id="rawFormMediaType" onchange="rrfCheckRawFilesFormDisplay(this)">
         <% ["application/json", "application/x-www-form-urlencoded", "multipart/form-data"].each do |t| %>
           <option value="<%= t %>"><%= t %></option>
         <% end %>
@@ -25,6 +25,25 @@
       <textarea class="form-control form-control-sm" style="font-family: monospace" id="rawFormContent" rows="8" cols="60"></textarea>
     </label>
   </div>
+
+  <% if @is_model_controller && model = controller.class.get_model %>
+    <% if attachment_reflections = model.attachment_reflections.presence %>
+      <div class="mb-2" style="display: none" id="rawFilesFormWrapper">
+        <%= form_with(
+          model: @record,
+          url: "",
+          id: "rawFilesForm",
+          scope: "",
+        ) do |form| %>
+          <% attachment_reflections.each do |field, ref| %>
+            <label class="form-label w-100"><%= controller.class.get_label(field) %>
+              <%= form.file_field field, multiple: ref.macro == :has_many_attached %>
+            </label>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
 
   <button type="button" class="btn btn-primary" style="float: right" onclick="rrfSubmitRawForm(this)">Submit</button>
 </div>

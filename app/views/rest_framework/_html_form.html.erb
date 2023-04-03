@@ -17,7 +17,7 @@
     id: "htmlForm",
     scope: "",
   ) do |form| %>
-    <% controller.get_fields(fallback: true).map(&:to_s).each do |f| %>
+    <% controller.get_fields.map(&:to_s).each do |f| %>
       <%
         # Don't provide form fields for associations or primary keys.
         metadata = controller.class.fields_metadata[f]
@@ -27,6 +27,10 @@
         <% if metadata[:kind] == "rich_text" %>
           <label class="form-label w-100"><%= controller.class.get_label(f) %></label>
           <%= form.rich_text_area f %>
+        <% elsif metadata[:kind] == "attachment" %>
+          <label class="form-label w-100"><%= controller.class.get_label(f) %>
+            <%= form.file_field f, multiple: metadata.dig(:attachment, :macro) == :has_many_attached %>
+          </label>
         <% else %>
           <label class="form-label w-100"><%= controller.class.get_label(f) %>
             <%= form.text_field f, class: "form-control form-control-sm" %>

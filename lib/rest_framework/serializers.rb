@@ -222,6 +222,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
     column_names = @model.column_names
     reflections = @model.reflections
+    attachment_reflections = @model.attachment_reflections
 
     fields.each do |f|
       field_config = @controller.class.get_field_config(f)
@@ -266,10 +267,22 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
           includes[f] = sub_config
         end
       elsif ref = reflections["rich_text_#{f}"]
-        # Define a rich text serializer method.
+        # ActionText Integration: Define rich text serializer method.
         serializer_methods[f] = f
         self.define_singleton_method(f) do |record|
           next record.send(f).to_s
+        end
+      elsif ref = attachment_reflections[f]
+        # ActiveStorage Integration: Define attachment serializer method.
+        serializer_methods[f] = f
+        if ref.macro == :has_one_attached
+          self.define_singleton_method(f) do |record|
+            next record.send(f).url
+          end
+        else
+          self.define_singleton_method(f) do |record|
+            next record.send(f).map(&:url)
+          end
         end
       elsif @model.method_defined?(f)
         methods << f
@@ -281,9 +294,10 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     }
   end
 
-  # Get the raw serializer config. Use `deep_dup` on any class mutables (array, hash, etc) to avoid
-  # mutating class state.
-  def _get_raw_serializer_config
+  # Get the raw serializer config, prior to any adjustments from the request.
+  #
+  # Use `deep_dup` on any class mutables (array, hash, etc) to avoid mutating class state.
+  def get_raw_serializer_config
     # Return a locally defined serializer config if one is defined.
     if local_config = self.get_local_native_serializer_config
       return local_config.deep_dup
@@ -295,7 +309,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     end
 
     # If the config wasn't determined, build a serializer config from controller fields.
-    if @model && fields = @controller&.get_fields(fallback: true)
+    if @model && fields = @controller&.get_fields
       return self._get_controller_serializer_config(fields.deep_dup)
     end
 
@@ -305,7 +319,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
   # Get a configuration passable to `serializable_hash` for the object, filtered if required.
   def get_serializer_config
-    return filter_from_request(self._get_raw_serializer_config)
+    return filter_from_request(self.get_raw_serializer_config)
   end
 
   # Serialize a single record and merge results of `serializer_methods`.

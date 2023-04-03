@@ -122,7 +122,7 @@
         <% end %>
         <% if @route_groups.present? %>
           <%
-            show_html_form = controller.class.included_modules.include?(RESTFramework::ModelControllerMixin)
+            @is_model_controller = controller.class.included_modules.include?(RESTFramework::ModelControllerMixin)
           %>
           <div class="row">
             <div>
@@ -141,7 +141,7 @@
                       Raw Form
                     </a>
                   </li>
-                  <% if show_html_form %>
+                  <% if @is_model_controller %>
                     <li class="nav-item">
                       <a class="nav-link" href="#tab-html-form" data-bs-toggle="tab" role="tab">
                         HTML Form
@@ -159,7 +159,7 @@
                 <div class="tab-pane fade" id="tab-raw-form" role="tabpanel">
                   <%= render partial: 'rest_framework/raw_form' %>
                 </div>
-                <% if show_html_form %>
+                <% if @is_model_controller %>
                   <div class="tab-pane fade" id="tab-html-form" role="tabpanel">
                     <%= render partial: 'rest_framework/html_form' %>
                   </div>
