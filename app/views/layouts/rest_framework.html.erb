@@ -1,5 +1,5 @@
 <!doctype html>
-<html data-bs-theme="dark">
+<html>
   <head>
     <title><%= @title %></title>
     <%= render partial: 'rest_framework/head' %>
@@ -8,13 +8,34 @@
   <body>
     <div>
       <div class="w-100 m-0 p-0" style="height: .3em; background-color: #900;"></div>
-      <nav class="navbar navbar-dark" style="background-color: #111">
+      <nav class="navbar" data-bs-theme="dark" style="background-color: #111">
         <div class="container">
           <span class="navbar-brand p-0">
             <h1 title="RRF v<%= RESTFramework::VERSION %>" class="text-light font-weight-light m-0 p-0" style="font-size: 1em">
               <%= @template_logo_text || 'Rails REST Framework' %>
             </h1>
           </span>
+
+          <div class="dropdown" id="rrfModeComponent">
+            <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"></button>
+            <ul class="dropdown-menu" style="font-size: .8em">
+              <li>
+                <button class="dropdown-item" data-mode-value="system">
+                  <i class="bi bi-circle-half me-2"></i>System
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item" data-mode-value="light">
+                  <i class="bi bi-sun-fill me-2"></i>Light
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item" data-mode-value="dark">
+                  <i class="bi bi-moon-stars-fill me-2"></i>Dark
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
       </nav>
     </div>
@@ -69,7 +90,12 @@
           <div>
             <pre style="white-space: normal">
               <code>
-                <strong><%= request.method %></strong> <%= request.path %><br>
+                <strong>
+                  <%= request.request_method %>
+                  <% if request.method != request.request_method %>
+                    (via <%= request.method %>)
+                  <% end %>
+                </strong> <%= request.path %><br>
               </code>
             </pre>
             <pre style="white-space: normal">

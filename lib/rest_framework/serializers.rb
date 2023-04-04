@@ -281,7 +281,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
           end
         else
           self.define_singleton_method(f) do |record|
-            next record.send(f).map { |x| x.attachment&.url }
+            next record.send(f).map(&:url)
           end
         end
       elsif @model.method_defined?(f)

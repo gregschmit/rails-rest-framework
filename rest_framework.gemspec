@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
     "VERSION",
     *Dir["lib/**/*.rb"],
     *Dir["app/**/*"],
+    *Dir["docs/**/*"],
   ]
   spec.require_paths = ["lib", "app"]
 end
