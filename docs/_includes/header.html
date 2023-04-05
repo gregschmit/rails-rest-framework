@@ -9,7 +9,7 @@
         </a>
       </span>
 
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
         <span class="navbar-toggler-icon"></span>
       </button>
 
@@ -30,25 +30,24 @@
             </div>
           </li>
 
-          <li class="nav-item">
-            <span style="display: block; padding-left: .8em; padding-top: .6em; width: 6em;">
+          <li class="nav-item ps-2" id="rrfGithubAndModeWrapper">
+            <span id="rrfGithubComponent">
               <script async defer src="https://buttons.github.io/buttons.js"></script>
               <a class="github-button" href="https://github.com/gregschmit/rails-rest-framework" data-show-count="true" aria-label="Star gregschmit/rails-rest-framework on GitHub">Star</a>
             </span>
-          </li>
-
-          <li class="nav-item dropdown" id="rrfModeComponent">
-            <button class="btn btn-dark dropdown-toggle rounded-0 bg-black" style="border-color: black" data-bs-toggle="dropdown"></button>
-            <div class="rrf-mode dropdown-menu dropdown-menu-end py-0 rounded-0" style="font-size: .8em; min-width: 0">
-              <button class="dropdown-item text-end" data-rrf-mode-value="system">
-                System<i class="bi bi-circle-half ms-2"></i>
-              </button>
-              <button class="dropdown-item text-end" data-rrf-mode-value="light">
-                Light<i class="bi bi-sun-fill ms-2"></i>
-              </button>
-              <button class="dropdown-item text-end" data-rrf-mode-value="dark">
-                Dark<i class="bi bi-moon-stars-fill ms-2"></i>
-              </button>
+            <div class="dropdown ms-auto float-end" id="rrfModeComponent">
+              <button class="btn btn-dark dropdown-toggle rounded-0 bg-black" style="border-color: black" data-bs-toggle="dropdown"></button>
+              <div class="rrf-mode dropdown-menu dropdown-menu-end py-0 rounded-0" style="font-size: .8em; min-width: 0">
+                <button class="dropdown-item text-end" data-rrf-mode-value="system">
+                  System<i class="bi bi-circle-half ms-2"></i>
+                </button>
+                <button class="dropdown-item text-end" data-rrf-mode-value="light">
+                  Light<i class="bi bi-sun-fill ms-2"></i>
+                </button>
+                <button class="dropdown-item text-end" data-rrf-mode-value="dark">
+                  Dark<i class="bi bi-moon-stars-fill ms-2"></i>
+                </button>
+              </div>
             </div>
           </li>
         </ul>

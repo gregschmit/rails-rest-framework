@@ -105,7 +105,7 @@ h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover, h6 a:hover {
   width: 1.1em;
 }
 .navbar .navbar-nav .nav-item .nav-link {
-  padding: .5em .6em;
+  padding: .45em .6em;
 }
 .navbar .navbar-nav .nav-item .nav-link:hover {
   background-color: #262a2f;
@@ -137,4 +137,23 @@ html[data-bs-theme="dark"] .headers-table {
 .headers-table ul ul { padding-left: .8em; padding-right: 0; }
 .headers-table > ul > li {
   font-weight: bold;
+}
+
+/* Style the github and mode component. */
+#rrfGithubAndModeWrapper {
+  height: 2.4em;
+}
+#rrfGithubComponent {
+  display: inline-block;
+  position: relative;
+  top: .6em;
+}
+#rrfModeComponent .dropdown-toggle {
+  float: right;
+}
+#rrfModeComponent .dropdown-menu {
+  position: absolute;
+  right: 0;
+  left: auto;
+  top: 100%;
 }
