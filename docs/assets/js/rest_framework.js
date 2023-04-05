@@ -98,6 +98,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize `Highlight.js`.
+  hljs.configure({ ignoreUnescapedHTML: true })
   hljs.highlightAll()
 
   // Setup the floating table of contents.
