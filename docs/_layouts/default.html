@@ -1,13 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html class="rrf-mode">
   {% include head.html %}
   <body>
     {% include header.html %}
-    <div class="container px-3 pb-3">
-      <div class="container">
-        <div id="headersTable" class="headers-table float-md-right m-2"></div>
-        {% include anchor_headings.html html=content anchorBody="#" %}
-      </div>
+    <div class="container pb-3">
+      <div id="headersTable" class="headers-table float-md-end m-2"></div>
+      {% include anchor_headings.html html=content anchorBody="#" %}
     </div>
   </body>
 </html>

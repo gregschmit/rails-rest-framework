@@ -1,10 +1,11 @@
-<header style="background-color: #111">
+<header>
   <div class="w-100 m-0 p-0" id="rrfAccentBar"></div>
-  <div class="container">
-    <nav class="navbar py-0 navbar-expand-md navbar-dark" style="background-color: #111">
+  <nav class="navbar py-0 navbar-expand-md" data-bs-theme="dark">
+    <div class="container">
+
       <span class="navbar-brand p-0">
         <a href="/">
-          <h1 class="text-light font-weight-light m-0 p-0" style="font-size: 1em">{{ site.title }}</h1>
+          <h1 class="text-light font-weight-light m-0 p-0" style="font-size: 1em; ">{{ site.title }}</h1>
         </a>
       </span>
 
@@ -13,28 +14,46 @@
       </button>
 
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav ml-auto">
+        <ul class="navbar-nav ms-auto">
           <li class="nav-item">
             <a class="nav-link{% if page.url == '/' %} active{% endif %}" href="/">Home</a>
           </li>
+
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {% if page.url contains 'guide' %} active{% endif %}" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <a class="nav-link dropdown-toggle {% if page.url contains 'guide' %} active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
               Guide
             </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <div class="rrf-mode dropdown-menu">
               {% for section in site.guide %}
                 <a class="dropdown-item" href="{{ section.url }}">{{ section.title }}</a>
               {% endfor %}
             </div>
           </li>
+
           <li class="nav-item">
             <span style="display: block; padding-left: .8em; padding-top: .6em; width: 6em;">
               <script async defer src="https://buttons.github.io/buttons.js"></script>
               <a class="github-button" href="https://github.com/gregschmit/rails-rest-framework" data-show-count="true" aria-label="Star gregschmit/rails-rest-framework on GitHub">Star</a>
             </span>
           </li>
+
+          <li class="nav-item dropdown" id="rrfModeComponent">
+            <button class="btn btn-dark dropdown-toggle rounded-0 bg-black" style="border-color: black" data-bs-toggle="dropdown"></button>
+            <div class="rrf-mode dropdown-menu dropdown-menu-end py-0 rounded-0" style="font-size: .8em; min-width: 0">
+              <button class="dropdown-item text-end" data-rrf-mode-value="system">
+                System<i class="bi bi-circle-half ms-2"></i>
+              </button>
+              <button class="dropdown-item text-end" data-rrf-mode-value="light">
+                Light<i class="bi bi-sun-fill ms-2"></i>
+              </button>
+              <button class="dropdown-item text-end" data-rrf-mode-value="dark">
+                Dark<i class="bi bi-moon-stars-fill ms-2"></i>
+              </button>
+            </div>
+          </li>
         </ul>
       </div>
-    </nav>
-  </div>
+
+    </div>
+  </nav>
 </header>

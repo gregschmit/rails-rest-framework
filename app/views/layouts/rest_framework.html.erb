@@ -1,200 +1,191 @@
 <!doctype html>
-<html>
+<html class="rrf-mode">
   <head>
     <title><%= @title %></title>
-    <%= render partial: 'rest_framework/head' %>
+    <%= render partial: "rest_framework/head" %>
   </head>
 
   <body>
-    <div>
-      <div class="w-100 m-0 p-0" style="height: .3em; background-color: #900;"></div>
-      <nav class="navbar" data-bs-theme="dark" style="background-color: #111">
+    <header>
+      <div class="w-100 m-0 p-0" id="rrfAccentBar"></div>
+      <nav class="navbar py-0" data-bs-theme="dark">
         <div class="container">
           <span class="navbar-brand p-0">
             <h1 title="RRF v<%= RESTFramework::VERSION %>" class="text-light font-weight-light m-0 p-0" style="font-size: 1em">
-              <%= @template_logo_text || 'Rails REST Framework' %>
+              <%= @template_logo_text || "Rails REST Framework" %>
             </h1>
           </span>
-
-          <div class="dropdown" id="rrfModeComponent">
-            <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"></button>
-            <ul class="dropdown-menu" style="font-size: .8em">
-              <li>
-                <button class="dropdown-item" data-mode-value="system">
-                  <i class="bi bi-circle-half me-2"></i>System
-                </button>
-              </li>
-              <li>
-                <button class="dropdown-item" data-mode-value="light">
-                  <i class="bi bi-sun-fill me-2"></i>Light
-                </button>
-              </li>
-              <li>
-                <button class="dropdown-item" data-mode-value="dark">
-                  <i class="bi bi-moon-stars-fill me-2"></i>Dark
-                </button>
-              </li>
-            </ul>
+          <div class="dropdown ms-auto" id="rrfModeComponent">
+            <button class="btn btn-dark dropdown-toggle rounded-0 bg-black" style="border-color: black" data-bs-toggle="dropdown"></button>
+            <div class="rrf-mode dropdown-menu dropdown-menu-end py-0 rounded-0" style="font-size: .8em; min-width: 0">
+              <button class="dropdown-item text-end" data-rrf-mode-value="system">
+                System<i class="bi bi-circle-half ms-2"></i>
+              </button>
+              <button class="dropdown-item text-end" data-rrf-mode-value="light">
+                Light<i class="bi bi-sun-fill ms-2"></i>
+              </button>
+              <button class="dropdown-item text-end" data-rrf-mode-value="dark">
+                Dark<i class="bi bi-moon-stars-fill ms-2"></i>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
-    </div>
+    </header>
     <div class="container py-3">
-      <div class="container">
-        <div class="row">
-          <nav>
-            <ol class="breadcrumb">
-              <%
-                breadcrumbs = request.path.split("/").inject([]) { |breadcrumbs, part|
-                  # Ignore blank parts of the path (leading slash or double-slashes).
-                  next breadcrumbs if part.blank?
+      <div class="row">
+        <nav>
+          <ol class="breadcrumb">
+            <%
+              breadcrumbs = request.path.split("/").inject([]) { |breadcrumbs, part|
+                # Ignore blank parts of the path (leading slash or double-slashes).
+                next breadcrumbs if part.blank?
 
-                  last_path = breadcrumbs.last&.first || "/"
-                  breadcrumbs << [
-                    [last_path, part].join(last_path[-1] == "/" ? "" : "/"),
-                    part,
-                  ]
+                last_path = breadcrumbs.last&.first || "/"
+                breadcrumbs << [
+                  [last_path, part].join(last_path[-1] == "/" ? "" : "/"),
+                  part,
+                ]
 
-                  next breadcrumbs
-                }
-              %>
-              <% breadcrumbs.each_with_index do |(path, label), i| %>
-                <% if i != breadcrumbs.size - 1 %>
-                  <li class="breadcrumb-item"><a href="<%= path %>"><%= label %></a></li>
-                <% else %>
-                  <li class="breadcrumb-item active"><%= label %></li>
-                <% end %>
+                next breadcrumbs
+              }
+            %>
+            <% breadcrumbs.each_with_index do |(path, label), i| %>
+              <% if i != breadcrumbs.size - 1 %>
+                <li class="breadcrumb-item"><a href="<%= path %>"><%= label %></a></li>
+              <% else %>
+                <li class="breadcrumb-item active"><%= label %></li>
               <% end %>
-            </ol>
-          </nav>
+            <% end %>
+          </ol>
+        </nav>
+      </div>
+      <div class="row">
+        <div>
+          <h1 class="m-0"><%= (@header_text if defined? @header_text) || @title %></h1>
+          <div style="float: right">
+            <% if @route_groups.values[0].any? { |r| r[:matches_path] && r[:verb] == "DELETE" } %>
+              <button type="button" class="btn btn-danger" onclick="rrfDelete(this)">DELETE</button>
+            <% end %>
+            <% if @route_groups.values[0].any? { |r| r[:matches_path] && r[:verb] == "OPTIONS" } %>
+              <button type="button" class="btn btn-primary" onclick="rrfOptions(this)">OPTIONS</button>
+            <% end %>
+            <button type="button" class="btn btn-primary" onclick="rrfGet(this)">GET</button>
+          </div>
+          <% if @description.present? %>
+            <br><br><p style="display: inline-block; margin-bottom: 0"><%= @description %></p>
+          <% end %>
         </div>
+      </div>
+      <hr/>
+      <div class="row">
+        <div>
+          <pre style="white-space: normal">
+            <code>
+              <strong>
+                <%= request.request_method %>
+                <% if request.method != request.request_method %>
+                  (via <%= request.method %>)
+                <% end %>
+              </strong> <%= request.path %><br>
+            </code>
+          </pre>
+          <pre style="white-space: normal">
+            <code>
+              <strong>HTTP <%= response.status %> <%= response.message %></strong><br>
+              <strong>Content-Type:</strong> <%= response.content_type %>
+            </code>
+          </pre>
+        </div>
+      </div>
+      <% if @json_payload.present? || @xml_payload.present? %>
         <div class="row">
           <div>
-            <h1><%= (@header_text if defined? @header_text) || @title %></h1>
-            <div style="float: right">
-              <% if @route_groups.values[0].any? { |r| r[:matches_path] && r[:verb] == "DELETE" } %>
-                <button type="button" class="btn btn-danger" onclick="rrfDelete(this)">DELETE</button>
+            <ul class="nav nav-tabs">
+              <% if @json_payload.present? %>
+                <li class="nav-item">
+                  <a class="nav-link active" href="#tab-json" data-bs-toggle="tab" role="tab">
+                    .json
+                  </a>
+                </li>
               <% end %>
-              <% if @route_groups.values[0].any? { |r| r[:matches_path] && r[:verb] == "OPTIONS" } %>
-                <button type="button" class="btn btn-primary" onclick="rrfOptions(this)">OPTIONS</button>
+              <% if @xml_payload.present? %>
+                <li class="nav-item">
+                  <a class="nav-link" href="#tab-xml" data-bs-toggle="tab" role="tab">
+                    .xml
+                  </a>
+                </li>
               <% end %>
-              <button type="button" class="btn btn-primary" onclick="rrfGet(this)">GET</button>
+            </ul>
+          </div>
+          <div class="tab-content pt-2">
+            <div class="tab-pane fade show active" id="tab-json" role="tabpanel">
+              <% if @json_payload.present? %>
+                <div><pre class="rrf-copy"><code class="auto-hljs language-json"><%=
+                  JSON.pretty_generate(
+                    JSON.parse(@json_payload)
+                  ) unless @json_payload == ''
+                %></code></pre></div>
+              <% end %>
             </div>
-            <% if @description.present? %>
-              <br><br><p style="display: inline-block; margin-bottom: 0"><%= @description %></p>
+            <div class="tab-pane fade" id="tab-xml" role="tabpanel">
+              <% if @xml_payload.present? %>
+                <div><pre class="rrf-copy"><code class="auto-hljs language-xml"><%=
+                  CGI.unescapeHTML(@xml_payload)
+                %></code></pre></div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+      <% if @route_groups.present? %>
+        <%
+          @is_model_controller = controller.class.included_modules.include?(RESTFramework::ModelControllerMixin)
+        %>
+        <div class="row">
+          <div>
+            <ul class="nav nav-tabs">
+              <li class="nav-item">
+                <a class="nav-link active" href="#tab-routes" data-bs-toggle="tab" role="tab">
+                  Routes
+                </a>
+              </li>
+              <% @_rrf_form_routes = @route_groups.values[0].select { |r|
+                r[:matches_params] && r[:verb].in?(["POST", "PUT", "PATCH"])
+              } %>
+              <% unless @_rrf_form_routes.empty? %>
+                <li class="nav-item">
+                  <a class="nav-link" href="#tab-raw-form" data-bs-toggle="tab" role="tab">
+                    Raw Form
+                  </a>
+                </li>
+                <% if @is_model_controller %>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#tab-html-form" data-bs-toggle="tab" role="tab">
+                      HTML Form
+                    </a>
+                  </li>
+                <% end %>
+              <% end %>
+            </ul>
+          </div>
+          <div class="tab-content pt-2">
+            <div class="tab-pane fade show active" id="tab-routes" role="tabpanel">
+              <%= render partial: "rest_framework/routes" %>
+            </div>
+            <% unless @_rrf_form_routes.empty? %>
+              <div class="tab-pane fade" id="tab-raw-form" role="tabpanel">
+                <%= render partial: "rest_framework/raw_form" %>
+              </div>
+              <% if @is_model_controller %>
+                <div class="tab-pane fade" id="tab-html-form" role="tabpanel">
+                  <%= render partial: "rest_framework/html_form" %>
+                </div>
+              <% end %>
             <% end %>
           </div>
         </div>
-        <hr/>
-        <div class="row">
-          <div>
-            <pre style="white-space: normal">
-              <code>
-                <strong>
-                  <%= request.request_method %>
-                  <% if request.method != request.request_method %>
-                    (via <%= request.method %>)
-                  <% end %>
-                </strong> <%= request.path %><br>
-              </code>
-            </pre>
-            <pre style="white-space: normal">
-              <code>
-                <strong>HTTP <%= response.status %> <%= response.message %></strong><br>
-                <strong>Content-Type:</strong> <%= response.content_type %>
-              </code>
-            </pre>
-          </div>
-        </div>
-        <% if @json_payload.present? || @xml_payload.present? %>
-          <div class="row">
-            <div>
-              <ul class="nav nav-tabs">
-                <% if @json_payload.present? %>
-                  <li class="nav-item">
-                    <a class="nav-link active" href="#tab-json" data-bs-toggle="tab" role="tab">
-                      .json
-                    </a>
-                  </li>
-                <% end %>
-                <% if @xml_payload.present? %>
-                  <li class="nav-item">
-                    <a class="nav-link" href="#tab-xml" data-bs-toggle="tab" role="tab">
-                      .xml
-                    </a>
-                  </li>
-                <% end %>
-              </ul>
-            </div>
-            <div class="tab-content pt-2">
-              <div class="tab-pane fade show active" id="tab-json" role="tabpanel">
-                <% if @json_payload.present? %>
-                  <div><pre class="rrf-copy"><code class="auto-hljs language-json"><%=
-                    JSON.pretty_generate(
-                      JSON.parse(@json_payload)
-                    ) unless @json_payload == ''
-                  %></code></pre></div>
-                <% end %>
-              </div>
-              <div class="tab-pane fade" id="tab-xml" role="tabpanel">
-                <% if @xml_payload.present? %>
-                  <div><pre class="rrf-copy"><code class="auto-hljs language-xml"><%=
-                    CGI.unescapeHTML(@xml_payload)
-                  %></code></pre></div>
-                <% end %>
-              </div>
-            </div>
-          </div>
-        <% end %>
-        <% if @route_groups.present? %>
-          <%
-            @is_model_controller = controller.class.included_modules.include?(RESTFramework::ModelControllerMixin)
-          %>
-          <div class="row">
-            <div>
-              <ul class="nav nav-tabs">
-                <li class="nav-item">
-                  <a class="nav-link active" href="#tab-routes" data-bs-toggle="tab" role="tab">
-                    Routes
-                  </a>
-                </li>
-                <% @_rrf_form_routes = @route_groups.values[0].select { |r|
-                  r[:matches_params] && r[:verb].in?(["POST", "PUT", "PATCH"])
-                } %>
-                <% unless @_rrf_form_routes.empty? %>
-                  <li class="nav-item">
-                    <a class="nav-link" href="#tab-raw-form" data-bs-toggle="tab" role="tab">
-                      Raw Form
-                    </a>
-                  </li>
-                  <% if @is_model_controller %>
-                    <li class="nav-item">
-                      <a class="nav-link" href="#tab-html-form" data-bs-toggle="tab" role="tab">
-                        HTML Form
-                      </a>
-                    </li>
-                  <% end %>
-                <% end %>
-              </ul>
-            </div>
-            <div class="tab-content pt-2">
-              <div class="tab-pane fade show active" id="tab-routes" role="tabpanel">
-                <%= render partial: 'rest_framework/routes' %>
-              </div>
-              <% unless @_rrf_form_routes.empty? %>
-                <div class="tab-pane fade" id="tab-raw-form" role="tabpanel">
-                  <%= render partial: 'rest_framework/raw_form' %>
-                </div>
-                <% if @is_model_controller %>
-                  <div class="tab-pane fade" id="tab-html-form" role="tabpanel">
-                    <%= render partial: 'rest_framework/html_form' %>
-                  </div>
-                <% end %>
-              <% end %>
-            </div>
-          </div>
-        <% end %>
-      </div>
+      <% end %>
     </div>
   </body>
 </html>
