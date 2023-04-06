@@ -135,11 +135,15 @@ html[data-bs-theme="dark"] .rrf-routes .rrf-route-group-header:hover {
 }
 .rrf-copy .rrf-copy-link {
   position: absolute;
-  top: .5em;
-  right: .5em;
+  top: .25em;
+  right: .4em;
   transition: 0.3s ease;
+  font-size: 1.5em;
 }
-.rrf-copy .rrf-copy-link.rrf-clicked{
+.rrf-copy .rrf-copy-link.rrf-clicked {
+  color: green;
+}
+.rrf-copy .rrf-copy-link.rrf-clicked:hover {
   color: green;
 }
 </style>
@@ -246,7 +250,7 @@ html[data-bs-theme="dark"] .rrf-routes .rrf-route-group-header:hover {
 
 document.addEventListener("DOMContentLoaded", (event) => {
   // Pretty-print JSON.
-  document.querySelectorAll(".language-json").forEach((el, index) => {
+  document.querySelectorAll(".language-json").forEach((el) => {
     el.innerHTML = neatJSON(JSON.parse(el.innerText), {
       wrap: 80,
       afterComma: 1,
@@ -263,16 +267,36 @@ document.addEventListener("DOMContentLoaded", (event) => {
   hljs.highlightAll()
 
   // Replace text node links with anchor tag links.
-  document.querySelectorAll(".rrf-copy code").forEach((el, index) => {
+  document.querySelectorAll(".rrf-copy code").forEach((el) => {
     el.innerHTML = rrfLinkify(el.innerHTML)
   })
 
-  // Insert copy link and callback to copy contents of `<code>` element.
-  document.querySelectorAll("rrf-copy").forEach((el, index) => {
+  // Insert copy links.
+  document.querySelectorAll(".rrf-copy").forEach((el) => {
     el.insertAdjacentHTML(
       "afterbegin",
-      "<a class=\"rrf-copy-link\" onclick=\"return rrfCopyToClipboard(this)\" href=\"#\">Copy to Clipboard</a>",
+      '<a class="rrf-copy-link" title="Copy to Clipboard" href="#"><i class="bi bi-clipboard-fill"></i></a>',
     )
+  })
+
+  // Copy link implementation.
+  document.querySelectorAll(".rrf-copy-link").forEach((el) => {
+    el.addEventListener("click", (event) => {
+      const range = document.createRange()
+      range.selectNode(el.nextSibling)
+      window.getSelection().removeAllRanges()
+      window.getSelection().addRange(range)
+      if (document.execCommand("copy")) {
+        // Trigger clicked animation.
+        el.classList.add("rrf-clicked")
+        el.innerHTML = '<i class="bi bi-clipboard-check-fill">'
+        setTimeout(() => {
+          el.classList.remove("rrf-clicked")
+          el.innerHTML = '<i class="bi bi-clipboard-fill">'
+        }, 1000)
+      }
+      event.preventDefault()
+    })
   })
 })
 
@@ -290,26 +314,6 @@ function rrfReplaceDocument(content) {
 
   // Trigger `DOMContentLoaded` manually so our custom JavaScript works.
   document.dispatchEvent(new Event("DOMContentLoaded", {bubbles: true, cancelable: true}))
-}
-
-// Copy the element's next `<code>` sibling's content to the clipboard.
-function rrfCopyToClipboard(element) {
-  let range = document.createRange()
-  range.selectNode(element.nextSibling)
-  window.getSelection().removeAllRanges()
-  window.getSelection().addRange(range)
-  if (document.execCommand("copy")) {
-    // Trigger clicked animation.
-    element.classList.add("rrf-clicked")
-    element.innerText = "Copied!"
-    setTimeout(() => {
-      element.classList.remove("rrf-clicked")
-      element.innerText = "Copy to Clipboard"
-    }, 700)
-  }
-
-  // Return false to prevent normal link behavior.
-  return false
 }
 
 // Refresh the window as a `GET` request.
@@ -352,7 +356,7 @@ function rrfSubmitRawForm(button) {
     // Add file(s) to `formData`.
     const rawFilesForm = document.getElementById("rawFilesForm")
     if (rawFilesForm) {
-      rawFilesForm.querySelectorAll("input[type=file]").forEach((el, index) => {
+      rawFilesForm.querySelectorAll("input[type=file]").forEach((el) => {
         const files = el.files
         for (let i = 0; i < files.length; i++) {
           formData.append(el.name, files[i])
