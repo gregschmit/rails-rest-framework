@@ -19,8 +19,6 @@
 
   // Set the mode, given a "selected" mode.
   const rrfSetSelectedMode = (selectedMode) => {
-    const modeComponent = document.getElementById("rrfModeComponent")
-
     // Anything except "light" or "dark" is casted to "system".
     if (selectedMode !== "light" && selectedMode !== "dark") {
       selectedMode = "system"
@@ -30,16 +28,19 @@
     localStorage.setItem("rrfMode", selectedMode)
 
     // Set the mode selector to the selected mode.
-    let labelHTML
-    modeComponent.querySelectorAll("button[data-rrf-mode-value]").forEach((el) => {
-      if (el.getAttribute("data-rrf-mode-value") === selectedMode) {
-        el.classList.add("active")
-        labelHTML = el.querySelector("i").outerHTML.replace("ms-2", "me-1")
-      } else {
-        el.classList.remove("active")
-      }
-    })
-    modeComponent.querySelector("button[data-bs-toggle]").innerHTML = labelHTML
+    const modeComponent = document.getElementById("rrfModeComponent")
+    if (modeComponent) {
+      let labelHTML
+      modeComponent.querySelectorAll("button[data-rrf-mode-value]").forEach((el) => {
+        if (el.getAttribute("data-rrf-mode-value") === selectedMode) {
+          el.classList.add("active")
+          labelHTML = el.querySelector("i").outerHTML.replace("ms-2", "me-1")
+        } else {
+          el.classList.remove("active")
+        }
+      })
+      modeComponent.querySelector("button[data-bs-toggle]").innerHTML = labelHTML
+    }
 
     // Get the real mode to use.
     realMode = rrfGetRealMode(selectedMode)
@@ -70,10 +71,14 @@
     }
   }
 
-  // Initialize dark/light mode.
+  // Initialize dark/light mode before page fully loads to prevent flash.
+  rrfSetSelectedMode(localStorage.getItem("rrfMode"))
+
+  // Initialize dark/light mode after page load (mostly so mode component is updated).
   document.addEventListener("DOMContentLoaded", (event) => {
-    const selectedMode = localStorage.getItem("rrfMode")
-    rrfSetSelectedMode(selectedMode)
+    rrfSetSelectedMode(localStorage.getItem("rrfMode"))
+
+    // Also set up mode selector.
     document.querySelectorAll("#rrfModeComponent button[data-rrf-mode-value]").forEach((el) => {
       el.addEventListener("click", (event) => {
         rrfSetSelectedMode(event.target.getAttribute("data-rrf-mode-value"))
