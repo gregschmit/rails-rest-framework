@@ -1,5 +1,5 @@
 class DemoApi::MarblesController < DemoApiController
-  include RESTFramework::ModelControllerMixin
+  include RESTFramework::BulkModelControllerMixin
 
   self.extra_member_actions = {adjust_price: :patch, toggle_is_discounted: :patch}
 

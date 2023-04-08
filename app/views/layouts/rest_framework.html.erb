@@ -64,7 +64,7 @@
         <div>
           <h1 class="m-0"><%= (@header_text if defined? @header_text) || @title %></h1>
           <div style="float: right">
-            <% if @route_groups.values[0].any? { |r| r[:matches_path] && r[:verb] == "DELETE" } %>
+            <% if @route_groups.values[0].any? { |r| r[:matches_path] && r[:verb] == "DELETE" && r[:action] == "destroy" } %>
               <button type="button" class="btn btn-danger" onclick="rrfDelete(this)">DELETE</button>
             <% end %>
             <% if @route_groups.values[0].any? { |r| r[:matches_path] && r[:verb] == "OPTIONS" } %>

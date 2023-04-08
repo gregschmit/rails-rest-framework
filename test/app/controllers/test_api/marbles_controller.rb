@@ -1,5 +1,5 @@
 class TestApi::MarblesController < TestApiController
-  include RESTFramework::ModelControllerMixin
+  include RESTFramework::BulkModelControllerMixin
 
   class MarblesSerializer < RESTFramework::NativeSerializer
     self.action_config = {list: {only: [:id, :name, :price]}}
@@ -26,6 +26,7 @@ class TestApi::MarblesController < TestApiController
   self.filter_backends = [
     RESTFramework::ModelFilter, RESTFramework::ModelOrderingFilter, RESTFramework::ModelSearchFilter
   ]
+  self.bulk_batch_mode = true
 
   def alternate_list
     return self.index

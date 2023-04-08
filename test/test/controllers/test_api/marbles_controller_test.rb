@@ -91,4 +91,27 @@ class TestApi::MarblesControllerTest < ActionController::TestCase
       assert_response(:success)
     end
   end
+
+  def test_bulk_create
+    post(
+      :create,
+      as: :json,
+      params: {_json: [{name: "test_bulk_marble_1"}, {name: "test_bulk_marble_2"}]},
+    )
+    assert_response(:success)
+    parsed_body = @response.parsed_body
+    assert(parsed_body.is_a?(Array))
+    assert(parsed_body.empty?)
+    assert(Marble.find_by(name: "test_bulk_marble_1"))
+    assert(Marble.find_by(name: "test_bulk_marble_2"))
+  end
+
+  def test_bulk_create_with_bad_insert
+    post(
+      :create,
+      as: :json,
+      params: {_json: [{name: "test_bulk_marble_1"}, {name: "test_bulk_marble_1"}]},
+    )
+    assert_response(:bad_request)
+  end
 end

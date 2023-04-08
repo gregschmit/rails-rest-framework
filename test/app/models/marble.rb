@@ -29,7 +29,7 @@ class Marble < ApplicationRecord
 
   accepts_nested_attributes_for :user, allow_destroy: true
 
-  validates_presence_of :name
+  validates :name, presence: true, uniqueness: true
   validates_numericality_of :price, greater_than: 0, allow_nil: true
 
   before_destroy :check_undestroyable
