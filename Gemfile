@@ -1,12 +1,5 @@
 source "https://rubygems.org"
 
-# Stamp version before packaging.
-# RESTFramework::Version.stamp_version
-begin
-  system("echo 'gns: testing git inside gemfile:'")
-  system("git status")
-end
-
 # We force the Gem version to "0.dev" so it doesn't keep changing inside the `Gemfile.lock`.
 ENV["RRF_OVERRIDE_VERSION"] = "0.dev"
 gemspec
