@@ -1,5 +1,5 @@
 class DemoApi::UsersController < DemoApiController
-  include RESTFramework::ModelControllerMixin
+  include RESTFramework::BulkModelControllerMixin
 
   self.field_config = {
     status: {options: User::STATUS_OPTS},
