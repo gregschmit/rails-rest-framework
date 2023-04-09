@@ -27,6 +27,7 @@ jobs:
             rails: 6.0.6
     env:
       RAILS_VERSION: ${{ matrix.rails }}
+      CUSTOM_RUBY_VERSION: ${{ matrix.ruby }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

@@ -4,6 +4,11 @@ source "https://rubygems.org"
 ENV["RRF_OVERRIDE_VERSION"] = "0.dev"
 gemspec
 
+# Support setting ruby version from env, and default to `.ruby-version` file.
+ruby ENV["CUSTOM_RUBY_VERSION"] || File.read(
+  File.expand_path(".ruby-version", __dir__),
+).strip.split("-")[1]
+
 # Support testing against multiple Rails versions.
 RAILS_VERSION = Gem::Version.new(
   ENV["RAILS_VERSION"] || File.read(File.expand_path(".rails-version", __dir__)).strip,
