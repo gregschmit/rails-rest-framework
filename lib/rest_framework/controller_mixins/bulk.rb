@@ -2,7 +2,6 @@ require_relative "models"
 
 # Mixin for creating records in bulk. This is unique compared to update/destroy because we overload
 # the existing `create` action to support bulk creation.
-# :nocov:
 module RESTFramework::BulkCreateModelMixin
   # While bulk update/destroy are obvious because they create new router endpoints, bulk create
   # overloads the existing collection `POST` endpoint, so we add a special key to the options
@@ -14,61 +13,73 @@ module RESTFramework::BulkCreateModelMixin
   def create
     if params[:_json].is_a?(Array)
       records = self.create_all!
-
-      # Serialize
-      # This is kinda slow, so perhaps we should eventually integrate `errors` serialization into
-      # the serializer directly. This would fail for active model serializers, but maybe we don't
-      # care?
-      serializer_class = self.get_serializer_class
-      records.map! do |record|
-        serializer_class.new(record, controller: self).serialize.merge!(
-          {errors: record.errors.presence}.compact,
-        )
-      end
-
-      return api_response(records)
+      serialized_records = self.bulk_serialize(records)
+      return api_response(serialized_records)
     end
 
     return super
   end
 
-  # Perform the `create` or `insert_all` call, and return the collection of records, which in the
-  # case of `insert_all` (batch mode) will be empty because the records are not instantiated.
+  # Perform the `create` call, and return the collection of (possibly) created records.
   def create_all!
-    if self.class.bulk_batch_mode
-      self.get_create_from.insert_all!(self.get_create_params(json_array: true)[:_json])
-      return []
-    end
+    create_data = self.get_create_params(bulk_mode: true)[:_json]
 
-    # Perform bulk creation in a transaction.
-    records = ActiveRecord::Base.transaction do
-      next self.get_create_from.create(self.get_create_params(json_array: true)[:_json])
+    # Perform bulk create in a transaction.
+    return ActiveRecord::Base.transaction do
+      next self.get_create_from.create(create_data)
     end
-    return records
   end
 end
 
 # Mixin for updating records in bulk.
 module RESTFramework::BulkUpdateModelMixin
   def update_all
-    raise NotImplementedError, "TODO"
+    records = self.update_all!
+    serialized_records = self.bulk_serialize(records)
+    return api_response(serialized_records)
   end
 
-  # Perform the `update!` call and return the updated record.
+  # Perform the `update` call and return the collection of (possibly) updated records.
   def update_all!
-    raise NotImplementedError, "TODO"
+    pk = self.class.get_model.primary_key
+    update_data = if params[:_json].is_a?(Array)
+      self.get_create_params(bulk_mode: :update)[:_json].index_by { |r| r[pk] }
+    else
+      create_params = self.get_create_params
+      {create_params[pk] => create_params}
+    end
+
+    # Perform bulk update in a transaction.
+    return ActiveRecord::Base.transaction do
+      next self.get_recordset.update(update_data.keys, update_data.values)
+    end
   end
 end
 
 # Mixin for destroying records in bulk.
 module RESTFramework::BulkDestroyModelMixin
   def destroy_all
-    raise NotImplementedError, "TODO"
+    if params[:_json].is_a?(Array)
+      records = self.destroy_all!
+      serialized_records = self.bulk_serialize(records)
+      return api_response(serialized_records)
+    end
+
+    return api_response(
+      {message: "Bulk destroy requires an array of primary keys as input."},
+      status: 400,
+    )
   end
 
   # Perform the `destroy!` call and return the destroyed (and frozen) record.
   def destroy_all!
-    raise NotImplementedError, "TODO"
+    pk = self.class.get_model.primary_key
+    destroy_data = self.request.request_parameters[:_json]
+
+    # Perform bulk destroy in a transaction.
+    return ActiveRecord::Base.transaction do
+      next self.get_recordset.where(pk => destroy_data).destroy_all
+    end
   end
 end
 
@@ -84,4 +95,3 @@ module RESTFramework::BulkModelControllerMixin
     RESTFramework::ModelControllerMixin.included(base)
   end
 end
-# :nocov:

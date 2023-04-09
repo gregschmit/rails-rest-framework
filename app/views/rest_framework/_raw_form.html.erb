@@ -2,9 +2,12 @@
   <div class="mb-2">
     <label class="form-label w-100">Route
       <select class="form-control form-control-sm" id="rawFormRoute">
-        <% @_rrf_form_routes.each do |route| %>
+        <% @_rrf_form_routes_raw.each do |route| %>
           <% path = @route_props[:with_path_args].call(route[:route]) %>
-          <option value="<%= route[:verb] %>:<%= path %>"><%= route[:verb] %> <%= route[:relative_path] %></option>
+          <option
+            value="<%= route[:verb] %>:<%= path %>"
+            data-supports-files="<%= !route[:action].in?(["update_all", "destroy", "destroy_all"]) ? "true" : "" %>"
+          ><%= route[:verb] %> <%= route[:relative_path] %></option>
         <% end %>
       </select>
     </label>
@@ -12,7 +15,7 @@
 
   <div class="mb-2">
     <label class="form-label w-100">Media Type
-      <select class="form-control form-control-sm" id="rawFormMediaType" onchange="rrfCheckRawFilesFormDisplay(this)">
+      <select class="form-control form-control-sm" id="rawFormMediaType">
         <% ["application/json", "application/x-www-form-urlencoded", "multipart/form-data"].each do |t| %>
           <option value="<%= t %>"><%= t %></option>
         <% end %>

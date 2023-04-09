@@ -303,6 +303,24 @@ document.addEventListener("DOMContentLoaded", (event) => {
       event.preventDefault()
     })
   })
+
+  // Check if `rawFilesFormWrapper` should be displayed when media type is changed.
+  const rawFormRouteSelect = document.getElementById("rawFormRoute")
+  const rawFormMediaTypeSelect = document.getElementById("rawFormMediaType")
+  const rawFilesFormWrapper = document.getElementById("rawFilesFormWrapper")
+  if (rawFilesFormWrapper) {
+    const rawFormFilesHandler = () => {
+      const selectedRouteOption = rawFormRouteSelect.options[rawFormRouteSelect.selectedIndex]
+      if (rawFormMediaTypeSelect.value === "multipart/form-data" && selectedRouteOption.dataset.supportsFiles) {
+        rawFilesFormWrapper.style.display = "block"
+      } else {
+        rawFilesFormWrapper.style.display = "none"
+      }
+    }
+
+    rawFormRouteSelect.addEventListener("change", rawFormFilesHandler)
+    rawFormMediaTypeSelect.addEventListener("change", rawFormFilesHandler)
+  }
 })
 
 // Convert plain-text links to anchor tag links.
@@ -390,18 +408,5 @@ function rrfAPICall(path, method, kwargs={}) {
   fetch(path, {method, headers: {"Accept": "text/html", ...headers}, ...kwargs})
     .then((response) => response.text())
     .then((body) => { rrfReplaceDocument(body) })
-}
-
-// Check if `rawFilesFormWrapper` should be displayed when media type is changed.
-function rrfCheckRawFilesFormDisplay(el) {
-  const rawFilesFormWrapper = document.getElementById("rawFilesFormWrapper")
-
-  if (rawFilesFormWrapper) {
-    if (el.value === "multipart/form-data") {
-      rawFilesFormWrapper.style.display = "block"
-    } else {
-      rawFilesFormWrapper.style.display = "none"
-    }
-  }
 }
 </script>

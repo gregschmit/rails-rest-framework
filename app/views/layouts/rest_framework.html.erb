@@ -150,22 +150,28 @@
                   Routes
                 </a>
               </li>
-              <% @_rrf_form_routes = @route_groups.values[0].select { |r|
+              <% @_rrf_form_routes_raw = @route_groups.values[0].select { |r|
+                r[:matches_params] && (
+                  r[:verb].in?(["POST", "PUT", "PATCH"]) ||
+                  (r[:verb] == "DELETE" && r[:action] == "destroy_all")
+                )
+              } %>
+              <% @_rrf_form_routes_html = @route_groups.values[0].select { |r|
                 r[:matches_params] && r[:verb].in?(["POST", "PUT", "PATCH"])
               } %>
-              <% unless @_rrf_form_routes.empty? %>
+              <% if @_rrf_form_routes_raw.present? %>
                 <li class="nav-item">
-                  <a class="nav-link" href="#tab-raw-form" data-bs-toggle="tab" role="tab">
+                  <a class="nav-link" href="#tabRawForm" data-bs-toggle="tab" role="tab">
                     Raw Form
                   </a>
                 </li>
-                <% if @is_model_controller %>
-                  <li class="nav-item">
-                    <a class="nav-link" href="#tab-html-form" data-bs-toggle="tab" role="tab">
-                      HTML Form
-                    </a>
-                  </li>
-                <% end %>
+              <% end %>
+              <% if @_rrf_form_routes_html.present? && @is_model_controller %>
+                <li class="nav-item">
+                  <a class="nav-link" href="#tabHtmlForm" data-bs-toggle="tab" role="tab">
+                    HTML Form
+                  </a>
+                </li>
               <% end %>
             </ul>
           </div>
@@ -173,15 +179,15 @@
             <div class="tab-pane fade show active" id="tab-routes" role="tabpanel">
               <%= render partial: "rest_framework/routes" %>
             </div>
-            <% unless @_rrf_form_routes.empty? %>
-              <div class="tab-pane fade" id="tab-raw-form" role="tabpanel">
+            <% if @_rrf_form_routes_raw.present? %>
+              <div class="tab-pane fade" id="tabRawForm" role="tabpanel">
                 <%= render partial: "rest_framework/raw_form" %>
               </div>
-              <% if @is_model_controller %>
-                <div class="tab-pane fade" id="tab-html-form" role="tabpanel">
-                  <%= render partial: "rest_framework/html_form" %>
-                </div>
-              <% end %>
+            <% end %>
+            <% if @_rrf_form_routes_html.present? && @is_model_controller %>
+              <div class="tab-pane fade" id="tabHtmlForm" role="tabpanel">
+                <%= render partial: "rest_framework/html_form" %>
+              </div>
             <% end %>
           </div>
         </div>

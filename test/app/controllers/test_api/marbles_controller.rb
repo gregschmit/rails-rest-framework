@@ -26,7 +26,6 @@ class TestApi::MarblesController < TestApiController
   self.filter_backends = [
     RESTFramework::ModelFilter, RESTFramework::ModelOrderingFilter, RESTFramework::ModelSearchFilter
   ]
-  self.bulk_batch_mode = true
 
   def alternate_list
     return self.index

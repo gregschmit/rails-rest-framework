@@ -66,10 +66,6 @@ module RESTFramework::BaseModelControllerMixin
 
     # Control if filtering is done before find.
     filter_recordset_before_find: true,
-
-    # Control if bulk operations should be done in "batch" mode, using efficient queries, but also
-    # skipping model validations/callbacks.
-    bulk_batch_mode: false,
   }
 
   module ClassMethods
@@ -498,20 +494,22 @@ module RESTFramework::BaseModelControllerMixin
   end
 
   # Use strong parameters to filter the request body using the configured allowed parameters.
-  def get_body_params(data: nil, json_array: false)
-    data ||= request.request_parameters
+  def get_body_params(data: nil, bulk_mode: nil)
+    data ||= self.request.request_parameters
+    pk = self.class.get_model&.primary_key
 
-    # Filter the request body with strong params. If `json_array` is true (i.e., bulk actions), then
-    # we apply allowed parameters to the `_json` key of the request body.
-    body_params = if json_array
-      ActionController::Parameters.new(data).permit({_json: self.get_allowed_parameters})
+    # Filter the request body with strong params. If `bulk` is true, then we apply allowed
+    # parameters to the `_json` key of the request body.
+    body_params = if bulk_mode
+      pk = bulk_mode == :update ? [pk] : []
+      ActionController::Parameters.new(data).permit({_json: self.get_allowed_parameters + pk})
     else
       ActionController::Parameters.new(data).permit(*self.get_allowed_parameters)
     end
 
     # Filter primary key if configured.
-    if self.class.filter_pk_from_request_body
-      body_params.delete(self.class.get_model&.primary_key)
+    if self.class.filter_pk_from_request_body && bulk_mode != :update
+      body_params.delete(pk)
     end
 
     # Filter fields in `exclude_body_fields`.
@@ -632,6 +630,22 @@ module RESTFramework::BaseModelControllerMixin
       # Otherwise, perform a "bare" insert_all.
       self.class.get_model
     end
+  end
+
+  # Serialize the records, but also include any errors that might exist. This is used for bulk
+  # actions, however we include it here so the helper is available everywhere.
+  def bulk_serialize(records)
+    # This is kinda slow, so perhaps we should eventually integrate `errors` serialization into
+    # the serializer directly. This would fail for active model serializers, but maybe we don't
+    # care?
+    serializer_class = self.get_serializer_class
+    serialized_records = records.map do |record|
+      serializer_class.new(record, controller: self).serialize.merge!(
+        {errors: record.errors.presence}.compact,
+      )
+    end
+
+    return serialized_records
   end
 end
 
