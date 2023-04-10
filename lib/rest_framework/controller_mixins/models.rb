@@ -256,7 +256,7 @@ module RESTFramework::BaseModelControllerMixin
             foreign_key: ref.foreign_key,
             primary_key: pk,
             polymorphic: ref.polymorphic?,
-            table_name: ref.table_name,
+            table_name: ref.polymorphic? ? ref.table_name : nil,
             options: ref.options.as_json.presence,
           }.compact
         end
