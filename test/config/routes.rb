@@ -3,15 +3,21 @@ Rails.application.routes.draw do
 
   namespace :plain_api do
     rest_root
+    rest_resources :emails
+    rest_resources :genres
     rest_resources :marbles
     rest_resources :movies
+    rest_resources :phone_numbers
     rest_resources :users
   end
 
   namespace :demo_api do
     rest_root
+    rest_resources :emails
+    rest_resources :genres
     rest_resources :marbles
     rest_resources :movies
+    rest_resources :phone_numbers
     rest_resources :users do
       rest_resources :marbles
       rest_resources :movies
