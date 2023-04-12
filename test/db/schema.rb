@@ -52,7 +52,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_15_233930) do
   create_table "emails", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.boolean "is_primary", default: false, null: false
-    t.integer "user_id", null: false
+    t.integer "user_id"
     t.index ["email"], name: "index_emails_on_email", unique: true
     t.index ["user_id"], name: "index_emails_on_user_id"
   end
@@ -114,13 +114,15 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_15_233930) do
     t.integer "manager_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer "email_id"
+    t.index ["email_id"], name: "index_users_on_email_id", unique: true
     t.index ["login"], name: "index_users_on_login", unique: true
     t.index ["manager_id"], name: "index_users_on_manager_id"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "emails", "users", on_delete: :cascade
+  add_foreign_key "emails", "users", on_delete: :nullify
   add_foreign_key "genres_movies", "genres", on_delete: :cascade
   add_foreign_key "genres_movies", "movies", on_delete: :cascade
   add_foreign_key "marbles", "users", on_delete: :cascade
@@ -128,5 +130,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_01_15_233930) do
   add_foreign_key "movies_users", "movies", on_delete: :cascade
   add_foreign_key "movies_users", "users", on_delete: :cascade
   add_foreign_key "phone_numbers", "users", on_delete: :cascade
+  add_foreign_key "users", "emails", on_delete: :nullify
   add_foreign_key "users", "users", column: "manager_id", on_delete: :nullify
 end

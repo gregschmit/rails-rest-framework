@@ -11,15 +11,18 @@
 #  status     :string           default(""), not null
 #  created_at :datetime
 #  updated_at :datetime
+#  email_id   :integer
 #  manager_id :integer
 #
 # Indexes
 #
+#  index_users_on_email_id    (email_id) UNIQUE
 #  index_users_on_login       (login) UNIQUE
 #  index_users_on_manager_id  (manager_id)
 #
 # Foreign Keys
 #
+#  email_id    (email_id => emails.id) ON DELETE => nullify
 #  manager_id  (manager_id => users.id) ON DELETE => nullify
 #
 class User < ApplicationRecord
@@ -30,6 +33,15 @@ class User < ApplicationRecord
     "busy" => "Busy",
   }
   include TranslateEnum
+
+  # This association is purposefully named differently than the column to test how this affects the
+  # framework.
+  belongs_to(
+    :billing_email,
+    optional: true,
+    class_name: "Email",
+    foreign_key: "email_id",
+  )
 
   belongs_to :manager, class_name: "User", optional: true
   has_and_belongs_to_many :movies
@@ -43,6 +55,7 @@ class User < ApplicationRecord
 
   attribute :secret_number, :integer
 
+  accepts_nested_attributes_for :billing_email, allow_destroy: true
   accepts_nested_attributes_for :marbles, :phone_number, allow_destroy: true
   accepts_nested_attributes_for :phone_number, allow_destroy: true
 

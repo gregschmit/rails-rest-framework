@@ -17,8 +17,10 @@ class TestAppTables < ActiveRecord::Migration[6.0]
       t.string(:email, null: false, default: "", index: {unique: true})
       t.boolean(:is_primary, null: false, default: false)
 
-      t.references(:user, null: false, foreign_key: {on_delete: :cascade})
+      t.references(:user, null: true, foreign_key: {on_delete: :nullify})
     end
+
+    add_reference(:users, :email, foreign_key: {on_delete: :nullify}, index: {unique: true})
 
     create_table(:phone_numbers) do |t|
       t.string(:number, null: false, default: "", index: {unique: true})

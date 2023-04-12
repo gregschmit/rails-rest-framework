@@ -146,6 +146,20 @@ module RESTFramework::BaseModelControllerMixin
       return @_get_field_config[f] = config.compact
     end
 
+    # Get a field's `id`/`ids` variation.
+    def get_id_field(field, reflection)
+      if reflection.collection?
+        return "#{field.singularize}_ids"
+      elsif reflection.belongs_to?
+        # The id field for belongs_to is always the foreign key column name, even if the
+        # association is named differently. This is a further argument to build a unified API
+        # using the association name itself.
+        return reflection.foreign_key
+      end
+
+      return nil
+    end
+
     # Get metadata about the resource's fields.
     def fields_metadata
       return @_fields_metadata if @_fields_metadata
@@ -228,21 +242,17 @@ module RESTFramework::BaseModelControllerMixin
         if ref = reflections[f]
           metadata[:kind] = "association"
 
-          # Determine if we render id/ids fields.
-          if self.permit_id_assignment
-            if ref.collection?
-              metadata[:id_field] = "#{f.singularize}_ids"
-            elsif ref.belongs_to?
-              metadata[:id_field] = "#{f}_id"
-            end
+          # Determine if we render id/ids fields. Unfortunately, `has_one` does not provide this
+          # interface.
+          if self.permit_id_assignment && id_field = self.get_id_field(f, ref)
+            metadata[:id_field] = id_field
           end
 
           # Determine if we render nested attributes options.
-          if self.permit_nested_attributes_assignment
-            if nested_opts = model.nested_attributes_options[f.to_sym].presence
-              nested_opts[:field] = "#{f}_attributes"
-              metadata[:nested_attributes_options] = nested_opts
-            end
+          if self.permit_nested_attributes_assignment && (
+            nested_opts = model.nested_attributes_options[f.to_sym].presence
+          )
+            metadata[:nested_attributes_options] = {field: "#{f}_attributes", **nested_opts}
           end
 
           begin
@@ -454,11 +464,11 @@ module RESTFramework::BaseModelControllerMixin
       # Return field if it's not an association.
       next f unless ref = reflections[f]
 
-      if self.class.permit_id_assignment
-        if ref.collection?
-          hash_variations["#{f.singularize}_ids"] = []
-        elsif ref.belongs_to?
-          variations << "#{f}_id"
+      if self.class.permit_id_assignment && id_field = self.class.get_id_field(f, ref)
+        if id_field.ends_with?("_ids")
+          hash_variations[id_field] = []
+        else
+          variations << id_field
         end
       end
 
