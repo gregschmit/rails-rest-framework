@@ -35,6 +35,7 @@ Rails.application.routes.draw do
     rest_resources :marbles_with_bare_create, force_plural: true, only: [:create]
     rest_resources :marbles_with_fields_hash
     rest_resources :marbles_with_string_serializer
+    rest_resources :marbles_with_sub_fields
     rest_resources :marbles_without_rescue_unknown_format
     rest_resource :marble, force_singular: true
 

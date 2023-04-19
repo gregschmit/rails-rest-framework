@@ -225,4 +225,17 @@ module RESTFramework::Utils
 
     return ["id", "name"]
   end
+
+  # Get a field's id/ids variation.
+  def self.get_id_field(field, reflection)
+    if reflection.collection?
+      return "#{field.singularize}_ids"
+    elsif reflection.belongs_to?
+      # The id field for belongs_to is always the foreign key column name, even if the
+      # association is named differently.
+      return reflection.foreign_key
+    end
+
+    return nil
+  end
 end

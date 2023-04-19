@@ -1,6 +1,8 @@
 class DemoApi::RootController < DemoApiController
   self.extra_actions = {nil: :get, blank: :get, echo: :post}
 
+  class_attribute(:gns, default: 8)
+
   def root
     api_response({message: DemoApiController::DESCRIPTION})
   end
@@ -14,6 +16,8 @@ class DemoApi::RootController < DemoApiController
   end
 
   def echo
-    api_response({message: "Here is your data:", data: request.request_parameters})
+    # @gns = 4
+    d = [self.gns, self.class.gns]
+    api_response({message: "Here is your data:", data: request.request_parameters, data2: d})
   end
 end
