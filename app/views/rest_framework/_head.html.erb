@@ -3,24 +3,17 @@
 <%= csrf_meta_tags %>
 <%= csp_meta_tag rescue nil %>
 
-<!-- Bootstrap -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js" integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.4/font/bootstrap-icons.css">
-
-<!-- Highlight.js -->
-<link rel="stylesheet" class="rrf-light-mode" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-light.min.css" integrity="sha512-WDk6RzwygsN9KecRHAfm9HTN87LQjqdygDmkHSJxVkVI7ErCZ8ZWxP6T8RvBujY1n2/E4Ac+bn2ChXnp5rnnHA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<link rel="stylesheet" class="rrf-dark-mode" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-dark.min.css" integrity="sha512-Vj6gPCk8EZlqnoveEyuGyYaWZ1+jyjMPg8g4shwyyNlRQl6d3L9At02ZHQr5K6s5duZl/+YKMnM3/8pDhoUphg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js" integrity="sha512-bgHRAiTjGrzHzLyKOnpFvaEpGzJet3z4tZnXGjpsCcqOnAH6VGUx9frc5bcIhKTVLEiCO6vEhNAgx5jtLUYrfA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/json.min.js" integrity="sha512-0xYvyncS9OLE7GOpNBZFnwyh9+bq4HVgk4yVVYI678xRvE22ASicF1v6fZ1UiST+M6pn17MzFZdvVCI3jTHSyw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/xml.min.js" integrity="sha512-5zBcw+OKRkaNyvUEPlTSfYylVzgpi7KpncY36b0gRudfxIYIH0q0kl2j26uCUB3YBRM6ytQQEZSgRg+ZlBTmdA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-<!-- NeatJSON -->
-<script src="https://cdn.jsdelivr.net/npm/neatjson@0.10.5/javascript/neatjson.min.js"></script>
-
-<!-- Trix -->
-<link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.0/dist/trix.css">
-<script type="text/javascript" src="https://unpkg.com/trix@2.0.0/dist/trix.umd.min.js"></script>
+<%# We vendor our UI libs so the browsable API works even if internet access is restricted. %>
+<%= render partial: "rest_framework/vendor/bootstrap-css" %>
+<%= render partial: "rest_framework/vendor/bootstrap-icons-css" %>
+<%= render partial: "rest_framework/vendor/bootstrap-js" %>
+<%= render partial: "rest_framework/vendor/highlight-a11y-dark-css" %>
+<%= render partial: "rest_framework/vendor/highlight-a11y-light-css" %>
+<%= render partial: "rest_framework/vendor/highlight-js" %>
+<%= render partial: "rest_framework/vendor/highlight-languages-js" %>
+<%= render partial: "rest_framework/vendor/neatjson-js" %>
+<%= render partial: "rest_framework/vendor/trix-css" %>
+<%= render partial: "rest_framework/vendor/trix-js" %>
 
 <!-- Custom Style -->
 <style>
@@ -28,7 +21,7 @@
  * START OF LIB/DOCS COMMON CSS *
  ********************************/
 
- :root {
+:root {
   --rrf-red: #900;
   --rrf-red-hover: #5f0c0c;
   --rrf-light-red: #db2525;
