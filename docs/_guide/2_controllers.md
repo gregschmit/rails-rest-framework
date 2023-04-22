@@ -138,9 +138,8 @@ end
 ```
 
 By default, all columns and associations are included in the controller's `fields`, which can be
-helpful when developing an administrative API. For most APIs, however, `fields` should always be
-explicitly defined. See [Specifying the Fields](#specifying-the-fields) for more
-information.
+helpful when developing an administrative API. For most APIs, however, `fields` should be explicitly
+defined. See [Specifying the Fields](#specifying-the-fields) for more information.
 
 ### Defining the Model
 
@@ -212,7 +211,7 @@ end
 The `fields` property defines the fields available for things like serialization and allowed
 parameters in body or query params. If `fields` is not set, then it will default to all columns and
 associations, which is helpful when developing an administrative API. For most APIs, however,
-`fields` should always be explicitly defined.
+`fields` should be explicitly defined.
 
 While you can also define per-request fields by overriding `get_fields`, you should also define a
 set of fields on the controller which is used for things like the `OPTIONS` metadata.
