@@ -22,7 +22,6 @@ module RESTFramework::BaseModelControllerMixin
     # Attributes for configuring record fields.
     fields: nil,
     field_config: nil,
-    action_fields: nil,
 
     # Options for what should be included/excluded from default fields.
     exclude_associations: false,
@@ -35,7 +34,6 @@ module RESTFramework::BaseModelControllerMixin
 
     # Attributes for create/update parameters.
     allowed_parameters: nil,
-    allowed_action_parameters: nil,
 
     # Attributes for the default native serializer.
     native_serializer_config: nil,
@@ -388,20 +386,9 @@ module RESTFramework::BaseModelControllerMixin
     end
   end
 
-  def _get_specific_action_config(action_config_key, generic_config_key)
-    action_config = self.class.send(action_config_key)&.with_indifferent_access || {}
-    action = self.action_name&.to_sym
-
-    # Index action should use :list serializer if :index is not provided.
-    action = :list if action == :index && !action_config.key?(:index)
-
-    return (action_config[action] if action) || self.class.send(generic_config_key)
-  end
-
   # Get a list of fields, taking into account the current action.
   def get_fields
-    fields = self._get_specific_action_config(:action_fields, :fields)
-    return self.class.get_fields(input_fields: fields)
+    return self.class.get_fields(input_fields: self.fields)
   end
 
   # Pass fields to get dynamic metadata based on which fields are available.
@@ -418,10 +405,7 @@ module RESTFramework::BaseModelControllerMixin
   def get_allowed_parameters
     return @_get_allowed_parameters if defined?(@_get_allowed_parameters)
 
-    @_get_allowed_parameters = self._get_specific_action_config(
-      :allowed_action_parameters,
-      :allowed_parameters,
-    )
+    @_get_allowed_parameters = self.allowed_parameters
     return @_get_allowed_parameters if @_get_allowed_parameters
 
     # For fields, automatically add `_id`/`_ids` and `_attributes` variations for associations.
@@ -486,8 +470,8 @@ module RESTFramework::BaseModelControllerMixin
   end
 
   # Use strong parameters to filter the request body using the configured allowed parameters.
-  def get_body_params(data: nil, bulk_mode: nil)
-    data ||= self.request.request_parameters
+  def get_body_params(bulk_mode: nil)
+    data = self.request.request_parameters
     pk = self.class.get_model&.primary_key
     allowed_params = self.get_allowed_parameters
 
@@ -510,7 +494,9 @@ module RESTFramework::BaseModelControllerMixin
 
     # Filter the request body with strong params. If `bulk` is true, then we apply allowed
     # parameters to the `_json` key of the request body.
-    body_params = if bulk_mode
+    body_params = if allowed_params == true
+      ActionController::Parameters.new(data).permit!
+    elsif bulk_mode
       pk = bulk_mode == :update ? [pk] : []
       ActionController::Parameters.new(data).permit({_json: allowed_params + pk})
     else

@@ -17,7 +17,6 @@ class TestApi::MarblesController < TestApiController
 
   self.fields = %w(id name)
   self.ordering_fields = %w(id name price)
-  self.action_fields = {create: %w(name), update: %w(name)}
   self.paginator_class = RESTFramework::PageNumberPaginator
   self.page_size = 2
   self.serializer_class = MarblesSerializer

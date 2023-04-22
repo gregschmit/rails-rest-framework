@@ -7,11 +7,13 @@ collections:
     output: true
     permalink: /:collection/:slug/
 
-# Build settings
+# Build settings.
 markdown: kramdown
+highlighter: none
 
 defaults:
   - scope:
-      path: ""  # All files.
+      # All files.
+      path: ""
     values:
       layout: default

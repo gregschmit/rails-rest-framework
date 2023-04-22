@@ -34,20 +34,21 @@ html[data-bs-theme="dark"] h6 {
 }
 
 /* Improve code and code blocks. */
-pre code {
+
+pre code, .trix-content pre {
   display: block;
   overflow-x: auto;
+  padding: .5em !important;
 }
 code, .trix-content pre {
-  padding: .5em !important;
+  --bs-code-color: black;
   background-color: #eee !important;
   border: 1px solid #aaa;
   border-radius: 3px;
-}
-p code {
-  padding: .1em .3em !important;
+  padding: .1em .3em;
 }
 html[data-bs-theme="dark"] code, html[data-bs-theme="dark"] .trix-content pre {
+  --bs-code-color: white;
   background-color: #2b2b2b !important;
 }
 
