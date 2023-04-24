@@ -8,16 +8,16 @@ slug: filtering-and-ordering
 
 While you can control the recordset that the API exposes, sometimes you want the user to control the
 records they want to see, or the order of those records. Both filtering and ordering are
-accomplished through what we call filters. To control the filter backends that a controller uses,
-you can either adjust the `filter_backends` controller attribute or you can override the
-`get_filter_backends()` method.
+accomplished through a generic mechanism called "filters". To control the filter backends that a
+controller uses, you can either adjust the `filter_backends` controller attribute or you can
+override the `get_filter_backends()` method.
 
-## ModelFilter
+## ModelQueryFilter
 
 This filter provides basic user-controllable filtering of the recordset using query params. For
-example, a request to `/api/movies?cool=true` could return movies where `cool` is `true`.
+example, a request to `/api/movies?cool=true` would return movies where `cool` is `true`.
 
-If you include `ModelControllerMixin` into your controller, `ModelFilter` is included in the filter
+If you include `ModelControllerMixin` into your controller, `ModelQueryFilter` is included in the filter
 backends by default.
 
 ## ModelOrderingFilter

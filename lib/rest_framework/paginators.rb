@@ -33,35 +33,31 @@ class RESTFramework::PageNumberPaginator < RESTFramework::BasePaginator
     page_size = nil
 
     # Get from context, if allowed.
-    if @controller.class.page_size_query_param
-      if page_size = @controller.params[@controller.class.page_size_query_param].presence
+    if @controller.page_size_query_param
+      if page_size = @controller.params[@controller.page_size_query_param].presence
         page_size = page_size.to_i
       end
     end
 
     # Otherwise, get from config.
-    if !page_size && @controller.class.page_size
-      page_size = @controller.class.page_size
+    if !page_size && @controller.page_size
+      page_size = @controller.page_size
     end
 
     # Ensure we don't exceed the max page size.
-    if @controller.class.max_page_size && page_size > @controller.class.max_page_size
-      page_size = @controller.class.max_page_size
+    if @controller.max_page_size && page_size > @controller.max_page_size
+      page_size = @controller.max_page_size
     end
 
     # Ensure we return at least 1.
     return page_size.zero? ? 1 : page_size
   end
 
-  def _page_query_param
-    return @controller.class.page_query_param&.to_sym
-  end
-
   # Get the page and return it so the caller can serialize it.
   def get_page(page_number=nil)
     # If page number isn't provided, infer from the params or use 1 as a fallback value.
     unless page_number
-      page_number = @controller&.params&.[](self._page_query_param)
+      page_number = @controller&.params&.[](@controller.page_query_param&.to_sym)
       if page_number.blank?
         page_number = 1
       else

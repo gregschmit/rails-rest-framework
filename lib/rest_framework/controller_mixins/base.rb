@@ -6,28 +6,18 @@ require_relative "../utils"
 # the ability to route arbitrary actions with `extra_actions`. This is also where `api_response`
 # is defined.
 module RESTFramework::BaseControllerMixin
-  RRF_BASE_CONTROLLER_CONFIG = {
-    filter_pk_from_request_body: true,
-    exclude_body_fields: %w[
-      created_at
-      created_by
-      created_by_id
-      updated_at
-      updated_by
-      updated_by_id
-      _method
-      utf8
-      authenticity_token
-    ].freeze,
+  RRF_BASE_CONFIG = {
     extra_actions: nil,
     extra_member_actions: nil,
-    filter_backends: nil,
     singleton_controller: nil,
 
     # Options related to metadata and display.
     title: nil,
     description: nil,
     inflect_acronyms: ["ID", "IDs", "REST", "API", "APIs"].freeze,
+  }
+  RRF_BASE_INSTANCE_CONFIG = {
+    filter_backends: nil,
 
     # Options related to serialization.
     rescue_unknown_format_with: :json,
@@ -41,10 +31,6 @@ module RESTFramework::BaseControllerMixin
     page_query_param: "page",
     page_size_query_param: "page_size",
     max_page_size: nil,
-
-    # Options related to bulk actions and batch processing.
-    bulk_guard_query_param: nil,
-    enable_batch_processing: nil,
 
     # Option to disable serializer adapters by default, mainly introduced because Active Model
     # Serializers will do things like serialize `[]` into `{"":[]}`.
@@ -146,7 +132,7 @@ module RESTFramework::BaseControllerMixin
     # :nocov:
     def rrf_finalize
       if RESTFramework.config.freeze_config
-        self::RRF_BASE_CONTROLLER_CONFIG.keys.each { |k|
+        (self::RRF_BASE_CONFIG.keys + self::RRF_BASE_INSTANCE_CONFIG.keys).each { |k|
           v = self.send(k)
           v.freeze if v.is_a?(Hash) || v.is_a?(Array)
         }
@@ -161,14 +147,15 @@ module RESTFramework::BaseControllerMixin
     base.extend(ClassMethods)
 
     # Add class attributes (with defaults) unless they already exist.
-    RRF_BASE_CONTROLLER_CONFIG.each do |a, default|
+    RRF_BASE_CONFIG.each do |a, default|
       next if base.respond_to?(a)
 
-      base.class_attribute(a)
+      base.class_attribute(a, default: default, instance_accessor: false)
+    end
+    RRF_BASE_INSTANCE_CONFIG.each do |a, default|
+      next if base.respond_to?(a)
 
-      # Set default manually so we can still support Rails 4. Maybe later we can use the default
-      # parameter on `class_attribute`.
-      base.send(:"#{a}=", default)
+      base.class_attribute(a, default: default)
     end
 
     # Alias `extra_actions` to `extra_collection_actions`.
@@ -219,7 +206,7 @@ module RESTFramework::BaseControllerMixin
 
   # Get the configured serializer class.
   def get_serializer_class
-    return nil unless serializer_class = self.class.serializer_class
+    return nil unless serializer_class = self.serializer_class
 
     # Support dynamically resolving serializer given a symbol or string.
     serializer_class = serializer_class.to_s if serializer_class.is_a?(Symbol)
@@ -242,7 +229,7 @@ module RESTFramework::BaseControllerMixin
 
   # Get filtering backends, defaulting to no backends.
   def get_filter_backends
-    return self.class.filter_backends || []
+    return self.filter_backends || []
   end
 
   # Filter an arbitrary data set over all configured filter backends.
@@ -299,7 +286,7 @@ module RESTFramework::BaseControllerMixin
     end
 
     # Do not use any adapters by default, if configured.
-    if self.class.disable_adapters_by_default && !kwargs.key?(:adapter)
+    if self.disable_adapters_by_default && !kwargs.key?(:adapter)
       kwargs[:adapter] = nil
     end
 
@@ -309,27 +296,27 @@ module RESTFramework::BaseControllerMixin
     begin
       respond_to do |format|
         if payload == ""
-          format.json { head(kwargs[:status] || :no_content) } if self.class.serialize_to_json
-          format.xml { head(kwargs[:status] || :no_content) } if self.class.serialize_to_xml
+          format.json { head(kwargs[:status] || :no_content) } if self.serialize_to_json
+          format.xml { head(kwargs[:status] || :no_content) } if self.serialize_to_xml
         else
           format.json {
             jkwargs = kwargs.merge(json_kwargs)
             render(json: payload, layout: false, **jkwargs)
-          } if self.class.serialize_to_json
+          } if self.serialize_to_json
           format.xml {
             xkwargs = kwargs.merge(xml_kwargs)
             render(xml: payload, layout: false, **xkwargs)
-          } if self.class.serialize_to_xml
+          } if self.serialize_to_xml
           # TODO: possibly support more formats here if supported?
         end
         format.html {
           @payload = payload
           if payload == ""
-            @json_payload = "" if self.class.serialize_to_json
-            @xml_payload = "" if self.class.serialize_to_xml
+            @json_payload = "" if self.serialize_to_json
+            @xml_payload = "" if self.serialize_to_xml
           else
-            @json_payload = payload.to_json if self.class.serialize_to_json
-            @xml_payload = payload.to_xml if self.class.serialize_to_xml
+            @json_payload = payload.to_json if self.serialize_to_json
+            @xml_payload = payload.to_xml if self.serialize_to_xml
           end
           @title ||= self.class.get_title
           @description ||= self.class.description
@@ -347,7 +334,7 @@ module RESTFramework::BaseControllerMixin
         }
       end
     rescue ActionController::UnknownFormat
-      if !already_rescued_unknown_format && rescue_format = self.class.rescue_unknown_format_with
+      if !already_rescued_unknown_format && rescue_format = self.rescue_unknown_format_with
         request.format = rescue_format
         already_rescued_unknown_format = true
         retry

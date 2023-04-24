@@ -93,12 +93,12 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     return nil unless @controller
 
     if @many == true
-      controller_serializer = @controller.class.try(:native_serializer_plural_config)
+      controller_serializer = @controller.try(:native_serializer_plural_config)
     elsif @many == false
-      controller_serializer = @controller.class.try(:native_serializer_singular_config)
+      controller_serializer = @controller.try(:native_serializer_singular_config)
     end
 
-    return controller_serializer || @controller.class.try(:native_serializer_config)
+    return controller_serializer || @controller.try(:native_serializer_config)
   end
 
   # Filter a single subconfig for specific keys. By default, keys from `fields` are removed from the
@@ -152,8 +152,8 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   def filter_from_request(cfg)
     return cfg unless @controller
 
-    except_param = @controller.class.try(:native_serializer_except_query_param)
-    only_param = @controller.class.try(:native_serializer_only_query_param)
+    except_param = @controller.try(:native_serializer_except_query_param)
+    only_param = @controller.try(:native_serializer_only_query_param)
     if except_param && except = @controller.request.query_parameters[except_param].presence
       if except = except.split(",").map(&:strip).map(&:to_sym).presence
         # Filter `only`, `except` (additive), `include`, `methods`, and `serializer_methods`.
@@ -196,10 +196,10 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   def _get_associations_limit
     return @_get_associations_limit if defined?(@_get_associations_limit)
 
-    limit = @controller.class.native_serializer_associations_limit
+    limit = @controller.native_serializer_associations_limit
 
     # Extract the limit from the query parameters if it's set.
-    if query_param = @controller.class.native_serializer_associations_limit_query_param
+    if query_param = @controller.native_serializer_associations_limit_query_param
       if @controller.request.query_parameters.key?(query_param)
         query_limit = @controller.request.query_parameters[query_param].to_i
         if query_limit > 0
@@ -256,7 +256,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
           end
 
           # If we need to include the association count, then add it here.
-          if @controller.class.native_serializer_include_associations_count
+          if @controller.native_serializer_include_associations_count
             method_name = "#{f}.count"
             serializer_methods[method_name] = method_name
             self.define_singleton_method(method_name) do |record|

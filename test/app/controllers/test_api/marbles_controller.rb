@@ -23,7 +23,9 @@ class TestApi::MarblesController < TestApiController
   self.extra_collection_actions = {alternate_list: :get}
   self.extra_member_actions = {description: :get}
   self.filter_backends = [
-    RESTFramework::ModelFilter, RESTFramework::ModelOrderingFilter, RESTFramework::ModelSearchFilter
+    RESTFramework::ModelOrderingFilter,
+    RESTFramework::ModelQueryFilter,
+    RESTFramework::ModelSearchFilter,
   ]
 
   def alternate_list

@@ -14,7 +14,7 @@ module RESTFramework::BaseModelControllerMixin
   }
   include RESTFramework::BaseControllerMixin
 
-  RRF_BASE_MODEL_CONTROLLER_CONFIG = {
+  RRF_BASE_MODEL_CONFIG = {
     # Core attributes related to models.
     model: nil,
     recordset: nil,
@@ -27,13 +27,26 @@ module RESTFramework::BaseModelControllerMixin
     exclude_associations: false,
     include_active_storage: false,
     include_action_text: false,
-
+  }
+  RRF_BASE_MODEL_INSTANCE_CONFIG = {
     # Attributes for finding records.
     find_by_fields: nil,
     find_by_query_param: "find_by",
 
-    # Attributes for create/update parameters.
+    # Options for handling request body parameters.
     allowed_parameters: nil,
+    filter_pk_from_request_body: true,
+    exclude_body_fields: %w[
+      created_at
+      created_by
+      created_by_id
+      updated_at
+      updated_by
+      updated_by_id
+      _method
+      utf8
+      authenticity_token
+    ].freeze,
 
     # Attributes for the default native serializer.
     native_serializer_config: nil,
@@ -63,6 +76,12 @@ module RESTFramework::BaseModelControllerMixin
 
     # Control if filtering is done before find.
     filter_recordset_before_find: true,
+
+    # Options for `ransack` filtering.
+    ransack_options: nil,
+    ransack_query_param: "q",
+    ransack_distinct: true,
+    ransack_distinct_query_param: "distinct",
   }
 
   module ClassMethods
@@ -358,7 +377,7 @@ module RESTFramework::BaseModelControllerMixin
       # self.setup_channel
 
       if RESTFramework.config.freeze_config
-        self::RRF_BASE_MODEL_CONTROLLER_CONFIG.keys.each { |k|
+        (self::RRF_BASE_MODEL_CONFIG.keys + self::RRF_BASE_MODEL_INSTANCE_CONFIG.keys).each { |k|
           v = self.send(k)
           v.freeze if v.is_a?(Hash) || v.is_a?(Array)
         }
@@ -375,30 +394,26 @@ module RESTFramework::BaseModelControllerMixin
     base.extend(ClassMethods)
 
     # Add class attributes (with defaults) unless they already exist.
-    RRF_BASE_MODEL_CONTROLLER_CONFIG.each do |a, default|
+    RRF_BASE_MODEL_CONFIG.each do |a, default|
       next if base.respond_to?(a)
 
-      base.class_attribute(a)
+      base.class_attribute(a, default: default, instance_accessor: false)
+    end
+    RRF_BASE_MODEL_INSTANCE_CONFIG.each do |a, default|
+      next if base.respond_to?(a)
 
-      # Set default manually so we can still support Rails 4. Maybe later we can use the default
-      # parameter on `class_attribute`.
-      base.send(:"#{a}=", default)
+      base.class_attribute(a, default: default)
     end
   end
 
-  # Get a list of fields, taking into account the current action.
+  # Get a list of fields for this controller.
   def get_fields
-    return self.class.get_fields(input_fields: self.fields)
+    return self.class.get_fields(input_fields: self.class.fields)
   end
 
   # Pass fields to get dynamic metadata based on which fields are available.
   def get_options_metadata
     return self.class.get_options_metadata
-  end
-
-  # Get a list of find_by fields for the current action.
-  def get_find_by_fields
-    return self.class.find_by_fields
   end
 
   # Get a list of parameters allowed for the current action.
@@ -434,7 +449,7 @@ module RESTFramework::BaseModelControllerMixin
       # Return field if it's not an association.
       next f unless ref = reflections[f]
 
-      if self.class.permit_id_assignment && id_field = RESTFramework::Utils.get_id_field(f, ref)
+      if self.permit_id_assignment && id_field = RESTFramework::Utils.get_id_field(f, ref)
         if id_field.ends_with?("_ids")
           hash_variations[id_field] = []
         else
@@ -442,7 +457,7 @@ module RESTFramework::BaseModelControllerMixin
         end
       end
 
-      if self.class.permit_nested_attributes_assignment
+      if self.permit_nested_attributes_assignment
         hash_variations["#{f}_attributes"] = self.class.get_field_config(f)[:sub_fields]
       end
 
@@ -459,11 +474,11 @@ module RESTFramework::BaseModelControllerMixin
     return super || RESTFramework::NativeSerializer
   end
 
-  # Get filtering backends, defaulting to using `ModelFilter`, `ModelOrderingFilter`, and
+  # Get filtering backends, defaulting to using `ModelQueryFilter`, `ModelOrderingFilter`, and
   # `ModelSearchFilter`.
   def get_filter_backends
-    return self.class.filter_backends || [
-      RESTFramework::ModelFilter,
+    return self.filter_backends || [
+      RESTFramework::ModelQueryFilter,
       RESTFramework::ModelOrderingFilter,
       RESTFramework::ModelSearchFilter,
     ]
@@ -504,12 +519,12 @@ module RESTFramework::BaseModelControllerMixin
     end
 
     # Filter primary key if configured.
-    if self.class.filter_pk_from_request_body && bulk_mode != :update
+    if self.filter_pk_from_request_body && bulk_mode != :update
       body_params.delete(pk)
     end
 
     # Filter fields in `exclude_body_fields`.
-    (self.class.exclude_body_fields || []).each { |f| body_params.delete(f) }
+    (self.exclude_body_fields || []).each { |f| body_params.delete(f) }
 
     # ActiveStorage Integration: Translate base64 encoded attachments to upload objects.
     #
@@ -591,9 +606,9 @@ module RESTFramework::BaseModelControllerMixin
     is_pk = true
 
     # Find by another column if it's permitted.
-    if find_by_param = self.class.find_by_query_param.presence
+    if find_by_param = self.find_by_query_param.presence
       if find_by = params[find_by_param].presence
-        find_by_fields = self.get_find_by_fields&.map(&:to_s)
+        find_by_fields = self.find_by_fields&.map(&:to_s)
 
         if !find_by_fields || find_by.in?(find_by_fields)
           is_pk = false unless find_by_key == find_by
@@ -617,7 +632,7 @@ module RESTFramework::BaseModelControllerMixin
 
   # Determine what collection to call `create` on.
   def get_create_from
-    if self.class.create_from_recordset
+    if self.create_from_recordset
       # Create with any properties inherited from the recordset. We exclude any `select` clauses
       # in case model callbacks need to call `count` on this collection, which typically raises a
       # SQL `SyntaxError`.
@@ -656,13 +671,13 @@ module RESTFramework::ListModelMixin
     records = self.get_records
 
     # Handle pagination, if enabled.
-    if self.class.paginator_class
+    if self.paginator_class
       # If there is no `max_page_size`, `page_size_query_param` is not `nil`, and the page size is
       # set to "0", then skip pagination.
-      unless !self.class.max_page_size &&
-          self.class.page_size_query_param &&
-          params[self.class.page_size_query_param] == "0"
-        paginator = self.class.paginator_class.new(data: records, controller: self)
+      unless !self.max_page_size &&
+          self.page_size_query_param &&
+          params[self.page_size_query_param] == "0"
+        paginator = self.paginator_class.new(data: records, controller: self)
         page = paginator.get_page
         serialized_page = self.serialize(page)
         return paginator.get_paginated_response(serialized_page)
