@@ -154,7 +154,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
     except_param = @controller.try(:native_serializer_except_query_param)
     only_param = @controller.try(:native_serializer_only_query_param)
-    if except_param && except = @controller.request.query_parameters[except_param].presence
+    if except_param && except = @controller.request&.query_parameters&.[](except_param).presence
       if except = except.split(",").map(&:strip).map(&:to_sym).presence
         # Filter `only`, `except` (additive), `include`, `methods`, and `serializer_methods`.
         if cfg[:only]
@@ -171,7 +171,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
           cfg[:serializer_methods], fields: except
         )
       end
-    elsif only_param && only = @controller.request.query_parameters[only_param].presence
+    elsif only_param && only = @controller.request&.query_parameters&.[](only_param).presence
       if only = only.split(",").map(&:strip).map(&:to_sym).presence
         # Filter `only`, `include`, and `methods`. Adding anything to `except` is not needed,
         # because any configuration there takes precedence over `only`.
@@ -196,10 +196,10 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   def _get_associations_limit
     return @_get_associations_limit if defined?(@_get_associations_limit)
 
-    limit = @controller.native_serializer_associations_limit
+    limit = @controller&.native_serializer_associations_limit
 
     # Extract the limit from the query parameters if it's set.
-    if query_param = @controller.native_serializer_associations_limit_query_param
+    if query_param = @controller&.native_serializer_associations_limit_query_param
       if @controller.request.query_parameters.key?(query_param)
         query_limit = @controller.request.query_parameters[query_param].to_i
         if query_limit > 0
