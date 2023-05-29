@@ -48,9 +48,6 @@ module RESTFramework
     # Disable `rescue_from` on the controller mixins.
     attr_accessor :disable_rescue_from
 
-    # Exclude certain classes from being added by default as association fields.
-    attr_accessor :exclude_association_classes
-
     # The default label fields to use when generating labels for `has_many` associations.
     attr_accessor :label_fields
 
@@ -59,7 +56,6 @@ module RESTFramework
 
     def initialize
       self.show_backtrace = Rails.env.development?
-      self.exclude_association_classes = DEFAULT_EXCLUDE_ASSOCIATION_CLASSES
       self.label_fields = DEFAULT_LABEL_FIELDS
       self.search_columns = DEFAULT_SEARCH_COLUMNS
     end

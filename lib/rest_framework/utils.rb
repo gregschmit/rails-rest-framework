@@ -154,8 +154,8 @@ module RESTFramework::Utils
     parsed_fields = fields_hash[:only] || (
       model ? self.fields_for(model, exclude_associations: exclude_associations) : []
     )
-    parsed_fields += fields_hash[:include] if fields_hash[:include]
-    parsed_fields -= fields_hash[:exclude] if fields_hash[:exclude]
+    parsed_fields += fields_hash[:include].map(&:to_s) if fields_hash[:include]
+    parsed_fields -= fields_hash[:exclude].map(&:to_s) if fields_hash[:exclude]
 
     # Warn for any unknown keys.
     (fields_hash.keys - [:only, :include, :exclude]).each do |k|
@@ -182,11 +182,6 @@ module RESTFramework::Utils
     } + model.reflections.map { |association, ref|
       # Ignore associations for which we have custom integrations.
       if ref.class_name.in?(%w(ActiveStorage::Attachment ActiveStorage::Blob ActionText::RichText))
-        next nil
-      end
-
-      # Exclude user-specified associations.
-      if ref.class_name.in?(RESTFramework.config.exclude_association_classes)
         next nil
       end
 
