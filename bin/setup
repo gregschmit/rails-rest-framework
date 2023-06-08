@@ -10,9 +10,6 @@ FileUtils.chdir(File.expand_path("..", __dir__)) do
   # This script is a way to setup or update your development environment automatically. It also
   # should be idempotent, so that you can run it multiple times and get a predictable outcome.
 
-  puts "== Configuring Bundler =="
-  system!("bundle config set --local force_ruby_platform true")
-
   puts "== Installing Ruby dependencies =="
   system!("bundle install")
 
