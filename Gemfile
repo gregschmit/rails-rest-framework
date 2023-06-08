@@ -29,14 +29,25 @@ end
 # Include `translate_enum` for custom integration.
 gem "translate_enum"
 
+# Enable to test sprockets/propshaft.
+ENV["ASSET_PIPELINE"] = nil
+if ENV["ASSET_PIPELINE"] == "sprockets"
+  gem "sprockets-rails"
+elsif ENV["ASSET_PIPELINE"] == "propshaft"
+  gem "propshaft"
+end
+
 group :development do
   gem "annotate"
-  gem "better_errors"
+  gem "better_errors", "2.9.1"  # Avoid `sassc` dependency.
   gem "binding_of_caller"
   gem "byebug"
   gem "pry-rails"
   gem "rubocop-shopify", require: false
   gem "web-console"
+
+  # Vendoring external assets.
+  gem "httparty"
 
   # Profiling
   gem "rack-mini-profiler"

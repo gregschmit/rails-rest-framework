@@ -3,17 +3,7 @@
 <%= csrf_meta_tags %>
 <%= csp_meta_tag rescue nil %>
 
-<%# We vendor our UI libs so the browsable API works even if internet access is restricted. %>
-<%= render partial: "rest_framework/vendor/bootstrap-css" %>
-<%= render partial: "rest_framework/vendor/bootstrap-icons-css" %>
-<%= render partial: "rest_framework/vendor/bootstrap-js" %>
-<%= render partial: "rest_framework/vendor/highlight-a11y-dark-css" %>
-<%= render partial: "rest_framework/vendor/highlight-a11y-light-css" %>
-<%= render partial: "rest_framework/vendor/highlight-js" %>
-<%= render partial: "rest_framework/vendor/highlight-languages-js" %>
-<%= render partial: "rest_framework/vendor/neatjson-js" %>
-<%= render partial: "rest_framework/vendor/trix-css" %>
-<%= render partial: "rest_framework/vendor/trix-js" %>
+<%= render partial: "rest_framework/assets" %>
 
 <!-- Custom Style -->
 <style>

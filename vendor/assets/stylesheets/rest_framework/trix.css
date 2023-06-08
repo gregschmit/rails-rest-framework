@@ -1,5 +1,3 @@
-<style>
-/* Vendored from: https://unpkg.com/trix@2.0.0/dist/trix.css */
 trix-editor {
   border: 1px solid #bbb;
   border-radius: 3px;
@@ -410,4 +408,3 @@ trix-editor .attachment__metadata {
     .trix-content .attachment-gallery.attachment-gallery--2 .attachment, .trix-content .attachment-gallery.attachment-gallery--4 .attachment {
       flex-basis: 50%;
       max-width: 50%; }
-</style>

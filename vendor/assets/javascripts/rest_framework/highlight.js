@@ -1,5 +1,3 @@
-<script>
-/* Vendored from: https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js */
 /*!
   Highlight.js v11.7.0 (git: 82688fad18)
   (c) 2006-2022 undefined and other contributors
@@ -1188,7 +1186,7 @@ begin:"\\w[\\w :\\/.-]*:(?=[ \t]|$)"},{begin:'"\\w[\\w :\\/.-]*":(?=[ \t]|$)'},{
 begin:"'\\w[\\w :\\/.-]*':(?=[ \t]|$)"}]},{className:"meta",begin:"^---\\s*$",
 relevance:10},{className:"string",
 begin:"[\\|>]([1-9]?[+-])?[ ]*\\n( +)[^ ][^\\n]*\\n(\\2[^\\n]+\\n?)*"},{
-begin:"<%%[%=-]?",end:"[%-]?%>",subLanguage:"ruby",excludeBegin:!0,excludeEnd:!0,
+begin:"<%[%=-]?",end:"[%-]?%>",subLanguage:"ruby",excludeBegin:!0,excludeEnd:!0,
 relevance:0},{className:"type",begin:"!\\w+!"+t},{className:"type",
 begin:"!<"+t+">"},{className:"type",begin:"!"+t},{className:"type",begin:"!!"+t
 },{className:"meta",begin:"&"+e.UNDERSCORE_IDENT_RE+"$"},{className:"meta",
@@ -1202,4 +1200,3 @@ aliases:["yml"],contains:l}}});const je=ne;for(const e of Object.keys(Ue)){
 const n=e.replace("grmr_","").replace("_","-");je.registerLanguage(n,Ue[e])}
 return je}()
 ;"object"==typeof exports&&"undefined"!=typeof module&&(module.exports=hljs);
-</script>

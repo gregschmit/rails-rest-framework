@@ -15,6 +15,11 @@ require "rails"
   require railtie
 end
 
+# Require `sprockets` if testing asset pipeline.
+if ENV["ASSET_PIPELINE"] == "sprockets"
+  require "sprockets/railtie"
+end
+
 # Require the gems listed in Gemfile.
 Bundler.require(*Rails.groups)
 
@@ -42,6 +47,11 @@ class Application < Rails::Application
   Rails.application.routes.default_url_options = URL_OPTIONS
 
   RESTFramework.config.freeze_config = true
+
+  # Use vendored assets if testing `sprockets` or `propshaft`.
+  if ENV["ASSET_PIPELINE"] == "sprockets" || ENV["ASSET_PIPELINE"] == "propshaft"
+    RESTFramework.config.use_vendored_assets = true
+  end
 
   if Rails::VERSION::MAJOR >= 7
     config.active_support.remove_deprecated_time_with_zone_name = true

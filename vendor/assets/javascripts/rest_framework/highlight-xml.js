@@ -1,14 +1,3 @@
-<script>
-/* Vendored from: https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/json.min.js */
-/*! `json` grammar compiled for Highlight.js 11.7.0 */
-(()=>{var e=(()=>{"use strict";return e=>{const a=["true","false","null"],n={
-scope:"literal",beginKeywords:a.join(" ")};return{name:"JSON",keywords:{
-literal:a},contains:[{className:"attr",begin:/"(\\.|[^\\"\r\n])*"(?=\s*:)/,
-relevance:1.01},{match:/[{}[\],:]/,className:"punctuation",relevance:0
-},e.QUOTE_STRING_MODE,n,e.C_NUMBER_MODE,e.C_LINE_COMMENT_MODE,e.C_BLOCK_COMMENT_MODE],
-illegal:"\\S"}}})();hljs.registerLanguage("json",e)})();
-
-/* Vendored from: https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/xml.min.js */
 /*! `xml` grammar compiled for Highlight.js 11.7.0 */
 (()=>{var e=(()=>{"use strict";return e=>{
 const a=e.regex,n=a.concat(/[\p{L}_]/u,a.optional(/[\p{L}0-9_.-]*:/u),/[\p{L}0-9_.-]*/u),s={
@@ -38,4 +27,3 @@ end:/\/?>/,contains:[{className:"name",begin:n,relevance:0,starts:r}]},{
 className:"tag",begin:a.concat(/<\//,a.lookahead(a.concat(n,/>/))),contains:[{
 className:"name",begin:n,relevance:0},{begin:/>/,relevance:0,endsParent:!0}]}]}}
 })();hljs.registerLanguage("xml",e)})();
-</script>

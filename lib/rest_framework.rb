@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module RESTFramework
   BUILTIN_ACTIONS = {
     index: :get,
@@ -17,6 +19,88 @@ module RESTFramework
     update_all: [:put, :patch].freeze,
     destroy_all: :delete,
   }.freeze
+
+  # rubocop:disable Layout/LineLength
+  EXTERNAL_ASSETS = {
+    # Bootstrap
+    "bootstrap.css" => {
+      url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css",
+      sri: "sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp",
+    },
+    "bootstrap.js" => {
+      url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js",
+      sri: "sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N",
+    },
+
+    # Bootstrap Icons
+    "bootstrap-icons.css" => {
+      url: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.4/font/bootstrap-icons.min.css",
+      inline_fonts: true,
+    },
+
+    # Highlight.js
+    "highlight.js" => {
+      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js",
+      sri: "sha512-bgHRAiTjGrzHzLyKOnpFvaEpGzJet3z4tZnXGjpsCcqOnAH6VGUx9frc5bcIhKTVLEiCO6vEhNAgx5jtLUYrfA==",
+    },
+    "highlight-json.js" => {
+      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/json.min.js",
+      sri: "sha512-0xYvyncS9OLE7GOpNBZFnwyh9+bq4HVgk4yVVYI678xRvE22ASicF1v6fZ1UiST+M6pn17MzFZdvVCI3jTHSyw==",
+    },
+    "highlight-xml.js" => {
+      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/xml.min.js",
+      sri: "sha512-5zBcw+OKRkaNyvUEPlTSfYylVzgpi7KpncY36b0gRudfxIYIH0q0kl2j26uCUB3YBRM6ytQQEZSgRg+ZlBTmdA==",
+    },
+    "highlight-a11y-dark.css" => {
+      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-dark.min.css",
+      sri: "sha512-Vj6gPCk8EZlqnoveEyuGyYaWZ1+jyjMPg8g4shwyyNlRQl6d3L9At02ZHQr5K6s5duZl/+YKMnM3/8pDhoUphg==",
+      extra_tag_attrs: {class: "rrf-dark-mode"},
+    },
+    "highlight-a11y-light.css" => {
+      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-light.min.css",
+      sri: "sha512-WDk6RzwygsN9KecRHAfm9HTN87LQjqdygDmkHSJxVkVI7ErCZ8ZWxP6T8RvBujY1n2/E4Ac+bn2ChXnp5rnnHA==",
+      extra_tag_attrs: {class: "rrf-light-mode"},
+    },
+
+    # NeatJSON
+    "neatjson.js" => {
+      url: "https://cdn.jsdelivr.net/npm/neatjson@0.10.5/javascript/neatjson.min.js",
+    },
+
+    # Trix
+    "trix.css" => {
+      url: "https://unpkg.com/trix@2.0.0/dist/trix.css",
+    },
+    "trix.js" => {
+      url: "https://unpkg.com/trix@2.0.0/dist/trix.umd.min.js",
+    },
+  }.map { |name, cfg|
+    if File.extname(name) == ".js"
+      cfg[:place] = "javascripts"
+      cfg[:extra_tag_attrs] ||= {}
+      cfg[:tag_attrs] = {
+        src: cfg[:url],
+        integrity: cfg[:sri],
+        crossorigin: "anonymous",
+        referrerpolicy: "no-referrer",
+        defer: true,
+        **cfg[:extra_tag_attrs],
+      }
+    else
+      cfg[:place] = "stylesheets"
+      cfg[:extra_tag_attrs] ||= {}
+      cfg[:tag_attrs] = {
+        rel: "stylesheet",
+        href: cfg[:url],
+        integrity: cfg[:sri],
+        crossorigin: "anonymous",
+        **cfg[:extra_tag_attrs],
+      }
+    end
+
+    [name, cfg]
+  }.to_h.freeze
+  # rubocop:enable Layout/LineLength
 
   # Global configuration should be kept minimal, as controller-level configurations allows multiple
   # APIs to be defined to behave differently.
@@ -53,6 +137,10 @@ module RESTFramework
 
     # The default search columns to use when generating search filters.
     attr_accessor :search_columns
+
+    # Option to use vendored assets (requires sprockets or propshaft) rather than linking to
+    # external assets (the default).
+    attr_accessor :use_vendored_assets
 
     def initialize
       self.show_backtrace = Rails.env.development?
