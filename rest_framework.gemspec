@@ -25,9 +25,10 @@ Gem::Specification.new do |spec|
     "README.md",
     "LICENSE",
     "VERSION",
-    *Dir["lib/**/*.rb"],
     *Dir["app/**/*"],
     *Dir["docs/**/*"],
+    *Dir["lib/**/*.rb"],
+    *Dir["vendor/assets/**/*"],
   ]
   spec.require_paths = ["lib", "app"]
 end
