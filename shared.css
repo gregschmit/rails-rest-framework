@@ -30,7 +30,6 @@ html[data-bs-theme="dark"] h6 {
 }
 
 /* Improve code and code blocks. */
-
 pre code, .trix-content pre {
   display: block;
   overflow-x: auto;
