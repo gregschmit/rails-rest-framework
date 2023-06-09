@@ -1,29 +1,149 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link rel='icon' type='image/x-icon' href='/assets/images/favicon.ico' />
+  <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico" />
 
   <title>{% if page.title %}{{ page.title | escape }}{% else %}{{ site.title | escape }}{% endif %}</title>
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js" integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.4/font/bootstrap-icons.css">
+  {% include external.html %}
+  {% include shared.html %}
 
-  <!-- Highlight.js -->
-  <link rel="stylesheet" class="rrf-light-mode" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-light.min.css" integrity="sha512-WDk6RzwygsN9KecRHAfm9HTN87LQjqdygDmkHSJxVkVI7ErCZ8ZWxP6T8RvBujY1n2/E4Ac+bn2ChXnp5rnnHA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" class="rrf-dark-mode" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-dark.min.css" integrity="sha512-Vj6gPCk8EZlqnoveEyuGyYaWZ1+jyjMPg8g4shwyyNlRQl6d3L9At02ZHQr5K6s5duZl/+YKMnM3/8pDhoUphg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js" integrity="sha512-bgHRAiTjGrzHzLyKOnpFvaEpGzJet3z4tZnXGjpsCcqOnAH6VGUx9frc5bcIhKTVLEiCO6vEhNAgx5jtLUYrfA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    /* Header adjustments. */
+    h1, h2, h3, h4, h5, h6 {
+      width: 100%;
+      font-weight: normal;
+      margin-top: 1.8rem;
+      margin-bottom: 1.2rem;
+    }
+    h1 a:not(:hover),
+    h2 a:not(:hover),
+    h3 a:not(:hover),
+    h4 a:not(:hover),
+    h5 a:not(:hover),
+    h6 a:not(:hover) {
+      color: #ddd;
+    }
+    html[data-bs-theme="dark"] h1 a:not(:hover),
+    html[data-bs-theme="dark"] h2 a:not(:hover),
+    html[data-bs-theme="dark"] h3 a:not(:hover),
+    html[data-bs-theme="dark"] h4 a:not(:hover),
+    html[data-bs-theme="dark"] h5 a:not(:hover),
+    html[data-bs-theme="dark"] h6 a:not(:hover) {
+      color: #444;
+    }
+    h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover, h6 a:hover {
+      text-decoration: none !important;
+    }
+
+    /* Navbar */
+    .navbar .navbar-toggler {
+      margin: .2em 0;
+      padding: .2em .3em;
+      border: none;
+    }
+    .navbar .navbar-toggler .navbar-toggler-icon {
+      height: 1.1em;
+      width: 1.1em;
+    }
+    .navbar .navbar-nav .nav-item .nav-link {
+      padding: .45em .6em;
+    }
+    .navbar .navbar-nav .nav-item .nav-link:hover {
+      background-color: #262a2f;
+    }
+    .navbar .dropdown-menu a.dropdown-item {
+      font-size: .9em;
+      padding: .2em .8em;
+    }
+
+    /* Headers table. */
+    .headers-table {
+      padding: .5em 1em;
+      background-color: #eee;
+      border: 1px solid #aaa;
+      border-radius: .3em;
+      font-size: .9em;
+    }
+    html[data-bs-theme="dark"] .headers-table {
+      background-color: #2b2b2b;
+    }
+    .headers-table:empty { display: none; }
+    .headers-table ul {
+      list-style-type: none;
+      margin: 0;
+      padding-left: 0;
+      padding-right: .6em;
+    }
+    .headers-table ul li { margin: .3em 0; }
+    .headers-table ul ul { padding-left: .8em; padding-right: 0; }
+    .headers-table > ul > li {
+      font-weight: bold;
+    }
+
+    /* Style the github and mode component. */
+    #rrfGithubAndModeWrapper {
+      height: 2.4em;
+    }
+    #rrfGithubComponent {
+      display: inline-block;
+      position: relative;
+      top: .6em;
+    }
+    #rrfModeComponent .dropdown-toggle {
+      float: right;
+    }
+    #rrfModeComponent .dropdown-menu {
+      position: absolute;
+      right: 0;
+      left: auto;
+      top: 100%;
+    }
+  </style>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Initialize `Highlight.js`.
+      hljs.configure({ ignoreUnescapedHTML: true })
+      hljs.highlightAll()
+
+      // Setup the floating table of contents.
+      let table = "<ul>"
+      let hlevel = 2
+      let hprevlevel = 2
+      document.querySelectorAll("h2, h3, h4").forEach((header) => {
+        hlevel = parseInt(header.tagName[1])
+
+        if (hlevel > hprevlevel) {
+          table += "<ul>"
+        } else if (hlevel < hprevlevel) {
+          Array(hprevlevel - hlevel)
+            .fill(0)
+            .forEach(function () {
+              table += "</ul>"
+            })
+        }
+        table += `<li><a href="${
+          header.querySelectorAll("a")[0].href
+        }">${header.childNodes[0].nodeValue.trim()}</a></li>`
+        hprevlevel = hlevel
+      })
+      if (hlevel > hprevlevel) {
+        table += "</ul>"
+      }
+      table += "</ul>"
+      if (table != "<ul></ul>") {
+        document.getElementById("headersTable").innerHTML = table
+      }
+    })
+  </script>
+
+  <!-- Extra Highlight.js languages not shared with the library. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/shell.min.js" integrity="sha512-X2JngetHwVsp0j3n6lo8HGdXQKLpz2hwFfQkG996OfanpFaQJFgjKJlmzsdefWsHTQIwY539tD09JF48kCPMXw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/erb.min.js" integrity="sha512-flbEiCcectGeyRXyuMZW5jlAGIQ1/qrTZS6DsZDTqObM0JG/isYHvUyehOyt14ssmY85gZRYra+IJR9+azRuqw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/ruby.min.js" integrity="sha512-xRUQANk9Iw3wtAp0cBOa1Ghr7yIFrMiJiEujrMGf04qOau23exxj4R7DLUeLGfLiDbVSK0FyN8v2ns4m/6iNmQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/json.min.js" integrity="sha512-0xYvyncS9OLE7GOpNBZFnwyh9+bq4HVgk4yVVYI678xRvE22ASicF1v6fZ1UiST+M6pn17MzFZdvVCI3jTHSyw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/xml.min.js" integrity="sha512-5zBcw+OKRkaNyvUEPlTSfYylVzgpi7KpncY36b0gRudfxIYIH0q0kl2j26uCUB3YBRM6ytQQEZSgRg+ZlBTmdA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-  <link rel="stylesheet" href="{{ "/assets/css/rest_framework.css" }}">
-  <script src="{{ "/assets/js/rest_framework.js" }}"></script>
-
-  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <!-- Google Analytics: Global Site Tag -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P2KRPNXQMT"></script>
   <script>
     window.dataLayer = window.dataLayer || [];

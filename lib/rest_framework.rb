@@ -65,14 +65,17 @@ module RESTFramework
     # NeatJSON
     "neatjson.js" => {
       url: "https://cdn.jsdelivr.net/npm/neatjson@0.10.5/javascript/neatjson.min.js",
+      exclude_from_docs: true,
     },
 
     # Trix
     "trix.css" => {
       url: "https://unpkg.com/trix@2.0.0/dist/trix.css",
+      exclude_from_docs: true,
     },
     "trix.js" => {
       url: "https://unpkg.com/trix@2.0.0/dist/trix.umd.min.js",
+      exclude_from_docs: true,
     },
   }.map { |name, cfg|
     if File.extname(name) == ".js"
@@ -86,6 +89,7 @@ module RESTFramework
         defer: true,
         **cfg[:extra_tag_attrs],
       }
+      cfg[:tag] = ActionController::Base.helpers.tag.script(**cfg[:tag_attrs])
     else
       cfg[:place] = "stylesheets"
       cfg[:extra_tag_attrs] ||= {}
@@ -96,6 +100,7 @@ module RESTFramework
         crossorigin: "anonymous",
         **cfg[:extra_tag_attrs],
       }
+      cfg[:tag] = ActionController::Base.helpers.tag.link(**cfg[:tag_attrs])
     end
 
     [name, cfg]
