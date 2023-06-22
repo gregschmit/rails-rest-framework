@@ -1,10 +1,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<%= csrf_meta_tags %>
-<%= csp_meta_tag rescue nil %>
 
-<%= render partial: "rest_framework/external" %>
-<%= render partial: "rest_framework/shared" %>
+<%= render partial: "rest_framework/head/external" %>
+<%= render partial: "rest_framework/head/shared" %>
 
 <style>
 /* Header adjustments. */

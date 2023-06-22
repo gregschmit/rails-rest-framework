@@ -2,7 +2,12 @@
 <html class="rrf-mode">
   <head>
     <title><%= @title %></title>
-    <%= render partial: "rest_framework/head" %>
+
+    <%# These dynamic tags cannot be cached, so include directly instead of in `head` partial. %>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag rescue nil %>
+
+    <%= render partial: "rest_framework/head", cached: true %>
   </head>
 
   <body>

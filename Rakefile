@@ -54,7 +54,7 @@ task :maintain_assets do
     #{File.read(File.expand_path("shared.js", __dir__))}
     </script>
   SHARED
-  File.write(File.expand_path("app/views/rest_Framework/_shared.html", __dir__), shared)
+  File.write(File.expand_path("app/views/rest_framework/head/_shared.html", __dir__), shared)
   File.write(File.expand_path("docs/_includes/shared.html", __dir__), shared)
 
   # Write external asset links to docs.
