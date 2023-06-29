@@ -20,6 +20,10 @@ module RESTFramework
     destroy_all: :delete,
   }.freeze
 
+  # We put most vendored external assets into these files to make precompilation and serving faster.
+  EXTERNAL_CSS_NAME = "rest_framework/external.min.css"
+  EXTERNAL_JS_NAME = "rest_framework/external.min.js"
+
   # We should always add the `.min` extension prefix even if the assets are not minified, to avoid
   # sprockets minifying the assets. We target propshaft, so we want these assets to just be passed
   # through.
@@ -81,7 +85,8 @@ module RESTFramework
       exclude_from_docs: true,
     },
   }.map { |name, cfg|
-    if File.extname(name) == ".js"
+    ext = File.extname(name)
+    if ext == ".js"
       cfg[:place] = "javascripts"
       cfg[:extra_tag_attrs] ||= {}
       cfg[:tag_attrs] = {
@@ -93,7 +98,7 @@ module RESTFramework
         **cfg[:extra_tag_attrs],
       }
       cfg[:tag] = ActionController::Base.helpers.tag.script(**cfg[:tag_attrs])
-    else
+    elsif ext == ".css"
       cfg[:place] = "stylesheets"
       cfg[:extra_tag_attrs] ||= {}
       cfg[:tag_attrs] = {
@@ -104,11 +109,15 @@ module RESTFramework
         **cfg[:extra_tag_attrs],
       }
       cfg[:tag] = ActionController::Base.helpers.tag.link(**cfg[:tag_attrs])
+    else
+      raise "Unknown asset extension: #{ext}."
     end
 
     [name, cfg]
   }.to_h.freeze
   # rubocop:enable Layout/LineLength
+
+  EXTERNAL_UNSUMMARIZED_ASSETS = EXTERNAL_ASSETS.select { |_, cfg| cfg[:extra_tag_attrs].present? }
 
   # Global configuration should be kept minimal, as controller-level configurations allows multiple
   # APIs to be defined to behave differently.

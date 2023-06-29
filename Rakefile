@@ -17,7 +17,12 @@ task :maintain_assets do
     Dir.mkdir(File.expand_path("#{path_type}/rest_framework", assets_dir))
   end
 
-  # Vendor each asset.
+  # Vendor each asset, summarizing assets into a single `external` asset unless they have
+  # `extra_tag_attrs`.
+  css_content = ""
+  css_path = File.expand_path("stylesheets/#{RESTFramework::EXTERNAL_CSS_NAME}", assets_dir)
+  js_content = ""
+  js_path = File.expand_path("javascripts/#{RESTFramework::EXTERNAL_JS_NAME}", assets_dir)
   RESTFramework::EXTERNAL_ASSETS.each do |name, cfg|
     file_path = File.expand_path("#{cfg[:place]}/rest_framework/#{name}", assets_dir)
 
@@ -57,8 +62,26 @@ task :maintain_assets do
       }
     end
 
-    File.write(file_path, content)
+    # Normalize content leading/trailing whitespace.
+    content = content.strip + "\n"
+
+    if cfg[:extra_tag_attrs].present?
+      # If `extra_tag_attrs` is set, then we write the asset to its own file so the tag attributes
+      # only affect that particular asset.
+      File.write(file_path, content)
+    else
+      # Otherwise, we append to the external asset.
+      if cfg[:place] == "stylesheets"
+        css_content << content
+      elsif cfg[:place] == "javascripts"
+        js_content << content
+      else
+        raise "Unknown asset place."
+      end
+    end
   end
+  File.write(css_path, css_content)
+  File.write(js_path, js_content)
 
   # Update shared css/js.
   shared = <<~SHARED

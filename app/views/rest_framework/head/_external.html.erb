@@ -1,9 +1,14 @@
 <% if RESTFramework.config.use_vendored_assets %>
-  <% RESTFramework::EXTERNAL_ASSETS.each do |name, cfg| %>
+  <%= javascript_include_tag RESTFramework::EXTERNAL_JS_NAME, defer: true %>
+  <%= stylesheet_link_tag RESTFramework::EXTERNAL_CSS_NAME %>
+
+  <% RESTFramework::EXTERNAL_UNSUMMARIZED_ASSETS.each do |name, cfg| %>
     <% if cfg[:place] == "javascripts" %>
       <%= javascript_include_tag "rest_framework/#{name}", defer: true, **cfg[:extra_tag_attrs] %>
-    <% else %>
+    <% elsif cfg[:place] == "stylesheets" %>
       <%= stylesheet_link_tag "rest_framework/#{name}", **cfg[:extra_tag_attrs] %>
+    <% else %>
+      <% raise "Unknown asset place." %>
     <% end %>
   <% end %>
 <% else %>

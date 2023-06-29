@@ -4,8 +4,8 @@ inherit_gem:
 
 AllCops:
   Exclude:
-  - test/db/schema.rb
-  - vendor
+    - test/db/schema.rb
+    - vendor
   SuggestExtensions: false
   NewCops: disable
 
@@ -30,7 +30,7 @@ Layout/LineLength:
   Max: 100
   AllowedPatterns:
     # Allow long comments.
-    - '^#.*'
+    - "^#.*"
 
 Layout/EndAlignment:
   Enabled: true
@@ -147,6 +147,9 @@ Style/DateTime:
   Enabled: false
 
 Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/IfInsideElse:
   Enabled: false
 
 Style/MultilineTernaryOperator:
