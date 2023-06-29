@@ -33,6 +33,10 @@ gem "translate_enum"
 ENV["ASSET_PIPELINE"] = nil
 if ENV["ASSET_PIPELINE"] == "sprockets"
   gem "sprockets-rails"
+
+  # Purely to test a failure in sass where if a css variable refers to a `url`, then it raises an
+  # `undefined method 'size' for nil:NilClass` exception in: `sass-3.7.4/lib/sass/util.rb:157`.
+  gem "sass-rails", "5.1"
 elsif ENV["ASSET_PIPELINE"] == "propshaft"
   gem "propshaft"
 end

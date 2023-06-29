@@ -20,25 +20,44 @@ task :maintain_assets do
   # Vendor each asset.
   RESTFramework::EXTERNAL_ASSETS.each do |name, cfg|
     file_path = File.expand_path("#{cfg[:place]}/rest_framework/#{name}", assets_dir)
-    File.open(file_path, "wb") do |file|
-      HTTParty.get(cfg[:url], stream_body: true, follow_redirects: true) do |fragment|
-        file.write(fragment)
+
+    # Fetch the content.
+    content = HTTParty.get(cfg[:url], follow_redirects: true).body.to_s
+
+    # Remove source map references.
+    content.gsub!(%r{^//# sourceMappingURL=.*}, "")
+    content.gsub!(%r{^/\*# sourceMappingURL=.*}, "")
+
+    # Fix bug in a version of sass where if a css variable refers to a `url`, then it raises an
+    # `undefined method 'size' for nil:NilClass` exception in: `sass-3.7.4/lib/sass/util.rb:157`.
+    #
+    # We fix by simply removing those `url` references. They only appear in Bootstrap, and we don't
+    # actually use them.
+    if cfg[:place] == "stylesheets"
+      vars = []
+      content.gsub!(/(--[a-z-]+):\s*url.+?;/) {
+        vars << Regexp.last_match(1)
+        next ""
+      }
+      vars.each do |var|
+        content.gsub!(/var\(#{var}\)/, "none")
       end
     end
 
     # Inline fonts, if needed.
-    if cfg[:inline_fonts]  # rubocop:disable Style/Next
+    if cfg[:inline_fonts]
       base_url = File.dirname(cfg[:url])
 
       # Replace font URLs with inline and base64-encoded fonts.
-      new_file = File.read(file_path).gsub(/url\("([^"]+)"\) format\("([^"]+)"\)/) {
-        content = Base64.strict_encode64(HTTParty.get("#{base_url}/#{Regexp.last_match(1)}").body)
+      content.gsub!(/url\("([^"]+)"\) format\("([^"]+)"\)/) {
+        c = Base64.strict_encode64(HTTParty.get("#{base_url}/#{Regexp.last_match(1)}").body)
         "url(\"data:application/font-#{
           Regexp.last_match(2)
-        };charset=utf-8;base64,#{content}\") format(\"#{Regexp.last_match(2)}\")"
+        };charset=utf-8;base64,#{c}\") format(\"#{Regexp.last_match(2)}\")"
       }
-      File.write(file_path, new_file)
     end
+
+    File.write(file_path, content)
   end
 
   # Update shared css/js.

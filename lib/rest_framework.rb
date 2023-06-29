@@ -20,60 +20,63 @@ module RESTFramework
     destroy_all: :delete,
   }.freeze
 
+  # We should always add the `.min` extension prefix even if the assets are not minified, to avoid
+  # sprockets minifying the assets. We target propshaft, so we want these assets to just be passed
+  # through.
   # rubocop:disable Layout/LineLength
   EXTERNAL_ASSETS = {
     # Bootstrap
-    "bootstrap.css" => {
+    "bootstrap.min.css" => {
       url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css",
       sri: "sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp",
     },
-    "bootstrap.js" => {
+    "bootstrap.min.js" => {
       url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js",
       sri: "sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N",
     },
 
     # Bootstrap Icons
-    "bootstrap-icons.css" => {
+    "bootstrap-icons.min.css" => {
       url: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.4/font/bootstrap-icons.min.css",
       inline_fonts: true,
     },
 
     # Highlight.js
-    "highlight.js" => {
+    "highlight.min.js" => {
       url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js",
       sri: "sha512-bgHRAiTjGrzHzLyKOnpFvaEpGzJet3z4tZnXGjpsCcqOnAH6VGUx9frc5bcIhKTVLEiCO6vEhNAgx5jtLUYrfA==",
     },
-    "highlight-json.js" => {
+    "highlight-json.min.js" => {
       url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/json.min.js",
       sri: "sha512-0xYvyncS9OLE7GOpNBZFnwyh9+bq4HVgk4yVVYI678xRvE22ASicF1v6fZ1UiST+M6pn17MzFZdvVCI3jTHSyw==",
     },
-    "highlight-xml.js" => {
+    "highlight-xml.min.js" => {
       url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/xml.min.js",
       sri: "sha512-5zBcw+OKRkaNyvUEPlTSfYylVzgpi7KpncY36b0gRudfxIYIH0q0kl2j26uCUB3YBRM6ytQQEZSgRg+ZlBTmdA==",
     },
-    "highlight-a11y-dark.css" => {
+    "highlight-a11y-dark.min.css" => {
       url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-dark.min.css",
       sri: "sha512-Vj6gPCk8EZlqnoveEyuGyYaWZ1+jyjMPg8g4shwyyNlRQl6d3L9At02ZHQr5K6s5duZl/+YKMnM3/8pDhoUphg==",
       extra_tag_attrs: {class: "rrf-dark-mode"},
     },
-    "highlight-a11y-light.css" => {
+    "highlight-a11y-light.min.css" => {
       url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-light.min.css",
       sri: "sha512-WDk6RzwygsN9KecRHAfm9HTN87LQjqdygDmkHSJxVkVI7ErCZ8ZWxP6T8RvBujY1n2/E4Ac+bn2ChXnp5rnnHA==",
       extra_tag_attrs: {class: "rrf-light-mode"},
     },
 
     # NeatJSON
-    "neatjson.js" => {
+    "neatjson.min.js" => {
       url: "https://cdn.jsdelivr.net/npm/neatjson@0.10.5/javascript/neatjson.min.js",
       exclude_from_docs: true,
     },
 
     # Trix
-    "trix.css" => {
+    "trix.min.css" => {
       url: "https://unpkg.com/trix@2.0.0/dist/trix.css",
       exclude_from_docs: true,
     },
-    "trix.js" => {
+    "trix.min.js" => {
       url: "https://unpkg.com/trix@2.0.0/dist/trix.umd.min.js",
       exclude_from_docs: true,
     },
