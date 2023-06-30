@@ -7,17 +7,17 @@ class RescuingUnknownFormatsTest < ActionDispatch::IntegrationTest
   # Test that an invalid format raises an uncaught exception.
   def test_raise_unknown_format
     assert_raises(ActionController::UnknownFormat) do
-      get("/test_api/marbles_without_rescue_unknown_format.jsom")
+      get("/api/test/marbles_without_rescue_unknown_format.jsom")
     end
   end
 
   # Test that we rescue an unkonwn format and also that it defaults to :json.
   def test_rescue_unknown_format
-    get("/test_api/marbles.json")
+    get("/api/test/marbles.json")
     assert_response(:success)
     resp1 = @response.body
 
-    get("/test_api/marbles.jsom")
+    get("/api/test/marbles.jsom")
     assert_response(:success)
     resp2 = @response.body
 

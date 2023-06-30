@@ -164,6 +164,12 @@ Style/RedundantReturn:
 Style/RedundantSelf:
   Enabled: false
 
+Style/RegexpLiteral:
+  Enabled: false
+
+Style/ReturnNil:
+  Enabled: false
+
 Style/TrailingCommaInArguments:
   Enabled: true
   EnforcedStyleForMultiline: comma

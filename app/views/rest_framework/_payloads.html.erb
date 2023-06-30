@@ -1,0 +1,36 @@
+<div class="row">
+  <div>
+    <ul class="nav nav-tabs">
+      <% if @json_payload.present? %>
+        <li class="nav-item">
+          <a class="nav-link active" href="#tab-json" data-bs-toggle="tab" role="tab">
+            .json
+          </a>
+        </li>
+      <% end %>
+      <% if @xml_payload.present? %>
+        <li class="nav-item">
+          <a class="nav-link" href="#tab-xml" data-bs-toggle="tab" role="tab">
+            .xml
+          </a>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+  <div class="tab-content pt-2">
+    <div class="tab-pane fade show active" id="tab-json" role="tabpanel">
+      <% if @json_payload.present? %>
+        <div><pre class="rrf-copy"><code class="language-json"><%=
+          JSON.pretty_generate(JSON.parse(@json_payload)) unless @json_payload == ""
+        %></code></pre></div>
+      <% end %>
+    </div>
+    <div class="tab-pane fade" id="tab-xml" role="tabpanel">
+      <% if @xml_payload.present? %>
+        <div><pre class="rrf-copy"><code class="language-xml"><%=
+          CGI.unescapeHTML(@xml_payload)
+        %></code></pre></div>
+      <% end %>
+    </div>
+  </div>
+</div>

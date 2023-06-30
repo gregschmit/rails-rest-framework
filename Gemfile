@@ -15,6 +15,7 @@ RAILS_VERSION = Gem::Version.new(
 )
 gem "rails", "~> #{RAILS_VERSION}"
 gem "rake", ">= 12.0"
+gem "sqlite3", "~> 1.4.0"
 
 # Ruby 3 removed webrick, so we need to install it manually.
 if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3")
@@ -41,6 +42,9 @@ elsif ENV["ASSET_PIPELINE"] == "propshaft"
   gem "propshaft"
 end
 
+gem "kramdown"
+gem "kramdown-parser-gfm"
+
 group :development do
   gem "annotate"
   gem "better_errors", "2.9.1"  # Avoid `sassc` dependency.
@@ -62,14 +66,4 @@ group :test do
   gem "minitest", ">= 5.0"
   gem "simplecov"
   gem "simplecov-lcov", "0.8.0", require: false
-end
-
-group :development, :test do
-  # Heroku does not allow sqlite3 gem.
-  gem "sqlite3", "~> 1.4.0"
-end
-
-group :production do
-  # Heroku requires Postgres.
-  gem "pg"
 end

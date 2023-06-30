@@ -2,219 +2,377 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <%= render partial: "rest_framework/head/external" %>
-<%= render partial: "rest_framework/head/shared" %>
 
 <style>
-/* Header adjustments. */
-h1,h2,h3,h4,h5,h6 { display: inline-block; font-weight: normal; margin-bottom: 0; }
+  :root {
+    --rrf-red: #900;
+    --rrf-red-hover: #5f0c0c;
+    --rrf-light-red: #db2525;
+    --rrf-light-red-hover: #b80404;
+  }
+  #rrfAccentBar {
+    background-color: var(--rrf-red);
+    height: .3em;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  header nav { background-color: black; }
 
-/* Reduce label font size. */
-label.form-label {
-  font-size: .8em;
-}
+  /* Header adjustments. */
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.7rem; }
+  h3 { font-size: 1.5rem; }
+  h4 { font-size: 1.3rem; }
+  h5 { font-size: 1.1rem; }
+  h6 { font-size: 1rem; }
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--rrf-red);
+    font-weight: normal;
+    margin-bottom: 0;
+  }
+  html[data-bs-theme="dark"] h1,
+  html[data-bs-theme="dark"] h2,
+  html[data-bs-theme="dark"] h3,
+  html[data-bs-theme="dark"] h4,
+  html[data-bs-theme="dark"] h5,
+  html[data-bs-theme="dark"] h6 {
+    color: var(--rrf-light-red);
+  }
 
-/* Make Trix buttons visible even in dark mode. */
-trix-toolbar .trix-button-group {
-  background-color: #eee;
-}
+  /* Improve code and code blocks. */
+  pre code, .trix-content pre {
+    display: block;
+    overflow-x: auto;
+    padding: .5em !important;
+  }
+  code, .trix-content pre {
+    --bs-code-color: black;
+    background-color: #eee !important;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    padding: .1em .3em;
+  }
+  html[data-bs-theme="dark"] code, html[data-bs-theme="dark"] .trix-content pre {
+    --bs-code-color: white;
+    background-color: #2b2b2b !important;
+  }
 
-/* Make Trix dialog URL input visible in dark mode. */
-input.trix-input--dialog {
-  color: black;
-}
+  /* Anchors */
+  a:not(.nav-link) {
+    text-decoration: none;
+    color: var(--rrf-red);
+  }
+  a:hover:not(.nav-link) {
+    text-decoration: underline;
+    color: var(--rrf-red-hover);
+  }
+  html[data-bs-theme="dark"] a:not(.nav-link) { color: var(--rrf-light-red); }
+  html[data-bs-theme="dark"] a:hover:not(.nav-link) { color: var(--rrf-light-red-hover); }
 
-/* Make route group expansion obvious to the user. */
-.rrf-routes .rrf-route-group-header:hover {
-  background-color: #ddd;
-}
-html[data-bs-theme="dark"] .rrf-routes .rrf-route-group-header:hover {
-  background-color: #333;
-}
-.rrf-routes .rrf-route-group-header td {
-  cursor: pointer;
-}
+  /* Reduce label font size. */
+  label.form-label {
+    font-size: .8em;
+  }
 
-/* Disable bootstrap's collapsing animation because in tables it causes delayed jerkiness. */
-.rrf-routes .collapsing {
-  -webkit-transition: none;
-  transition: none;
-  display: none;
-}
+  /* Make Trix buttons visible even in dark mode. */
+  trix-toolbar .trix-button-group {
+    background-color: #eee;
+  }
 
-/* Copy-to-clipboard styles. */
-.rrf-copy {
-  position: relative;
-}
-.rrf-copy .rrf-copy-link {
-  position: absolute;
-  top: .25em;
-  right: .4em;
-  transition: 0.3s ease;
-  font-size: 1.5em;
-}
-.rrf-copy .rrf-copy-link.rrf-clicked {
-  color: green;
-}
-.rrf-copy .rrf-copy-link.rrf-clicked:hover {
-  color: green;
-}
+  /* Make Trix dialog URL input visible in dark mode. */
+  input.trix-input--dialog {
+    color: black;
+  }
+
+  /* Make route group expansion obvious to the user. */
+  .rrf-routes .rrf-route-group-header:hover {
+    background-color: #ddd;
+  }
+  html[data-bs-theme="dark"] .rrf-routes .rrf-route-group-header:hover {
+    background-color: #333;
+  }
+  .rrf-routes .rrf-route-group-header td {
+    cursor: pointer;
+  }
+
+  /* Disable bootstrap's collapsing animation because in tables it causes delayed jerkiness. */
+  .rrf-routes .collapsing {
+    -webkit-transition: none;
+    transition: none;
+    display: none;
+  }
+
+  /* Copy-to-clipboard styles. */
+  .rrf-copy {
+    position: relative;
+  }
+  .rrf-copy .rrf-copy-link {
+    position: absolute;
+    top: .25em;
+    right: .4em;
+    transition: 0.3s ease;
+    font-size: 1.5em;
+  }
+  .rrf-copy .rrf-copy-link.rrf-clicked {
+    color: green;
+  }
+  .rrf-copy .rrf-copy-link.rrf-clicked:hover {
+    color: green;
+  }
 </style>
 
 <script>
-document.addEventListener("DOMContentLoaded", (event) => {
-  // Pretty-print JSON.
-  document.querySelectorAll(".language-json").forEach((el) => {
-    el.innerHTML = neatJSON(JSON.parse(el.innerText), {
-      wrap: 80,
-      afterComma: 1,
-      afterColon: 1,
-    }).replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;")
-  })
-
-  // Then highlight it.
-  hljs.configure({cssSelector: "pre code.auto-hljs"})
-  hljs.highlightAll()
-
-  // Replace text node links with anchor tag links.
-  document.querySelectorAll(".rrf-copy code").forEach((el) => {
-    el.innerHTML = rrfLinkify(el.innerHTML)
-  })
-
-  // Insert copy links.
-  document.querySelectorAll(".rrf-copy").forEach((el) => {
-    el.insertAdjacentHTML(
-      "afterbegin",
-      '<a class="rrf-copy-link" title="Copy to Clipboard" href="#"><i class="bi bi-clipboard-fill"></i></a>',
-    )
-  })
-
-  // Copy link implementation.
-  document.querySelectorAll(".rrf-copy-link").forEach((el) => {
-    el.addEventListener("click", (event) => {
-      const range = document.createRange()
-      range.selectNode(el.nextSibling)
-      window.getSelection().removeAllRanges()
-      window.getSelection().addRange(range)
-      if (document.execCommand("copy")) {
-        // Trigger clicked animation.
-        el.classList.add("rrf-clicked")
-        el.innerHTML = '<i class="bi bi-clipboard-check-fill">'
-        setTimeout(() => {
-          el.classList.remove("rrf-clicked")
-          el.innerHTML = '<i class="bi bi-clipboard-fill">'
-        }, 1000)
+  // Javascript for dark/light mode.
+  ;(() => {
+    // Get the real mode from a selected mode. Anything other than "light" or "dark" is treated as
+    // "system" mode.
+    const rrfGetRealMode = (selectedMode) => {
+      if (selectedMode === "light" || selectedMode === "dark") {
+        return selectedMode
       }
-      event.preventDefault()
-    })
-  })
 
-  // Check if `rawFilesFormWrapper` should be displayed when media type is changed.
-  const rawFormRouteSelect = document.getElementById("rawFormRoute")
-  const rawFormMediaTypeSelect = document.getElementById("rawFormMediaType")
-  const rawFilesFormWrapper = document.getElementById("rawFilesFormWrapper")
-  if (rawFilesFormWrapper) {
-    const rawFormFilesHandler = () => {
-      const selectedRouteOption = rawFormRouteSelect.options[rawFormRouteSelect.selectedIndex]
-      if (rawFormMediaTypeSelect.value === "multipart/form-data" && selectedRouteOption.dataset.supportsFiles) {
-        rawFilesFormWrapper.style.display = "block"
+      if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        return "dark"
+      }
+
+      return "light"
+    }
+
+    // Set the mode, given a "selected" mode.
+    const rrfSetSelectedMode = (selectedMode) => {
+      // Anything except "light" or "dark" is casted to "system".
+      if (selectedMode !== "light" && selectedMode !== "dark") {
+        selectedMode = "system"
+      }
+
+      // Store selected mode in `localStorage`.
+      localStorage.setItem("rrfMode", selectedMode)
+
+      // Set the mode selector to the selected mode.
+      const modeComponent = document.getElementById("rrfModeComponent")
+      if (modeComponent) {
+        let labelHTML
+        modeComponent.querySelectorAll("button[data-rrf-mode-value]").forEach((el) => {
+          if (el.getAttribute("data-rrf-mode-value") === selectedMode) {
+            el.classList.add("active")
+            labelHTML = el.querySelector("i").outerHTML.replace("ms-2", "me-1")
+          } else {
+            el.classList.remove("active")
+          }
+        })
+        modeComponent.querySelector("button[data-bs-toggle]").innerHTML = labelHTML
+      }
+
+      // Get the real mode to use.
+      realMode = rrfGetRealMode(selectedMode)
+
+      // Set the `realMode` effects.
+      if (realMode === "light") {
+        document.querySelectorAll(".rrf-light-mode").forEach((el) => {
+          el.disabled = false
+        })
+        document.querySelectorAll(".rrf-dark-mode").forEach((el) => {
+          el.disabled = true
+        })
+        document.querySelectorAll(".rrf-mode").forEach((el) => {
+          el.setAttribute("data-bs-theme", "light")
+        })
+      } else if (realMode === "dark") {
+        document.querySelectorAll(".rrf-light-mode").forEach((el) => {
+          el.disabled = true
+        })
+        document.querySelectorAll(".rrf-dark-mode").forEach((el) => {
+          el.disabled = false
+        })
+        document.querySelectorAll(".rrf-mode").forEach((el) => {
+          el.setAttribute("data-bs-theme", "dark")
+        })
       } else {
-        rawFilesFormWrapper.style.display = "none"
+        console.log(`RRF: Unknown mode: ${mode}`)
       }
     }
 
-    rawFormRouteSelect.addEventListener("change", rawFormFilesHandler)
-    rawFormMediaTypeSelect.addEventListener("change", rawFormFilesHandler)
-  }
-})
+    // Initialize dark/light mode before page fully loads to prevent flash.
+    rrfSetSelectedMode(localStorage.getItem("rrfMode"))
 
-// Convert plain-text links to anchor tag links.
-function rrfLinkify(text) {
-  return text.replace(/(https?:\/\/[^\s<>"]+)/g, "<a href=\"$1\" target=\"_blank\">$1</a>")
-}
+    // Initialize dark/light mode after page load (mostly so mode component is updated).
+    document.addEventListener("DOMContentLoaded", (event) => {
+      rrfSetSelectedMode(localStorage.getItem("rrfMode"))
 
-// Replace the document when doing form submission (mainly to support PUT/PATCH/DELETE).
-function rrfReplaceDocument(content) {
-  // Replace the document with provided content.
-  document.open()
-  document.write(content)
-  document.close()
-
-  // Trigger `DOMContentLoaded` manually so our custom JavaScript works.
-  document.dispatchEvent(new Event("DOMContentLoaded", {bubbles: true, cancelable: true}))
-}
-
-// Refresh the window as a `GET` request.
-function rrfGet(button) {
-  button.disabled = true
-  window.location.replace(window.location.href)
-}
-
-// Call `DELETE` on the current path.
-function rrfDelete(button) {
-  button.disabled = true
-  rrfAPICall(window.location.pathname, "DELETE")
-}
-
-// Call `OPTIONS` on the current path.
-function rrfOptions(button) {
-  button.disabled = true
-  rrfAPICall(window.location.pathname, "OPTIONS")
-}
-
-// Submit the raw form.
-function rrfSubmitRawForm(button) {
-  button.disabled = true
-
-  // Grab the selected route/method, media type, and the body.
-  const [method, path] = document.getElementById("rawFormRoute").value.split(":")
-  const mediaType = document.getElementById("rawFormMediaType").value
-  let body = document.getElementById("rawFormContent").value
-
-  // If the media type is `multipart/form-data`, then we need to build a FormData object.
-  if (mediaType == "multipart/form-data") {
-    let formData = new FormData()
-
-    // Add body to `formData`.
-    const bodySearchParams = new URLSearchParams(body)
-    bodySearchParams.forEach((value, key) => {
-      formData.append(key, value)
+      // Also set up mode selector.
+      document.querySelectorAll("#rrfModeComponent button[data-rrf-mode-value]").forEach((el) => {
+        el.addEventListener("click", (event) => {
+          rrfSetSelectedMode(event.target.getAttribute("data-rrf-mode-value"))
+        })
+      })
     })
 
-    // Add file(s) to `formData`.
-    const rawFilesForm = document.getElementById("rawFilesForm")
-    if (rawFilesForm) {
-      rawFilesForm.querySelectorAll("input[type=file]").forEach((el) => {
-        const files = el.files
-        for (let i = 0; i < files.length; i++) {
-          formData.append(el.name, files[i])
+    // Handle case where user changes system theme.
+    if (window.matchMedia) {
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+        const selectedMode = localStorage.getItem("rrfMode")
+        if (selectedMode !== "light" && selectedMode !== "dark") {
+          rrfSetSelectedMode("system")
         }
       })
     }
+  })();
 
-    // Set body to be the form data.
-    body = formData
+  document.addEventListener("DOMContentLoaded", (event) => {
+    // Pretty-print JSON.
+    document.querySelectorAll(".language-json").forEach((el) => {
+      el.innerHTML = neatJSON(JSON.parse(el.innerText), {
+        wrap: 80,
+        afterComma: 1,
+        afterColon: 1,
+      }).replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;")
+    })
+
+    // Then highlight it.
+    hljs.configure({cssSelector: "pre code"})
+    hljs.highlightAll()
+
+    // Replace text node links with anchor tag links.
+    document.querySelectorAll(".rrf-copy code").forEach((el) => {
+      el.innerHTML = rrfLinkify(el.innerHTML)
+    })
+
+    // Insert copy links.
+    document.querySelectorAll(".rrf-copy").forEach((el) => {
+      el.insertAdjacentHTML(
+        "afterbegin",
+        '<a class="rrf-copy-link" title="Copy to Clipboard" href="#"><i class="bi bi-clipboard-fill"></i></a>',
+      )
+    })
+
+    // Copy link implementation.
+    document.querySelectorAll(".rrf-copy-link").forEach((el) => {
+      el.addEventListener("click", (event) => {
+        const range = document.createRange()
+        range.selectNode(el.nextSibling)
+        window.getSelection().removeAllRanges()
+        window.getSelection().addRange(range)
+        if (document.execCommand("copy")) {
+          // Trigger clicked animation.
+          el.classList.add("rrf-clicked")
+          el.innerHTML = '<i class="bi bi-clipboard-check-fill">'
+          setTimeout(() => {
+            el.classList.remove("rrf-clicked")
+            el.innerHTML = '<i class="bi bi-clipboard-fill">'
+          }, 1000)
+        }
+        event.preventDefault()
+      })
+    })
+
+    // Check if `rawFilesFormWrapper` should be displayed when media type is changed.
+    const rawFormRouteSelect = document.getElementById("rawFormRoute")
+    const rawFormMediaTypeSelect = document.getElementById("rawFormMediaType")
+    const rawFilesFormWrapper = document.getElementById("rawFilesFormWrapper")
+    if (rawFilesFormWrapper) {
+      const rawFormFilesHandler = () => {
+        const selectedRouteOption = rawFormRouteSelect.options[rawFormRouteSelect.selectedIndex]
+        if (rawFormMediaTypeSelect.value === "multipart/form-data" && selectedRouteOption.dataset.supportsFiles) {
+          rawFilesFormWrapper.style.display = "block"
+        } else {
+          rawFilesFormWrapper.style.display = "none"
+        }
+      }
+
+      rawFormRouteSelect.addEventListener("change", rawFormFilesHandler)
+      rawFormMediaTypeSelect.addEventListener("change", rawFormFilesHandler)
+    }
+  })
+
+  // Convert plain-text links to anchor tag links.
+  function rrfLinkify(text) {
+    return text.replace(/(https?:\/\/[^\s<>"]+)/g, "<a href=\"$1\" target=\"_blank\">$1</a>")
   }
 
-  // Perform the API call.
-  rrfAPICall(path, method, {
-    body,
-    // If the media type is `multipart/form-data`, then we don't want to set the content type
-    // because it must be set by `fetch` to include boundary.
-    headers: mediaType == "multipart/form-data" ? {} : {"Content-Type": mediaType},
-  })
-}
+  // Replace the document when doing form submission (mainly to support PUT/PATCH/DELETE).
+  function rrfReplaceDocument(content) {
+    // Replace the document with provided content.
+    document.open()
+    document.write(content)
+    document.close()
 
-// Make an HTML API call and replace the document with the response.
-function rrfAPICall(path, method, kwargs={}) {
-  const headers = kwargs.headers || {}
-  delete kwargs.headers
+    // Trigger `DOMContentLoaded` manually so our custom JavaScript works.
+    document.dispatchEvent(new Event("DOMContentLoaded", {bubbles: true, cancelable: true}))
+  }
 
-  fetch(path, {method, headers: {"Accept": "text/html", ...headers}, ...kwargs})
-    .then((response) => response.text())
-    .then((body) => { rrfReplaceDocument(body) })
-}
+  // Refresh the window as a `GET` request.
+  function rrfGet(button) {
+    button.disabled = true
+    window.location.replace(window.location.href)
+  }
+
+  // Call `DELETE` on the current path.
+  function rrfDelete(button) {
+    button.disabled = true
+    rrfAPICall(window.location.pathname, "DELETE")
+  }
+
+  // Call `OPTIONS` on the current path.
+  function rrfOptions(button) {
+    button.disabled = true
+    rrfAPICall(window.location.pathname, "OPTIONS")
+  }
+
+  // Submit the raw form.
+  function rrfSubmitRawForm(button) {
+    button.disabled = true
+
+    // Grab the selected route/method, media type, and the body.
+    const [method, path] = document.getElementById("rawFormRoute").value.split(":")
+    const mediaType = document.getElementById("rawFormMediaType").value
+    let body = document.getElementById("rawFormContent").value
+
+    // If the media type is `multipart/form-data`, then we need to build a FormData object.
+    if (mediaType == "multipart/form-data") {
+      let formData = new FormData()
+
+      // Add body to `formData`.
+      const bodySearchParams = new URLSearchParams(body)
+      bodySearchParams.forEach((value, key) => {
+        formData.append(key, value)
+      })
+
+      // Add file(s) to `formData`.
+      const rawFilesForm = document.getElementById("rawFilesForm")
+      if (rawFilesForm) {
+        rawFilesForm.querySelectorAll("input[type=file]").forEach((el) => {
+          const files = el.files
+          for (let i = 0; i < files.length; i++) {
+            formData.append(el.name, files[i])
+          }
+        })
+      }
+
+      // Set body to be the form data.
+      body = formData
+    }
+
+    // Perform the API call.
+    rrfAPICall(path, method, {
+      body,
+      // If the media type is `multipart/form-data`, then we don't want to set the content type
+      // because it must be set by `fetch` to include boundary.
+      headers: mediaType == "multipart/form-data" ? {} : {"Content-Type": mediaType},
+    })
+  }
+
+  // Make an HTML API call and replace the document with the response.
+  function rrfAPICall(path, method, kwargs={}) {
+    const headers = kwargs.headers || {}
+    delete kwargs.headers
+
+    fetch(path, {method, headers: {"Accept": "text/html", ...headers}, ...kwargs})
+      .then((response) => response.text())
+      .then((body) => { rrfReplaceDocument(body) })
+  }
 </script>
