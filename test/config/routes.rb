@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   root to: "home#index"
 
+  get "guide", to: "home#guide_first", format: false
   get "guide/:section", to: "home#show_guide_section", as: :show_guide_section, format: false
   get(
     "guide/:section/assets/:asset",

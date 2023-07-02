@@ -11,6 +11,10 @@ class HomeController < ApplicationController
     render_content(Rails.root.join("../README.md"))
   end
 
+  def guide_first
+    redirect_to(show_guide_section_path(section: self.get_sections.first[0]))
+  end
+
   def show_guide_section
     render_content(self.lookup_section(params[:section]))
   end
