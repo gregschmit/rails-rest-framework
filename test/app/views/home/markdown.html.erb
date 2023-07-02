@@ -46,27 +46,27 @@
       padding: .2em .8em;
     }
 
-    /* Headers table. */
-    .headers-table {
+    /* Headings table. */
+    .headings-table {
       padding: .5em 1em;
       background-color: #eee;
       border: 1px solid #aaa;
       border-radius: .3em;
       font-size: .9em;
     }
-    html[data-bs-theme="dark"] .headers-table {
+    html[data-bs-theme="dark"] .headings-table {
       background-color: #2b2b2b;
     }
-    .headers-table:empty { display: none; }
-    .headers-table ul {
+    .headings-table:empty { display: none; }
+    .headings-table ul {
       list-style-type: none;
       margin: 0;
       padding-left: 0;
       padding-right: .6em;
     }
-    .headers-table ul li { margin: .3em 0; }
-    .headers-table ul ul { padding-left: .8em; padding-right: 0; }
-    .headers-table > ul > li {
+    .headings-table ul li { margin: .3em 0; }
+    .headings-table ul ul { padding-left: .8em; padding-right: 0; }
+    .headings-table > ul > li {
       font-weight: 600;
     }
 
@@ -107,7 +107,7 @@
       }
       table += "</ul>"
       if (table != "<ul></ul>") {
-        document.getElementById("headersTable").innerHTML = table
+        document.getElementById("headingsTable").innerHTML = table
       }
     })
   </script>
@@ -160,6 +160,6 @@
   </div>
 <% end %>
 
-<div id="headersTable" class="headers-table float-md-end m-2"></div>
+<div id="headingsTable" class="headings-table float-md-end m-2"></div>
 
 <%= @content.to_html.html_safe %>
