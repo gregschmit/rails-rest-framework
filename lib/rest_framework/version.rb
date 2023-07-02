@@ -17,12 +17,6 @@ module RESTFramework
       rescue SystemCallError
       end
 
-      # If that fails, then try to get a plain commit SHA from git.
-      unless skip_git
-        version = `git describe --dirty --always`&.strip
-        return "0.#{version}" unless !version || version.empty?
-      end
-
       # No VERSION file, so version is unknown.
       return "0.unknown"
     end
