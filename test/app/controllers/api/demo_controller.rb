@@ -9,6 +9,15 @@ class Api::DemoController < ApiController
   class_attribute(:page_size, default: 30)
   class_attribute(:native_serializer_associations_limit, default: 6)
   class_attribute(:native_serializer_include_associations_count, default: true)
+  class_attribute(
+    :filter_backends,
+    default: [
+      RESTFramework::ModelQueryFilter,
+      RESTFramework::ModelOrderingFilter,
+      RESTFramework::ModelSearchFilter,
+      RESTFramework::RansackFilter,
+    ],
+  )
 
   self.paginator_class = RESTFramework::PageNumberPaginator
 

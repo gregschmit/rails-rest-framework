@@ -182,6 +182,10 @@ GEM
       zeitwerk (~> 2.5)
     rainbow (3.1.1)
     rake (13.0.6)
+    ransack (4.0.0)
+      activerecord (>= 6.1.5)
+      activesupport (>= 6.1.5)
+      i18n
     regexp_parser (2.8.0)
     rexml (3.2.5)
     rubocop (1.52.0)
@@ -244,6 +248,7 @@ DEPENDENCIES
   rack-mini-profiler
   rails (~> 7.0.4)
   rake (>= 12.0)
+  ransack (~> 4.0)
   rest_framework!
   rubocop-shopify
   simplecov

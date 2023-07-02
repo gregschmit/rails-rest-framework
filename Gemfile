@@ -17,13 +17,18 @@ gem "rails", "~> #{RAILS_VERSION}"
 gem "rake", ">= 12.0"
 gem "sqlite3", "~> 1.4.0"
 
+# Only include ransack for Rails >=7.
+if RAILS_VERSION >= Gem::Version.new("7")
+  gem "ransack", "~> 4.0"
+end
+
 # Ruby 3 removed webrick, so we need to install it manually.
 if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3")
   gem "webrick"
 end
 
 # Include `active_model_serializers` for custom integration (Rails >=6 only).
-if RAILS_VERSION > Gem::Version.new("6")
+if RAILS_VERSION >= Gem::Version.new("6")
   gem "active_model_serializers", "0.10.13"
 end
 

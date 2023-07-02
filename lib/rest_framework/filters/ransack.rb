@@ -9,15 +9,15 @@ class RESTFramework::RansackFilter < RESTFramework::BaseFilter
 
       # Determine if `distinct` is determined by query param.
       if distinct_query_param = @controller.ransack_distinct_query_param
-        distinct_from_query = ActiveRecord::Type::Boolean.new.cast(
-          @controller.request.query_parameters[distinct_query_param],
-        )
-        unless distinct_from_query.nil?
-          distinct = distinct_from_query
+        if distinct_query = @controller.request.query_parameters[distinct_query_param].presence
+          distinct_from_query = ActiveRecord::Type::Boolean.new.cast(distinct_query)
+          unless distinct_from_query.nil?
+            distinct = distinct_from_query
+          end
         end
       end
 
-      return data.ransack(q, @controller.ransack_options).result(distinct: distinct)
+      return data.ransack(q, @controller.ransack_options || {}).result(distinct: distinct)
     end
 
     return data
