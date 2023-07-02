@@ -1,0 +1,15 @@
+<div class="w-100 m-0 p-0" id="rrfAccentBar"></div>
+<nav class="navbar navbar-expand-md py-0" data-bs-theme="dark">
+  <div class="container">
+    <span class="navbar-brand p-0">
+      <h1 title="RRF v<%= RESTFramework::VERSION %>" class="text-light font-weight-light m-0 p-0" style="font-size: 1em">
+        <%= @template_logo_text || @header_title || "Rails REST Framework" %>
+      </h1>
+    </span>
+    <% if content_for? :header_menu %>
+      <%= yield :header_menu %>
+    <% else %>
+      <%= render partial: "rest_framework/header/mode" %>
+    <% end %>
+  </div>
+</nav>

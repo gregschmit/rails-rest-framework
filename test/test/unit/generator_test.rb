@@ -25,14 +25,14 @@ class GeneratorTest < Minitest::Test
   end
 
   def test_controller
-    path = "test_api/testa"
+    path = "api/test/testa"
     filename = "app/controllers/#{path}_controller.rb"
     _suppress_stdout do
       Rails::Generators.invoke("rest_framework:controller", [path])
     end
     file = File.read(filename)
     expected = <<~END
-      class TestApi::TestaController < ApplicationController
+      class Api::Test::TestaController < ApplicationController
         include RESTFramework::ModelControllerMixin
       end
     END
@@ -42,14 +42,14 @@ class GeneratorTest < Minitest::Test
   end
 
   def test_controller_with_include_base
-    path = "test_api/testb"
+    path = "api/test/testb"
     filename = "app/controllers/#{path}_controller.rb"
     _suppress_stdout do
       Rails::Generators.invoke("rest_framework:controller", [path, "--include-base"])
     end
     file = File.read(filename)
     expected = <<~END
-      class TestApi::TestbController < ApplicationController
+      class Api::Test::TestbController < ApplicationController
         include RESTFramework::BaseControllerMixin
       end
     END
@@ -59,17 +59,17 @@ class GeneratorTest < Minitest::Test
   end
 
   def test_controller_with_parent_class
-    path = "test_api/testc"
+    path = "api/test/testc"
     filename = "app/controllers/#{path}_controller.rb"
     _suppress_stdout do
       Rails::Generators.invoke(
         "rest_framework:controller",
-        [path, "--parent-class=TestApiController"],
+        [path, "--parent-class=Api::TestController"],
       )
     end
     file = File.read(filename)
     expected = <<~END
-      class TestApi::TestcController < TestApiController
+      class Api::Test::TestcController < Api::TestController
         include RESTFramework::ModelControllerMixin
       end
     END

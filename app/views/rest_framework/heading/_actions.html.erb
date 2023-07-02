@@ -1,0 +1,9 @@
+<div style="float: right">
+  <% if @route_groups.values[0].any? { |r| r[:matches_path] && r[:verb] == "DELETE" && r[:action] == "destroy" } %>
+    <button type="button" class="btn btn-danger" onclick="rrfDelete(this)">DELETE</button>
+  <% end %>
+  <% if @route_groups.values[0].any? { |r| r[:matches_path] && r[:verb] == "OPTIONS" } %>
+    <button type="button" class="btn btn-primary" onclick="rrfOptions(this)">OPTIONS</button>
+  <% end %>
+  <button type="button" class="btn btn-primary" onclick="rrfGet(this)">GET</button>
+</div>

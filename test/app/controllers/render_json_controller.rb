@@ -8,7 +8,7 @@ if defined?(ActiveModel::Serializer)
 
     def list_rest_serializer
       @marbles = self.get_recordset
-      render(json: @marbles, each_serializer: TestApi::MarblesController::MarblesSerializer)
+      render(json: @marbles, each_serializer: Api::Test::MarblesController::MarblesSerializer)
     end
 
     def list_am_serializer
@@ -18,7 +18,7 @@ if defined?(ActiveModel::Serializer)
 
     def show_rest_serializer
       @marble = self.get_record
-      render(json: @marble, serializer: TestApi::MarblesController::MarblesSerializer)
+      render(json: @marble, serializer: Api::Test::MarblesController::MarblesSerializer)
     end
 
     def show_am_serializer

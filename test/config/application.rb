@@ -24,7 +24,7 @@ end
 Bundler.require(*Rails.groups)
 
 URL_OPTIONS = Rails.env.production? ? {
-  host: "https://demo.rails-rest-framework.com",
+  host: "https://rails-rest-framework.com",
 } : {host: "http://localhost:3000"}
 
 class Application < Rails::Application
@@ -34,13 +34,17 @@ class Application < Rails::Application
   config.eager_load = false
 
   config.action_dispatch.show_exceptions = !Rails.env.test?
-  config.consider_all_requests_local = true
+  config.consider_all_requests_local = !Rails.env.production?
   config.serve_static_files = true
 
   config.cache_classes = false
   config.action_controller.perform_caching = false
 
   config.active_storage.service = :local
+
+  config.session_store(:cookie_store, key: "_session")
+  config.secret_token = "a_test_token"
+  config.secret_key_base = "a_test_secret"
 
   config.default_url_options = URL_OPTIONS
   config.action_controller.default_url_options = URL_OPTIONS
@@ -54,11 +58,7 @@ class Application < Rails::Application
   end
 
   if Rails::VERSION::MAJOR >= 7
-    config.active_support.remove_deprecated_time_with_zone_name = true
     config.active_record.legacy_connection_handling = false
+    config.active_support.remove_deprecated_time_with_zone_name = true
   end
-
-  config.session_store(:cookie_store, key: "_session")
-  config.secret_token = "a_test_token"
-  config.secret_key_base = "a_test_secret"
 end

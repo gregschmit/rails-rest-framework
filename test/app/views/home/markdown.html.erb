@@ -1,0 +1,165 @@
+<% content_for :head do %>
+  <style>
+    /* Header adjustments. */
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+    h1 a:not(:hover),
+    h2 a:not(:hover),
+    h3 a:not(:hover),
+    h4 a:not(:hover),
+    h5 a:not(:hover),
+    h6 a:not(:hover) {
+      color: #ddd;
+    }
+    html[data-bs-theme="dark"] h1 a:not(:hover),
+    html[data-bs-theme="dark"] h2 a:not(:hover),
+    html[data-bs-theme="dark"] h3 a:not(:hover),
+    html[data-bs-theme="dark"] h4 a:not(:hover),
+    html[data-bs-theme="dark"] h5 a:not(:hover),
+    html[data-bs-theme="dark"] h6 a:not(:hover) {
+      color: #444;
+    }
+    h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover, h6 a:hover {
+      text-decoration: none !important;
+    }
+
+    /* Navbar */
+    .navbar .navbar-toggler {
+      margin: .2em 0;
+      padding: .2em .3em;
+      border: none;
+    }
+    .navbar .navbar-toggler .navbar-toggler-icon {
+      height: 1.1em;
+      width: 1.1em;
+    }
+    .navbar .navbar-nav .nav-item .nav-link {
+      padding: .45em .6em;
+    }
+    .navbar .navbar-nav .nav-item .nav-link:hover {
+      background-color: #262a2f;
+    }
+    .navbar .dropdown-menu a.dropdown-item {
+      font-size: .9em;
+      padding: .2em .8em;
+    }
+
+    /* Headers table. */
+    .headers-table {
+      padding: .5em 1em;
+      background-color: #eee;
+      border: 1px solid #aaa;
+      border-radius: .3em;
+      font-size: .9em;
+    }
+    html[data-bs-theme="dark"] .headers-table {
+      background-color: #2b2b2b;
+    }
+    .headers-table:empty { display: none; }
+    .headers-table ul {
+      list-style-type: none;
+      margin: 0;
+      padding-left: 0;
+      padding-right: .6em;
+    }
+    .headers-table ul li { margin: .3em 0; }
+    .headers-table ul ul { padding-left: .8em; padding-right: 0; }
+    .headers-table > ul > li {
+      font-weight: bold;
+    }
+
+    /* Style the github component. */
+    #rrfGithubAndModeWrapper {
+      height: 2.4em;
+    }
+    #rrfGithubComponent {
+      display: inline-block;
+      position: relative;
+      top: .6em;
+    }
+  </style>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Setup the floating table of contents for any h2-h4 headings.
+      let table = "<ul>"
+      let hlevel = 2
+      let hprevlevel = 2
+      document.querySelectorAll("h2, h3, h4").forEach((header) => {
+        hlevel = parseInt(header.tagName[1])
+
+        if (hlevel > hprevlevel) {
+          table += "<ul>"
+        } else if (hlevel < hprevlevel) {
+          Array(hprevlevel - hlevel)
+            .fill(0)
+            .forEach(function () {
+              table += "</ul>"
+            })
+        }
+        table += `<li><a href="#${header.id}">${header.childNodes[0].nodeValue.trim()}</a></li>`
+        hprevlevel = hlevel
+      })
+      if (hlevel > hprevlevel) {
+        table += "</ul>"
+      }
+      table += "</ul>"
+      if (table != "<ul></ul>") {
+        document.getElementById("headersTable").innerHTML = table
+      }
+    })
+  </script>
+
+  <!-- Extra Highlight.js languages not shared with the library. -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/shell.min.js" integrity="sha512-X2JngetHwVsp0j3n6lo8HGdXQKLpz2hwFfQkG996OfanpFaQJFgjKJlmzsdefWsHTQIwY539tD09JF48kCPMXw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/erb.min.js" integrity="sha512-flbEiCcectGeyRXyuMZW5jlAGIQ1/qrTZS6DsZDTqObM0JG/isYHvUyehOyt14ssmY85gZRYra+IJR9+azRuqw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/ruby.min.js" integrity="sha512-xRUQANk9Iw3wtAp0cBOa1Ghr7yIFrMiJiEujrMGf04qOau23exxj4R7DLUeLGfLiDbVSK0FyN8v2ns4m/6iNmQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- Google Analytics: Global Site Tag -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P2KRPNXQMT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-P2KRPNXQMT');
+  </script>
+<% end %>
+
+<% content_for :header_menu do %>
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav ms-auto">
+      <li class="nav-item">
+        <a class="nav-link <%= "active" if action_name == "index" %>" href="/">Home</a>
+      </li>
+
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle <%= "active" if action_name == "show_guide_section" %>" href="#" role="button" data-bs-toggle="dropdown">
+          Guide
+        </a>
+        <div class="rrf-mode dropdown-menu">
+          <% get_sections.each do |name, cfg| %>
+            <a class="dropdown-item" href="<%= show_guide_section_path(name, section: name) %>"><%= cfg[:title] %></a>
+          <% end %>
+        </div>
+      </li>
+
+      <li class="nav-item ps-2" id="rrfGithubAndModeWrapper">
+        <span id="rrfGithubComponent">
+          <script async defer src="https://buttons.github.io/buttons.js"></script>
+          <a class="github-button" href="https://github.com/gregschmit/rails-rest-framework" data-show-count="true" aria-label="Star gregschmit/rails-rest-framework on GitHub">Star</a>
+        </span>
+        <%= render partial: "rest_framework/header/mode" %>
+      </li>
+    </ul>
+  </div>
+<% end %>
+
+<div id="headersTable" class="headers-table float-md-end m-2"></div>
+
+<%= @content.to_html.html_safe %>

@@ -1,0 +1,16 @@
+<div class="row">
+  <div>
+    <pre><code><%
+      concat request.request_method
+      if request.method != request.request_method
+        concat " (via #{request.method})"
+      end
+      concat " #{request.path}"
+    %></code></pre>
+    <pre><code><%
+      concat "HTTP #{response.status} #{response.message}"
+      concat "\n"
+      concat "Content-Type: #{response.content_type}"
+    %></code></pre>
+  </div>
+</div>

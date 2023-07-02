@@ -146,6 +146,9 @@ module RESTFramework::BaseControllerMixin
 
     base.extend(ClassMethods)
 
+    # By default, the layout should be set to `rest_framework`.
+    base.layout("rest_framework")
+
     # Add class attributes (with defaults) unless they already exist.
     RRF_BASE_CONFIG.each do |a, default|
       next if base.respond_to?(a)
@@ -267,8 +270,8 @@ module RESTFramework::BaseControllerMixin
 
   # Render a browsable API for `html` format, along with basic `json`/`xml` formats, and with
   # support or passing custom `kwargs` to the underlying `render` calls.
-  def api_response(payload, html_kwargs: nil, **kwargs)
-    html_kwargs ||= {}
+  def api_response(payload, **kwargs)
+    html_kwargs = kwargs.delete(:html_kwargs) || {}
     json_kwargs = kwargs.delete(:json_kwargs) || {}
     xml_kwargs = kwargs.delete(:xml_kwargs) || {}
 
@@ -300,12 +303,10 @@ module RESTFramework::BaseControllerMixin
           format.xml { head(kwargs[:status] || :no_content) } if self.serialize_to_xml
         else
           format.json {
-            jkwargs = kwargs.merge(json_kwargs)
-            render(json: payload, layout: false, **jkwargs)
+            render(json: payload, **kwargs.merge(json_kwargs))
           } if self.serialize_to_json
           format.xml {
-            xkwargs = kwargs.merge(xml_kwargs)
-            render(xml: payload, layout: false, **xkwargs)
+            render(xml: payload, **kwargs.merge(xml_kwargs))
           } if self.serialize_to_xml
           # TODO: possibly support more formats here if supported?
         end
@@ -323,13 +324,11 @@ module RESTFramework::BaseControllerMixin
           @route_props, @route_groups = RESTFramework::Utils.get_routes(
             Rails.application.routes, request
           )
-          hkwargs = kwargs.merge(html_kwargs)
           begin
-            render(**hkwargs)
-          rescue ActionView::MissingTemplate  # Fallback to `rest_framework` layout.
-            hkwargs[:layout] = "rest_framework"
-            hkwargs[:html] = ""
-            render(**hkwargs)
+            render(**kwargs.merge(html_kwargs))
+          rescue ActionView::MissingTemplate
+            # A view is not required, so just use `html: ""`.
+            render(html: "", layout: true, **kwargs.merge(html_kwargs))
           end
         }
       end
