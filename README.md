@@ -53,7 +53,7 @@ action and a simple interface for routing arbitrary additional actions:
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::BaseControllerMixin
-  self.extra_actions = {test: [:get]}
+  self.extra_actions = {test: :get}
 
   def test
     render api_response({message: "Test successful!"})
