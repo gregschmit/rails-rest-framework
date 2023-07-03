@@ -2,6 +2,7 @@
 module RESTFramework
   module Version
     VERSION_FILEPATH = File.expand_path("../../VERSION", __dir__)
+    UNKNOWN = "0-unknown"
 
     def self.get_version(skip_git: false)
       # First, attempt to get the version from git.
@@ -18,14 +19,14 @@ module RESTFramework
       end
 
       # No VERSION file, so version is unknown.
-      return "0.unknown"
+      return UNKNOWN
     end
 
     def self.stamp_version
       puts "RRF: Version resolved to #{RESTFramework::VERSION}"
 
       # Only stamp the version if it's not unknown.
-      if RESTFramework::VERSION != "0.unknown"
+      if RESTFramework::VERSION != UNKNOWN
         puts "RRF: Stamping version #{RESTFramework::VERSION}"
         File.write(VERSION_FILEPATH, RESTFramework::VERSION)
       end
