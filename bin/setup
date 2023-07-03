@@ -11,6 +11,11 @@ PRODUCTION = ENV["RAILS_ENV"] == "production"
 FileUtils.chdir(File.expand_path("..", __dir__)) do
   # This script configures the development or production environment, and should be idempotent.
 
+  if PRODUCTION
+    puts "== Ensuring git tags are available. =="
+    system!("git fetch --prune --tags --force")
+  end
+
   puts "== Installing Ruby dependencies =="
   system!("bundle install")
 
