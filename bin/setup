@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+# Configure the development or production environment; must be idempotent.
+
 require "fileutils"
 
 def system!(*args)
@@ -9,8 +11,6 @@ end
 PRODUCTION = ENV["RAILS_ENV"] == "production"
 
 FileUtils.chdir(File.expand_path("..", __dir__)) do
-  # This script configures the development or production environment, and should be idempotent.
-
   puts "== Installing Ruby dependencies =="
   system!("bundle install")
 

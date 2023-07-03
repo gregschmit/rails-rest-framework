@@ -6,7 +6,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Install Ruby and gems
+      - name: Install Ruby/Gems
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Remove `Gemfile.lock` because this is a matrix job
         run: rm Gemfile.lock
-      - name: Install Ruby and gems
+      - name: Install Ruby/Gems
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -61,8 +61,10 @@ jobs:
         uses: actions/checkout@v3
       - name: Ensure latest tag is fetched
         run: git fetch --unshallow --prune --tags --force
-      - name: Install Ruby
+      - name: Install Ruby/Gems
         uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
       - name: Build the gem
         run: gem build rest_framework.gemspec -o rest_framework.gem
       - name: Push to RubyGems
