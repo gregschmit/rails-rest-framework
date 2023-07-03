@@ -59,10 +59,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - name: Ensure latest tag is fetched
-        run: git fetch --prune --tags --force
+        run: git fetch --unshallow --prune --tags --force
       - name: Install Ruby
         uses: ruby/setup-ruby@v1
       - name: Build the gem

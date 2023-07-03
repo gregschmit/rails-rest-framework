@@ -13,7 +13,7 @@ FileUtils.chdir(File.expand_path("..", __dir__)) do
 
   if PRODUCTION
     puts "== Ensuring git tags are available. =="
-    system!("git fetch --prune --tags --force")
+    system!("git fetch --unshallow --prune --tags --force")
     puts `git describe`
   end
 
