@@ -18,7 +18,7 @@ class RESTFrameworkTest < Minitest::Test
 
   def test_get_version_stamp
     RESTFramework::Version.unstamp_version
-    assert(RESTFramework::Version.get_version(skip_git: true) == "0.unknown")
+    assert(RESTFramework::Version.get_version(skip_git: true) == RESTFramework::Version::UNKNOWN)
     RESTFramework::Version.stamp_version
     assert(RESTFramework::Version.get_version(skip_git: true))
   end
