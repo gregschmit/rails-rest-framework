@@ -14,12 +14,12 @@ RAILS_VERSION = Gem::Version.new(
   ENV["RAILS_VERSION"] || File.read(File.expand_path(".rails-version", __dir__)).strip,
 )
 gem "rails", "~> #{RAILS_VERSION}"
-gem "rake", ">= 12.0"
-gem "sqlite3", "~> 1.4.0"
+gem "rake"
+gem "sqlite3"
 
 # Only include ransack for Rails >=7.
 if RAILS_VERSION >= Gem::Version.new("7")
-  gem "ransack", "~> 4.0"
+  gem "ransack", ">= 4.0"
 end
 
 # Ruby 3 removed webrick, so we need to install it manually.
@@ -68,7 +68,7 @@ group :development do
 end
 
 group :test do
-  gem "minitest", ">= 5.0"
+  gem "minitest"
   gem "simplecov"
   gem "simplecov-lcov", "0.8.0", require: false
 end
