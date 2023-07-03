@@ -15,7 +15,7 @@ FileUtils.chdir(File.expand_path("..", __dir__)) do
     puts "== Ensuring git tags are available. =="
     system!("git fetch --unshallow --prune --tags --force")
     puts `pwd`
-    puts `cat .git`
+    puts `ls .git`
     puts `cat .git/config`
     puts `git describe`
   end
