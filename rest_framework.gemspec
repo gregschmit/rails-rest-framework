@@ -29,5 +29,4 @@ Gem::Specification.new do |spec|
     *Dir["lib/**/*.rb"],
     *Dir["vendor/assets/**/*"],
   ]
-  spec.require_paths = ["lib", "app"]
 end
