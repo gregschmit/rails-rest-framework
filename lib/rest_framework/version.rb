@@ -23,11 +23,8 @@ module RESTFramework
     end
 
     def self.stamp_version
-      puts "RRF: Version resolved to #{RESTFramework::VERSION}"
-
       # Only stamp the version if it's not unknown.
       if RESTFramework::VERSION != UNKNOWN
-        puts "RRF: Stamping version #{RESTFramework::VERSION}"
         File.write(VERSION_FILEPATH, RESTFramework::VERSION)
       end
     end
