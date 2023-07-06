@@ -26,7 +26,6 @@ Gem::Specification.new do |spec|
     "LICENSE",
     "VERSION",
     *Dir["app/**/*"],
-    *Dir["docs/**/*"],
     *Dir["lib/**/*.rb"],
     *Dir["vendor/assets/**/*"],
   ]
