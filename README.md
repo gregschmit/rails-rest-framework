@@ -80,7 +80,7 @@ class Api::RootController < ApiController
   self.extra_actions = {test: :get}
 
   def root
-    api_response(
+    return api_response(
       {
         message: "Welcome to the API.",
         how_to_authenticate: <<~END.lines.map(&:strip).join(" "),
@@ -108,7 +108,7 @@ class Api::MoviesController < ApiController
   self.extra_member_actions = {first: :get}
 
   def first
-    # Always use the band method, since the framework will rescue `RecordNotFound` and return a
+    # Always use the bang method, since the framework will rescue `RecordNotFound` and return a
     # sensible error response.
     return api_response(self.get_records.first!)
   end
