@@ -1,6 +1,5 @@
 --private
 --protected
-lib/**/*.rb
 -
 LICENSE
 README.md

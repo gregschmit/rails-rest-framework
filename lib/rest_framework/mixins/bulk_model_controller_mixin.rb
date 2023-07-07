@@ -1,8 +1,8 @@
-require_relative "models"
+require_relative "model_controller_mixin"
 
 # Mixin for creating records in bulk. This is unique compared to update/destroy because we overload
 # the existing `create` action to support bulk creation.
-module RESTFramework::BulkCreateModelMixin
+module RESTFramework::Mixins::BulkCreateModelMixin
   # While bulk update/destroy are obvious because they create new router endpoints, bulk create
   # overloads the existing collection `POST` endpoint, so we add a special key to the options
   # metadata to indicate bulk create is supported.
@@ -31,8 +31,11 @@ module RESTFramework::BulkCreateModelMixin
   end
 end
 
+# Alias for convenience.
+RESTFramework::BulkCreateModelMixin = RESTFramework::Mixins::BulkCreateModelMixin
+
 # Mixin for updating records in bulk.
-module RESTFramework::BulkUpdateModelMixin
+module RESTFramework::Mixins::BulkUpdateModelMixin
   def update_all
     records = self.update_all!
     serialized_records = self.bulk_serialize(records)
@@ -56,8 +59,11 @@ module RESTFramework::BulkUpdateModelMixin
   end
 end
 
+# Alias for convenience.
+RESTFramework::BulkUpdateModelMixin = RESTFramework::Mixins::BulkUpdateModelMixin
+
 # Mixin for destroying records in bulk.
-module RESTFramework::BulkDestroyModelMixin
+module RESTFramework::Mixins::BulkDestroyModelMixin
   def destroy_all
     if params[:_json].is_a?(Array)
       records = self.destroy_all!
@@ -83,8 +89,11 @@ module RESTFramework::BulkDestroyModelMixin
   end
 end
 
+# Alias for convenience.
+RESTFramework::BulkDestroyModelMixin = RESTFramework::Mixins::BulkDestroyModelMixin
+
 # Mixin that includes all the CRUD bulk mixins.
-module RESTFramework::BulkModelControllerMixin
+module RESTFramework::Mixins::BulkModelControllerMixin
   include RESTFramework::ModelControllerMixin
 
   include RESTFramework::BulkCreateModelMixin
@@ -95,3 +104,6 @@ module RESTFramework::BulkModelControllerMixin
     RESTFramework::ModelControllerMixin.included(base)
   end
 end
+
+# Alias for convenience.
+RESTFramework::BulkModelControllerMixin = RESTFramework::Mixins::BulkModelControllerMixin

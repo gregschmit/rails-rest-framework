@@ -25,6 +25,7 @@ Gem::Specification.new do |spec|
     "README.md",
     "LICENSE",
     "VERSION",
+    ".yardopts",
     *Dir["app/**/*"],
     *Dir["lib/**/*.rb"],
     *Dir["vendor/assets/**/*"],

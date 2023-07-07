@@ -1,8 +1,5 @@
-require_relative "base"
-require_relative "../filters"
-
 # This module provides the core functionality for controllers based on models.
-module RESTFramework::BaseModelControllerMixin
+module RESTFramework::Mixins::BaseModelControllerMixin
   BASE64_REGEX = /data:(.*);base64,(.*)/
   BASE64_TRANSLATE = ->(field, value) {
     _, content_type, payload = value.match(BASE64_REGEX).to_a
@@ -634,8 +631,11 @@ module RESTFramework::BaseModelControllerMixin
   end
 end
 
+# Alias for convenience.
+RESTFramework::BaseModelControllerMixin = RESTFramework::Mixins::BaseModelControllerMixin
+
 # Mixin for listing records.
-module RESTFramework::ListModelMixin
+module RESTFramework::Mixins::ListModelMixin
   def index
     return api_response(self.get_index_records)
   end
@@ -662,15 +662,21 @@ module RESTFramework::ListModelMixin
   end
 end
 
+# Alias for convenience.
+RESTFramework::ListModelMixin = RESTFramework::Mixins::ListModelMixin
+
 # Mixin for showing records.
-module RESTFramework::ShowModelMixin
+module RESTFramework::Mixins::ShowModelMixin
   def show
     return api_response(self.get_record)
   end
 end
 
+# Alias for convenience.
+RESTFramework::ShowModelMixin = RESTFramework::Mixins::ShowModelMixin
+
 # Mixin for creating records.
-module RESTFramework::CreateModelMixin
+module RESTFramework::Mixins::CreateModelMixin
   def create
     return api_response(self.create!, status: :created)
   end
@@ -681,8 +687,11 @@ module RESTFramework::CreateModelMixin
   end
 end
 
+# Alias for convenience.
+RESTFramework::CreateModelMixin = RESTFramework::Mixins::CreateModelMixin
+
 # Mixin for updating records.
-module RESTFramework::UpdateModelMixin
+module RESTFramework::Mixins::UpdateModelMixin
   def update
     return api_response(self.update!)
   end
@@ -695,8 +704,11 @@ module RESTFramework::UpdateModelMixin
   end
 end
 
+# Alias for convenience.
+RESTFramework::UpdateModelMixin = RESTFramework::Mixins::UpdateModelMixin
+
 # Mixin for destroying records.
-module RESTFramework::DestroyModelMixin
+module RESTFramework::Mixins::DestroyModelMixin
   def destroy
     self.destroy!
     return api_response("")
@@ -708,8 +720,11 @@ module RESTFramework::DestroyModelMixin
   end
 end
 
+# Alias for convenience.
+RESTFramework::DestroyModelMixin = RESTFramework::Mixins::DestroyModelMixin
+
 # Mixin that includes show/list mixins.
-module RESTFramework::ReadOnlyModelControllerMixin
+module RESTFramework::Mixins::ReadOnlyModelControllerMixin
   include RESTFramework::BaseModelControllerMixin
 
   include RESTFramework::ListModelMixin
@@ -720,8 +735,11 @@ module RESTFramework::ReadOnlyModelControllerMixin
   end
 end
 
+# Alias for convenience.
+RESTFramework::ReadOnlyModelControllerMixin = RESTFramework::Mixins::ReadOnlyModelControllerMixin
+
 # Mixin that includes all the CRUD mixins.
-module RESTFramework::ModelControllerMixin
+module RESTFramework::Mixins::ModelControllerMixin
   include RESTFramework::BaseModelControllerMixin
 
   include RESTFramework::ListModelMixin
@@ -734,3 +752,6 @@ module RESTFramework::ModelControllerMixin
     RESTFramework::BaseModelControllerMixin.included(base)
   end
 end
+
+# Alias for convenience.
+RESTFramework::ModelControllerMixin = RESTFramework::Mixins::ModelControllerMixin

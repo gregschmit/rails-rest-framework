@@ -1,11 +1,7 @@
-require_relative "../errors"
-require_relative "../serializers"
-require_relative "../utils"
-
 # This module provides the common functionality for any controller mixins, a `root` action, and
 # the ability to route arbitrary actions with `extra_actions`. This is also where `api_response`
 # is defined.
-module RESTFramework::BaseControllerMixin
+module RESTFramework::Mixins::BaseControllerMixin
   RRF_BASE_CONFIG = {
     extra_actions: nil,
     extra_member_actions: nil,
@@ -348,3 +344,6 @@ module RESTFramework::BaseControllerMixin
     return api_response(self.get_options_metadata)
   end
 end
+
+# Alias for convenience.
+RESTFramework::BaseControllerMixin = RESTFramework::Mixins::BaseControllerMixin

@@ -1,5 +1,4 @@
 require "action_dispatch/routing/mapper"
-require_relative "utils"
 
 module ActionDispatch::Routing
   class Mapper
