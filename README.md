@@ -146,8 +146,6 @@ Rails.application.routes.draw do
     rest_resources :movies
     rest_resources :users
   end
-
-  ...
 end
 ```
 
