@@ -31,9 +31,6 @@ module RESTFramework::Mixins::BulkCreateModelMixin
   end
 end
 
-# Alias for convenience.
-RESTFramework::BulkCreateModelMixin = RESTFramework::Mixins::BulkCreateModelMixin
-
 # Mixin for updating records in bulk.
 module RESTFramework::Mixins::BulkUpdateModelMixin
   def update_all
@@ -58,9 +55,6 @@ module RESTFramework::Mixins::BulkUpdateModelMixin
     end
   end
 end
-
-# Alias for convenience.
-RESTFramework::BulkUpdateModelMixin = RESTFramework::Mixins::BulkUpdateModelMixin
 
 # Mixin for destroying records in bulk.
 module RESTFramework::Mixins::BulkDestroyModelMixin
@@ -89,21 +83,21 @@ module RESTFramework::Mixins::BulkDestroyModelMixin
   end
 end
 
-# Alias for convenience.
-RESTFramework::BulkDestroyModelMixin = RESTFramework::Mixins::BulkDestroyModelMixin
-
 # Mixin that includes all the CRUD bulk mixins.
 module RESTFramework::Mixins::BulkModelControllerMixin
-  include RESTFramework::ModelControllerMixin
+  include RESTFramework::Mixins::ModelControllerMixin
 
-  include RESTFramework::BulkCreateModelMixin
-  include RESTFramework::BulkUpdateModelMixin
-  include RESTFramework::BulkDestroyModelMixin
+  include RESTFramework::Mixins::BulkCreateModelMixin
+  include RESTFramework::Mixins::BulkUpdateModelMixin
+  include RESTFramework::Mixins::BulkDestroyModelMixin
 
   def self.included(base)
-    RESTFramework::ModelControllerMixin.included(base)
+    RESTFramework::Mixins::ModelControllerMixin.included(base)
   end
 end
 
-# Alias for convenience.
+# Aliases for convenience.
+RESTFramework::BulkCreateModelMixin = RESTFramework::Mixins::BulkCreateModelMixin
+RESTFramework::BulkUpdateModelMixin = RESTFramework::Mixins::BulkUpdateModelMixin
+RESTFramework::BulkDestroyModelMixin = RESTFramework::Mixins::BulkDestroyModelMixin
 RESTFramework::BulkModelControllerMixin = RESTFramework::Mixins::BulkModelControllerMixin

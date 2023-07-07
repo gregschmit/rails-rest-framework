@@ -5,30 +5,32 @@ controller inheritance hierarchy, so we want developers to be able to maintain t
 structure while leveraging the power of the REST Framework. Also, different controllers which
 inherit from the same parent often need different REST Framework functionality and behavior. For
 these reasons, REST Framework provides the controller functionality as modules that you mix into
-your controllers.
+your controllers, following the pattern of "composition over inheritance".
 
-Here is a graph of the controller mixins (all exist within the `RESTFramework` namespace), with
-supplementary mixins shown as well:
+Here are the controller mixins, one of which should always be included into any API controller.
+There are accessory mixins listed below some of the controller mixins, which are included by default
+to provide specific CRUD functionality.
 
-```shell
-BaseControllerMixin
-BaseModelControllerMixin (includes BaseControllerMixin)
-ModelControllerMixin (includes BaseModelControllerMixin)
-├── ListModelMixin
-├── ShowModelMixin
-├── CreateModelMixin
-├── UpdateModelMixin
-└── DestroyModelMixin
-ReadOnlyModelControllerMixin (includes BaseModelControllerMixin)
-├── ListModelMixin
-└── ShowModelMixin
-BulkModelControllerMixin (includes ModelControllerMixin)
-├── BulkCreateModelMixin
-├── BulkUpdateModelMixin
-└── BulkDestroyModelMixin
+```text
+Mixins:
+├─ BaseControllerMixin
+│  └─ BaseModelControllerMixin (includes BaseControllerMixin)
+├─ ModelControllerMixin (includes BaseModelControllerMixin)
+│  ├─ ListModelMixin
+│  ├─ ShowModelMixin
+│  ├─ CreateModelMixin
+│  ├─ UpdateModelMixin
+│  └─ DestroyModelMixin
+├─ ReadOnlyModelControllerMixin (includes BaseModelControllerMixin)
+│  ├─ ListModelMixin
+│  └─ ShowModelMixin
+└─ BulkModelControllerMixin (includes ModelControllerMixin)
+   ├─ BulkCreateModelMixin
+   ├─ BulkUpdateModelMixin
+   └─ BulkDestroyModelMixin
 ```
 
-All API controllers should include at least one of these top-level controller mixins, and can
+Again, all API controllers should include at least one of these top-level controller mixins, and can
 include any of the supplementary mixins to add additional functionality. For example, if you want to
 permit create but not update or destroy, then you could do this:
 

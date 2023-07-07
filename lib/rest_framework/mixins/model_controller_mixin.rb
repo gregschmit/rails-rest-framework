@@ -631,9 +631,6 @@ module RESTFramework::Mixins::BaseModelControllerMixin
   end
 end
 
-# Alias for convenience.
-RESTFramework::BaseModelControllerMixin = RESTFramework::Mixins::BaseModelControllerMixin
-
 # Mixin for listing records.
 module RESTFramework::Mixins::ListModelMixin
   def index
@@ -662,18 +659,12 @@ module RESTFramework::Mixins::ListModelMixin
   end
 end
 
-# Alias for convenience.
-RESTFramework::ListModelMixin = RESTFramework::Mixins::ListModelMixin
-
 # Mixin for showing records.
 module RESTFramework::Mixins::ShowModelMixin
   def show
     return api_response(self.get_record)
   end
 end
-
-# Alias for convenience.
-RESTFramework::ShowModelMixin = RESTFramework::Mixins::ShowModelMixin
 
 # Mixin for creating records.
 module RESTFramework::Mixins::CreateModelMixin
@@ -686,9 +677,6 @@ module RESTFramework::Mixins::CreateModelMixin
     return self.get_create_from.create!(self.get_create_params)
   end
 end
-
-# Alias for convenience.
-RESTFramework::CreateModelMixin = RESTFramework::Mixins::CreateModelMixin
 
 # Mixin for updating records.
 module RESTFramework::Mixins::UpdateModelMixin
@@ -704,9 +692,6 @@ module RESTFramework::Mixins::UpdateModelMixin
   end
 end
 
-# Alias for convenience.
-RESTFramework::UpdateModelMixin = RESTFramework::Mixins::UpdateModelMixin
-
 # Mixin for destroying records.
 module RESTFramework::Mixins::DestroyModelMixin
   def destroy
@@ -720,38 +705,39 @@ module RESTFramework::Mixins::DestroyModelMixin
   end
 end
 
-# Alias for convenience.
-RESTFramework::DestroyModelMixin = RESTFramework::Mixins::DestroyModelMixin
-
 # Mixin that includes show/list mixins.
 module RESTFramework::Mixins::ReadOnlyModelControllerMixin
-  include RESTFramework::BaseModelControllerMixin
+  include RESTFramework::Mixins::BaseModelControllerMixin
 
-  include RESTFramework::ListModelMixin
-  include RESTFramework::ShowModelMixin
+  include RESTFramework::Mixins::ListModelMixin
+  include RESTFramework::Mixins::ShowModelMixin
 
   def self.included(base)
     RESTFramework::BaseModelControllerMixin.included(base)
   end
 end
-
-# Alias for convenience.
-RESTFramework::ReadOnlyModelControllerMixin = RESTFramework::Mixins::ReadOnlyModelControllerMixin
 
 # Mixin that includes all the CRUD mixins.
 module RESTFramework::Mixins::ModelControllerMixin
-  include RESTFramework::BaseModelControllerMixin
+  include RESTFramework::Mixins::BaseModelControllerMixin
 
-  include RESTFramework::ListModelMixin
-  include RESTFramework::ShowModelMixin
-  include RESTFramework::CreateModelMixin
-  include RESTFramework::UpdateModelMixin
-  include RESTFramework::DestroyModelMixin
+  include RESTFramework::Mixins::ListModelMixin
+  include RESTFramework::Mixins::ShowModelMixin
+  include RESTFramework::Mixins::CreateModelMixin
+  include RESTFramework::Mixins::UpdateModelMixin
+  include RESTFramework::Mixins::DestroyModelMixin
 
   def self.included(base)
     RESTFramework::BaseModelControllerMixin.included(base)
   end
 end
 
-# Alias for convenience.
+# Aliases for convenience.
+RESTFramework::BaseModelControllerMixin = RESTFramework::Mixins::BaseModelControllerMixin
+RESTFramework::ListModelMixin = RESTFramework::Mixins::ListModelMixin
+RESTFramework::ShowModelMixin = RESTFramework::Mixins::ShowModelMixin
+RESTFramework::CreateModelMixin = RESTFramework::Mixins::CreateModelMixin
+RESTFramework::UpdateModelMixin = RESTFramework::Mixins::UpdateModelMixin
+RESTFramework::DestroyModelMixin = RESTFramework::Mixins::DestroyModelMixin
+RESTFramework::ReadOnlyModelControllerMixin = RESTFramework::Mixins::ReadOnlyModelControllerMixin
 RESTFramework::ModelControllerMixin = RESTFramework::Mixins::ModelControllerMixin
