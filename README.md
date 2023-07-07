@@ -152,14 +152,9 @@ end
 ## Development/Testing
 
 After you clone the repository, cd'ing into the directory should create a new gemset if you are
-using RVM. Then run `bundle install` to install the appropriate gems.
+using RVM. Then run `bin/setup` to install the appropriate gems and set things up.
 
-To run the test suite:
-
-```shell
-rails test
-```
+To run the test suite, just execute `rails test`.
 
 The top-level `bin/rails` proxies all Rails commands to the test project, so you can operate it via
-the usual commands. Ensure you run `rails db:setup` before running `rails server` or
-`rails console`.
+the usual commands (e.g., `rails server` or `rails console`).
