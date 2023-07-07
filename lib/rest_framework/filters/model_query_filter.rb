@@ -1,5 +1,5 @@
 # A simple filtering backend that supports filtering a recordset based on query parameters.
-class RESTFramework::ModelQueryFilter < RESTFramework::BaseFilter
+class RESTFramework::Filters::ModelQueryFilter < RESTFramework::Filters::BaseFilter
   # Get a list of filterset fields for the current action.
   def _get_fields
     # Always return a list of strings; `@controller.get_fields` already does this.
@@ -49,3 +49,6 @@ class RESTFramework::ModelQueryFilter < RESTFramework::BaseFilter
     return data
   end
 end
+
+# Alias for convenience.
+RESTFramework::ModelQueryFilter = RESTFramework::Filters::ModelQueryFilter

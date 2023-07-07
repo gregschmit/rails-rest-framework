@@ -1,5 +1,5 @@
 # Multi-field text searching on models.
-class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
+class RESTFramework::Filters::ModelSearchFilter < RESTFramework::Filters::BaseFilter
   # Get a list of search fields for the current action.
   def _get_fields
     if search_fields = @controller.search_fields
@@ -39,3 +39,6 @@ class RESTFramework::ModelSearchFilter < RESTFramework::BaseFilter
     return data
   end
 end
+
+# Alias for convenience.
+RESTFramework::ModelSearchFilter = RESTFramework::Filters::ModelSearchFilter

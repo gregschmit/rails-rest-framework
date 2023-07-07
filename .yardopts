@@ -3,4 +3,4 @@
 lib/**/*.rb
 -
 LICENSE
-guide/*
+README.md

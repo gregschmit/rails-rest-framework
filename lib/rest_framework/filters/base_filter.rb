@@ -1,4 +1,4 @@
-class RESTFramework::BaseFilter
+class RESTFramework::Filters::BaseFilter
   def initialize(controller:)
     @controller = controller
   end
@@ -7,3 +7,6 @@ class RESTFramework::BaseFilter
     raise NotImplementedError
   end
 end
+
+# Alias for convenience.
+RESTFramework::BaseFilter = RESTFramework::Filters::BaseFilter

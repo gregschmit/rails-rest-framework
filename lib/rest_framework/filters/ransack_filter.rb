@@ -1,5 +1,5 @@
 # Adapter for the `ransack` gem.
-class RESTFramework::RansackFilter < RESTFramework::BaseFilter
+class RESTFramework::Filters::RansackFilter < RESTFramework::Filters::BaseFilter
   # Filter data according to the request query parameters.
   def get_filtered_data(data)
     q = @controller.request.query_parameters[@controller.ransack_query_param]
@@ -23,3 +23,6 @@ class RESTFramework::RansackFilter < RESTFramework::BaseFilter
     return data
   end
 end
+
+# Alias for convenience.
+RESTFramework::RansackFilter = RESTFramework::Filters::RansackFilter
