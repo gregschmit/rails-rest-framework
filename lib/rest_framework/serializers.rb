@@ -362,7 +362,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     if @object.respond_to?(:to_ary)
       # Preload associations using `includes` to avoid N+1 queries. For now this also allows filter
       # backends to use associated data; perhaps it may be wise to have a system in place for
-      # filters to reload their own associations?
+      # filters to preload their own associations?
       @object = @object.includes(*includes_map.values) if includes_map.present?
 
       return @object.map { |r| self._serialize(r, config, serializer_methods) }
