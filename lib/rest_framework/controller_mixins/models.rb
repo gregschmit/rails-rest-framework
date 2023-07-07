@@ -552,54 +552,28 @@ module RESTFramework::BaseModelControllerMixin
   alias_method :get_create_params, :get_body_params
   alias_method :get_update_params, :get_body_params
 
-  # Get the set of records this controller has access to. The return value is cached and exposed to
-  # the view as the `@recordset` instance variable.
+  # Get the set of records this controller has access to.
   def get_recordset
-    return @recordset if instance_variable_defined?(:@recordset)
-    return (@recordset = self.class.recordset) if self.class.recordset
+    return self.class.recordset if self.class.recordset
 
     # If there is a model, return that model's default scope (all records by default).
-    if (model = self.class.get_model)
-      return @recordset = model.all
+    if model = self.class.get_model
+      return model.all
     end
 
-    return @recordset = nil
-  end
-
-  # Get the recordset but with any associations included to avoid N+1 queries.
-  def get_recordset_with_includes
-    reflections = self.class.get_model.reflections
-    associations = self.get_fields.map { |f|
-      if reflections.key?(f)
-        f.to_sym
-      elsif reflections.key?("rich_text_#{f}")
-        :"rich_text_#{f}"
-      elsif reflections.key?("#{f}_attachment")
-        :"#{f}_attachment"
-      elsif reflections.key?("#{f}_attachments")
-        :"#{f}_attachments"
-      end
-    }.compact
-
-    if associations.any?
-      return self.get_recordset.includes(associations)
-    end
-
-    return self.get_recordset
+    return nil
   end
 
   # Get the records this controller has access to *after* any filtering is applied.
   def get_records
-    return @records if instance_variable_defined?(:@records)
-
-    return @records = self.get_filtered_data(self.get_recordset_with_includes)
+    return @records ||= self.get_filtered_data(self.get_recordset)
   end
 
   # Get a single record by primary key or another column, if allowed. The return value is cached and
   # exposed to the view as the `@record` instance variable.
   def get_record
     # Cache the result.
-    return @record if instance_variable_defined?(:@record)
+    return @record if @record
 
     recordset = self.get_recordset
     find_by_key = self.class.get_model.primary_key

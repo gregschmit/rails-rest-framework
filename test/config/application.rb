@@ -42,6 +42,16 @@ class Application < Rails::Application
   config.secret_token = "a_test_token"
   config.secret_key_base = "a_test_secret"
 
+  if defined?(Bullet)
+    config.after_initialize do
+      Bullet.enable = true
+      Bullet.alert = true
+      Bullet.console = true
+      Bullet.add_footer = true
+      Bullet.raise = true if Rails.env.test?
+    end
+  end
+
   RESTFramework.config.freeze_config = true
 
   # Use vendored assets if testing `sprockets` or `propshaft`.

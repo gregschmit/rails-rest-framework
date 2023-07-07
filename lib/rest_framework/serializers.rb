@@ -170,6 +170,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
         cfg[:serializer_methods] = self.class.filter_subcfg(
           cfg[:serializer_methods], fields: except
         )
+        cfg[:includes_map] = self.class.filter_subcfg(cfg[:includes_map], fields: except)
       end
     elsif only_param && only = @controller.request&.query_parameters&.[](only_param).presence
       if only = only.split(",").map(&:strip).map(&:to_sym).presence
@@ -186,6 +187,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
         cfg[:serializer_methods] = self.class.filter_subcfg(
           cfg[:serializer_methods], fields: only, only: true
         )
+        cfg[:includes_map] = self.class.filter_subcfg(cfg[:includes_map], fields: only, only: true)
       end
     end
 
@@ -220,6 +222,12 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     methods = []
     serializer_methods = {}
 
+    # We try to construct performant queries using Active Record's `includes` method. This is
+    # sometimes impossible, for example when limiting the number of associated records returned, so
+    # we should only add associations here when it's useful, and using the `Bullet` gem is helpful
+    # in determining when that is the case.
+    includes_map = {}
+
     column_names = @model.column_names
     reflections = @model.reflections
     attachment_reflections = @model.attachment_reflections
@@ -253,6 +261,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
             end
           else
             includes[f] = sub_config
+            includes_map[f] = f.to_sym
           end
 
           # If we need to include the association count, then add it here.
@@ -265,22 +274,28 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
           end
         else
           includes[f] = sub_config
+          includes_map[f] = f.to_sym
         end
       elsif ref = reflections["rich_text_#{f}"]
         # ActionText Integration: Define rich text serializer method.
+        includes_map[f] = :"rich_text_#{f}"
         serializer_methods[f] = f
         self.define_singleton_method(f) do |record|
           next record.send(f).to_s
         end
       elsif ref = attachment_reflections[f]
         # ActiveStorage Integration: Define attachment serializer method.
-        serializer_methods[f] = f
         if ref.macro == :has_one_attached
+          serializer_methods[f] = f
+          includes_map[f] = {"#{f}_attachment": :blob}
           self.define_singleton_method(f) do |record|
             next record.send(f).attachment&.url
           end
-        else
+        elsif ref.macro == :has_many_attached
+          serializer_methods[f] = f
+          includes_map[f] = {"#{f}_attachments": :blob}
           self.define_singleton_method(f) do |record|
+            # Iterating the collection yields attachment objects.
             next record.send(f).map(&:url)
           end
         end
@@ -290,7 +305,11 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
     end
 
     return {
-      only: columns, include: includes, methods: methods, serializer_methods: serializer_methods
+      only: columns,
+      include: includes,
+      methods: methods,
+      serializer_methods: serializer_methods,
+      includes_map: includes_map,
     }
   end
 
@@ -319,7 +338,7 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
 
   # Get a configuration passable to `serializable_hash` for the object, filtered if required.
   def get_serializer_config
-    return filter_from_request(self.get_raw_serializer_config)
+    return self.filter_from_request(self.get_raw_serializer_config)
   end
 
   # Serialize a single record and merge results of `serializer_methods`.
@@ -338,8 +357,14 @@ class RESTFramework::NativeSerializer < RESTFramework::BaseSerializer
   def serialize(*args)
     config = self.get_serializer_config
     serializer_methods = config.delete(:serializer_methods)
+    includes_map = config.delete(:includes_map)
 
     if @object.respond_to?(:to_ary)
+      # Preload associations using `includes` to avoid N+1 queries. For now this also allows filter
+      # backends to use associated data; perhaps it may be wise to have a system in place for
+      # filters to reload their own associations?
+      @object = @object.includes(*includes_map.values) if includes_map.present?
+
       return @object.map { |r| self._serialize(r, config, serializer_methods) }
     end
 

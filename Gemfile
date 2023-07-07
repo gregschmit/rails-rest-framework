@@ -65,6 +65,7 @@ group :development do
   # Profiling
   gem "rack-mini-profiler"
   gem "stackprof"
+  gem "bullet"
 end
 
 group :test do
