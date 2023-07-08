@@ -52,6 +52,13 @@ jobs:
         if: steps.lcov_exists.outputs.files_exists == 'true'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Trigger render.com deploy hook
+        run: curl -X POST '${{ secrets.RENDER_COM_DEPLOY_HOOK }}'
   release:
     needs: test
     runs-on: ubuntu-latest
