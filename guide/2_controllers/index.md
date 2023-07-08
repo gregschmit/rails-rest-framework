@@ -7,13 +7,12 @@ inherit from the same parent often need different REST Framework functionality a
 these reasons, REST Framework provides the controller functionality as modules that you mix into
 your controllers, following the pattern of "composition over inheritance".
 
-Here are the controller mixins, one of which should always be included into any API controller.
+Here are the 4 controller mixins, one of which should always be included into any API controller.
 There are accessory mixins listed below some of the controller mixins, which are included by default
 to provide specific CRUD functionality.
 
 ```text
-Mixins:
-├─ BaseControllerMixin
+┌─ BaseControllerMixin
 │  └─ BaseModelControllerMixin (includes BaseControllerMixin)
 ├─ ModelControllerMixin (includes BaseModelControllerMixin)
 │  ├─ ListModelMixin
@@ -30,9 +29,9 @@ Mixins:
    └─ BulkDestroyModelMixin
 ```
 
-Again, all API controllers should include at least one of these top-level controller mixins, and can
-include any of the supplementary mixins to add additional functionality. For example, if you want to
-permit create but not update or destroy, then you could do this:
+Again, all API controllers should include at least one of these 4 top-level controller mixins, and
+can include any of the supplementary mixins to add additional functionality. For example, if you
+want to permit create but not update or destroy, then you could do this:
 
 ```ruby
 class Api::MoviesController < ApiController

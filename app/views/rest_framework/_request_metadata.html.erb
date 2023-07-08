@@ -1,16 +1,14 @@
 <div class="row">
   <div>
-    <pre><code><%
+    <pre class="mb-2"><code class="language-plaintext"><%
       concat request.request_method
       if request.method != request.request_method
         concat " (via #{request.method})"
       end
       concat " #{request.path}"
     %></code></pre>
-    <pre><code><%
+    <pre><code class="language-plaintext"><%
       concat "HTTP #{response.status} #{response.message}"
-      concat "\n"
-      concat "Content-Type: #{response.content_type}"
     %></code></pre>
   </div>
 </div>
