@@ -59,13 +59,24 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
 
   # Wrap the serialized page with appropriate metadata. TODO: include links.
   def get_paginated_response(serialized_page)
+    page_query_param = @controller.page_query_param
+    base_params = @controller.params.to_unsafe_h
+    next_url = if @page_number < @total_pages
+      @controller.url_for({**base_params, page_query_param => @page_number + 1})
+    end
+    previous_url = if @page_number > 1
+      @controller.url_for({**base_params, page_query_param => @page_number - 1})
+    end
+
     return {
       count: @count,
       page: @page_number,
       page_size: @page_size,
       total_pages: @total_pages,
+      next: next_url,
+      previous: previous_url,
       results: serialized_page,
-    }
+    }.compact
   end
 end
 

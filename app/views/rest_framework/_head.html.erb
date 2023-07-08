@@ -289,7 +289,7 @@
 
   // Convert plain-text links to anchor tag links.
   function rrfLinkify(text) {
-    return text.replace(/(https?:\/\/[^\s<>"]+)/g, "<a href=\"$1\" target=\"_blank\">$1</a>")
+    return text.replace(/(https?:\/\/[^\s<>"]+)/g, "<a href=\"$1\">$1</a>")
   }
 
   // Replace the document when doing form submission (mainly to support PUT/PATCH/DELETE).
