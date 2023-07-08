@@ -1,5 +1,5 @@
-# Do not use Rails-specific helper methods here (e.g., `blank?`) so the module can run standalone.
 module RESTFramework
+  # Do not use Rails-specific helper methods here (e.g., `blank?`) so the module can run standalone.
   module Version
     VERSION_FILEPATH = File.expand_path("../../VERSION", __dir__)
     UNKNOWN = "0-unknown"
