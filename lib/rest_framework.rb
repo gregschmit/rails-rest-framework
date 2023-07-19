@@ -122,9 +122,19 @@ module RESTFramework
   # Global configuration should be kept minimal, as controller-level configurations allows multiple
   # APIs to be defined to behave differently.
   class Config
-    DEFAULT_EXCLUDE_ASSOCIATION_CLASSES = [].freeze
     DEFAULT_LABEL_FIELDS = %w(name label login title email username url).freeze
     DEFAULT_SEARCH_COLUMNS = DEFAULT_LABEL_FIELDS + %w(description note).freeze
+    DEFAULT_EXCLUDE_BODY_FIELDS = %w[
+      created_at
+      created_by
+      created_by_id
+      updated_at
+      updated_by
+      updated_by_id
+      _method
+      utf8
+      authenticity_token
+    ].freeze
 
     # Do not run `rrf_finalize` on controllers automatically using a `TracePoint` hook. This is a
     # performance option and must be global because we have to determine this before any
@@ -155,6 +165,9 @@ module RESTFramework
     # The default search columns to use when generating search filters.
     attr_accessor :search_columns
 
+    # The default list of fields to exclude from the body of the request.
+    attr_accessor :exclude_body_fields
+
     # Option to use vendored assets (requires sprockets or propshaft) rather than linking to
     # external assets (the default).
     attr_accessor :use_vendored_assets
@@ -163,6 +176,7 @@ module RESTFramework
       self.show_backtrace = Rails.env.development?
       self.label_fields = DEFAULT_LABEL_FIELDS
       self.search_columns = DEFAULT_SEARCH_COLUMNS
+      self.exclude_body_fields = DEFAULT_EXCLUDE_BODY_FIELDS
     end
   end
 

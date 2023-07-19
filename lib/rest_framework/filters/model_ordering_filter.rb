@@ -15,6 +15,7 @@ class RESTFramework::Filters::ModelOrderingFilter < RESTFramework::Filters::Base
 
     if order_string.present?
       ordering = {}.with_indifferent_access
+
       order_string.split(",").each do |field|
         if field[0] == "-"
           column = field[1..-1]
@@ -24,10 +25,11 @@ class RESTFramework::Filters::ModelOrderingFilter < RESTFramework::Filters::Base
           direction = :asc
         end
 
-        next if !column.in?(fields) && column.split(".").first.in?(fields)
+        next if !column.in?(fields) && !column.split(".").first.in?(fields)
 
         ordering[column] = direction
       end
+
       return ordering
     end
 
