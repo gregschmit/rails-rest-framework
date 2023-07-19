@@ -62,19 +62,19 @@ class Api::Plain::MarblesControllerTest < ActionController::TestCase
     end
 
     def test_order_by_user_id
-      get(:index, as: :json, params: {ordering: "users.id"})
+      get(:index, as: :json, params: {ordering: "user.id"})
       assert_response(:success)
       ids = @response.parsed_body.select { |t|
               t["user"]
             }.map { |t| t["user"]["id"] }.compact.uniq
       assert_equal(ids, ids.sort)
 
-      get(:index, as: :json, params: {ordering: "-users.id"})
+      get(:index, as: :json, params: {ordering: "-user.id"})
       assert_response(:success)
       ids = @response.parsed_body.select { |t|
               t["user"]
             }.map { |t| t["user"]["id"] }.compact.uniq
-      assert_equal(ids, ids.sort.reverse)
+      assert_equal(ids.sort.reverse, ids)
     end
 
     def test_order_by_name

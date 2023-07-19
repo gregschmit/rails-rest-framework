@@ -43,7 +43,7 @@ class RESTFramework::Filters::ModelQueryFilter < RESTFramework::Filters::BaseFil
       v = nil if v.in?(NIL_VALUES)
 
       [p, v]
-    }.to_h.symbolize_keys.presence
+    }.to_h.symbolize_keys
 
     return filter_params, includes
   end
@@ -52,8 +52,12 @@ class RESTFramework::Filters::ModelQueryFilter < RESTFramework::Filters::BaseFil
   def get_filtered_data(data)
     filter_params, includes = self._get_filter_params
 
-    if filter_params.presence
-      return data.includes(*includes).where(**filter_params)
+    if filter_params.any?
+      if includes.any?
+        data = data.includes(*includes)
+      end
+
+      return data.where(**filter_params)
     end
 
     return data
