@@ -16,7 +16,7 @@
     <%# Render any other groups under dropdowns. %>
     <% @route_groups.drop(1).each_with_index do |(name, route_group), index| %>
       <tr data-bs-toggle="collapse" data-bs-target="#route-group-<%= index %>" class="rrf-route-group-header">
-        <td colspan="3" class="text-center user-select-none"><%= name %></td>
+        <td colspan="3" class="text-center user-select-none" style="cursor: pointer"><%= name %></td>
       </tr>
       <tbody id="route-group-<%= index %>" class="collapse">
         <% route_group.each do |route| %>

@@ -90,9 +90,6 @@
   html[data-bs-theme="dark"] .rrf-routes .rrf-route-group-header:hover {
     background-color: #333;
   }
-  .rrf-routes .rrf-route-group-header td {
-    cursor: pointer;
-  }
 
   /* Disable bootstrap's collapsing animation because in tables it causes delayed jerkiness. */
   .rrf-routes .collapsing {
@@ -194,7 +191,7 @@
     // Initialize dark/light mode before page fully loads to prevent flash.
     rrfSetSelectedMode(localStorage.getItem("rrfMode"))
 
-    // Initialize dark/light mode after page load (mostly so mode component is updated).
+    // Initialize dark/light mode after page load (duplicate so mode component is updated).
     document.addEventListener("DOMContentLoaded", (event) => {
       rrfSetSelectedMode(localStorage.getItem("rrfMode"))
 

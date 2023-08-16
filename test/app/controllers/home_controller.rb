@@ -30,7 +30,7 @@ class HomeController < ApplicationController
 
     # If there is no trailing slash, adjust relative asset links.
     original_path = URI(request.original_fullpath).path
-    unless URI(request.original_fullpath).path.end_with?("/")
+    unless original_path.end_with?("/")
       last_element = original_path.split("/").last
       file_content.gsub!(/]\(assets\//, "](#{last_element}/assets/")
     end
