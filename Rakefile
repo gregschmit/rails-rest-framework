@@ -40,7 +40,7 @@ task :maintain_assets do
     # actually use them.
     if cfg[:place] == "stylesheets"
       vars = []
-      content.gsub!(/(--[a-z-]+):\s*url.+?;/) {
+      content.gsub!(/(--[a-z-]+):\s*url\(".+?"\);?/) {
         vars << Regexp.last_match(1)
         next ""
       }
