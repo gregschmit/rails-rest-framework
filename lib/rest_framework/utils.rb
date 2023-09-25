@@ -171,15 +171,12 @@ module RESTFramework::Utils
   # strings, not symbols.
   def self.fields_for(model, exclude_associations: nil)
     foreign_keys = model.reflect_on_all_associations(:belongs_to).map(&:foreign_key)
+    base_fields = model.column_names.reject { |c| c.in?(foreign_keys) }
 
-    if exclude_associations
-      return model.column_names.reject { |c| c.in?(foreign_keys) }
-    end
+    return base_fields if exclude_associations
 
     # Add associations in addition to normal columns.
-    return model.column_names.reject { |c|
-      c.in?(foreign_keys)
-    } + model.reflections.map { |association, ref|
+    return base_fields + model.reflections.map { |association, ref|
       # Ignore associations for which we have custom integrations.
       if ref.class_name.in?(%w(ActiveStorage::Attachment ActiveStorage::Blob ActionText::RichText))
         next nil
