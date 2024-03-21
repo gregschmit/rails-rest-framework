@@ -16,20 +16,18 @@ RAILS_VERSION = Gem::Version.new(
 gem "rails", "~> #{RAILS_VERSION}"
 gem "rake"
 gem "sqlite3"
+gem "puma"
 
-# Only include ransack for Rails >=7.
+# Only Rails >=7.1 gems.
 if RAILS_VERSION >= Gem::Version.new("7")
+  gem "kamal"
   gem "ransack", ">= 4.0"
-end
-
-# Ruby 3 removed webrick, so we need to install it manually.
-if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3")
-  gem "webrick"
+  gem "solid_queue"
 end
 
 # Include `active_model_serializers` for custom integration (Rails >=6 only).
 if RAILS_VERSION >= Gem::Version.new("6")
-  gem "active_model_serializers", "0.10.13"
+  gem "active_model_serializers", "0.10.14"
 end
 
 # Include `translate_enum` for custom integration.
@@ -47,6 +45,12 @@ elsif ENV["ASSET_PIPELINE"] == "propshaft"
   gem "propshaft"
 end
 
+if ENV["ASSET_PIPELINE"]
+  # Requires an asset pipeline. Originally to schedule a periodic data wipe for demo data, however
+  # that would require the worker to restart which is not currently possible in Ruby.
+  # gem "mission_control-jobs"
+end
+
 gem "kramdown"
 gem "kramdown-parser-gfm"
 
@@ -55,6 +59,7 @@ group :development do
   gem "better_errors", "2.9.1"  # Avoid `sassc` dependency.
   gem "binding_of_caller"
   gem "byebug"
+  gem "foreman"
   gem "pry-rails"
   gem "rubocop-shopify", require: false
   gem "web-console"
@@ -70,6 +75,6 @@ end
 
 group :test do
   gem "minitest"
-  gem "simplecov"
+  gem "simplecov", require: false
   gem "simplecov-lcov", "0.8.0", require: false
 end

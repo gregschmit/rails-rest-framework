@@ -99,12 +99,10 @@ module RESTFramework::Utils
     return route_props, application_routes.routes.select { |r|
       # We `select` first to avoid unnecessarily calculating metadata for routes we don't even want
       # to show.
-      (
-        (r.defaults[:subdomain].blank? || r.defaults[:subdomain] == request.subdomain) &&
+      (r.defaults[:subdomain].blank? || r.defaults[:subdomain] == request.subdomain) &&
         current_comparable_path.match?(self.comparable_path(r.path.spec.to_s)) &&
         r.defaults[:controller].present? &&
         r.defaults[:action].present?
-      )
     }.map { |r|
       path = r.path.spec.to_s.gsub("(.:format)", "")
       levels = path.count("/")

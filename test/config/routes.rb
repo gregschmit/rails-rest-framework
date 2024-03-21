@@ -1,6 +1,12 @@
 Rails.application.routes.draw do
   root to: "home#index"
 
+  get "up" => "rails/health#show", as: :rails_health_check
+
+  if defined?(MissionControl)
+    mount MissionControl::Jobs::Engine, at: "/jobs"
+  end
+
   get "guide", to: "home#guide_first", format: false
   get "guide/:section", to: "home#show_guide_section", as: :show_guide_section, format: false
   get(

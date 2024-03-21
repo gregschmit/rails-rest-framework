@@ -1,0 +1,25 @@
+service: rails-rest-framework
+
+image: ghcr.io/gregschmit/rails-rest-framework
+labels:
+  org.opencontainers.image.source: https://github.com/gregschmit/rails-rest-framework
+builder:
+  multiarch: false
+
+servers:
+  web:
+    - appserver.schmit.net
+  worker:
+    hosts:
+      - appserver.schmit.net
+    cmd: bin/rails solid_queue:start
+
+ssh:
+  user: deploy
+  proxy: "appserver@home.schmit.net"
+
+registry:
+  server: ghcr.io
+  username: gregschmit
+  password:
+    - GITHUB_TOKEN

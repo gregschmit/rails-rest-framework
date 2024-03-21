@@ -1,35 +1,39 @@
 require_relative "boot"
 require "uri"
 
-# Rather than `require 'rails/all'`, only require things we absolutely need.
-require "rails"
-[
-  "active_record/railtie",
-  "active_storage/engine",
-  "action_controller/railtie",
-  "action_view/railtie",
-  "active_job/railtie",
-  "action_text/engine",
-  "rails/test_unit/railtie",
-].each do |railtie|
-  require railtie
-end
+require "rails/all"
 
 # Require `sprockets` if testing asset pipeline.
 if ENV["ASSET_PIPELINE"] == "sprockets"
   require "sprockets/railtie"
 end
 
+# Patch for Ransack (fixes `undefined method 'table_name' for #<Arel::Table`).
+class Arel::Table
+  def table_name
+    return self.name
+  end
+end
+
 # Require the gems listed in Gemfile.
 Bundler.require(*Rails.groups)
 
 class Application < Rails::Application
+  if Rails::VERSION::MAJOR >= 7
+    config.load_defaults(7.0)
+  end
+
   config.hosts = nil
 
   config.autoloader = :zeitwerk
   config.eager_load = false
 
-  config.action_dispatch.show_exceptions = !Rails.env.test?
+  if Rails::VERSION::MAJOR >= 7 && Rails::VERSION::MINOR >= 1
+    config.action_dispatch.show_exceptions = Rails.env.test? ? :none : :all
+  else
+    config.action_dispatch.show_exceptions = !Rails.env.test?
+  end
+
   config.consider_all_requests_local = !Rails.env.production?
   config.serve_static_files = true
 
@@ -38,7 +42,7 @@ class Application < Rails::Application
 
   config.active_storage.service = :local
 
-  config.session_store(:cookie_store, key: "_session")
+  config.session_store(:cookie_store, key: "rrf_session")
   config.secret_token = "a_test_token"
   config.secret_key_base = "a_test_secret"
 
@@ -52,6 +56,14 @@ class Application < Rails::Application
     end
   end
 
+  if defined?(MissionControl)
+    config.mission_control.jobs.base_controller_class = "JobsController"
+  end
+
+  if defined?(SolidQueue)
+    config.active_job.queue_adapter = :solid_queue
+  end
+
   RESTFramework.config.freeze_config = true
 
   # Use vendored assets if testing `sprockets` or `propshaft`.
@@ -59,7 +71,7 @@ class Application < Rails::Application
     RESTFramework.config.use_vendored_assets = true
   end
 
-  if Rails::VERSION::MAJOR >= 7
+  if Rails::VERSION::MAJOR >= 7 && Rails::VERSION::MINOR < 1
     config.active_record.legacy_connection_handling = false
     config.active_support.remove_deprecated_time_with_zone_name = true
   end

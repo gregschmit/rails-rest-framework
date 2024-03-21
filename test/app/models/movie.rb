@@ -19,7 +19,7 @@
 #  main_genre_id  (main_genre_id => genres.id) ON DELETE => nullify
 #
 class Movie < ApplicationRecord
-  belongs_to :main_genre, class_name: "Genre"
+  belongs_to :main_genre, optional: true, class_name: "Genre"
   has_and_belongs_to_many :genres
   has_and_belongs_to_many :users
 
