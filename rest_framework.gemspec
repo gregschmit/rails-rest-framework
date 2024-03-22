@@ -1,11 +1,18 @@
-require_relative "lib/rest_framework/version"
+rrf_version = ENV["RRF_OVERRIDE_VERSION"]
 
-# Stamp version before packaging.
-RESTFramework::Version.stamp_version
+unless rrf_version
+  require_relative "lib/rest_framework/version"
+
+  # Stamp version before packaging.
+  RESTFramework::Version.stamp_version
+
+  # Use the stamped version.
+  rrf_version = RESTFramework::VERSION
+end
 
 Gem::Specification.new do |spec|
   spec.name = "rest_framework"
-  spec.version = ENV["RRF_OVERRIDE_VERSION"] || RESTFramework::VERSION
+  spec.version = rrf_version
   spec.authors = ["Gregory N. Schmit"]
   spec.email = ["schmitgreg@gmail.com"]
 

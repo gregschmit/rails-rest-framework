@@ -4,10 +4,8 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Install Ruby/Gems
-        uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
       - name: Run code checks
@@ -19,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         ruby: [2.7.5, 3.0.6, 3.1.4, 3.2.2]
-        rails: [6.0.6, 6.1.7, 7.0.4]
+        rails: [6.0.6, 6.1.7, 7.0.4, 7.1.3]
         exclude:
           - ruby: 3.1.4
             rails: 6.0.6
@@ -29,12 +27,10 @@ jobs:
       RAILS_VERSION: ${{ matrix.rails }}
       CUSTOM_RUBY_VERSION: ${{ matrix.ruby }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Remove `Gemfile.lock` because this is a matrix job
         run: rm Gemfile.lock
-      - name: Install Ruby/Gems
-        uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
@@ -44,7 +40,7 @@ jobs:
         run: BACKTRACE=1 bin/rails test
       - name: Check if coverage LCOV file exists
         id: lcov_exists
-        uses: andstor/file-existence-action@v2
+        uses: andstor/file-existence-action@v3
         with:
           files: coverage/lcov.info
       - name: Submit coverage to `coveralls.io` if LCOV file exists
@@ -57,23 +53,42 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Trigger render.com deploy hook
-        run: curl -X POST '${{ secrets.RENDER_COM_DEPLOY_HOOK }}'
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.APPSERVER_DEPLOY_SSH_KEY }}
+      - name: Setup appserver known_hosts
+        run: cat config/appserver.known_hosts >> ~/.ssh/known_hosts
+      - name: Set up Docker Buildx for cache
+        uses: docker/setup-buildx-action@v3
+      - name: Expose GitHub Runtime for cache
+        uses: crazy-max/ghaction-github-runtime@v3
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Build and deploy using Kamal
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bundle exec kamal deploy
   release:
     needs: test
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Ensure latest tag is fetched
-        run: git fetch --unshallow --prune --tags --force
-      - name: Install Ruby/Gems
-        uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
       - name: Build the gem
         run: gem build rest_framework.gemspec -o rest_framework.gem
+      - name: Display VERSION
+        run: cat VERSION
       - name: Push to RubyGems
         env:
           GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}

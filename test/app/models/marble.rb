@@ -21,7 +21,7 @@
 #  user_id  (user_id => users.id) ON DELETE => cascade
 #
 class Marble < ApplicationRecord
-  belongs_to :user
+  belongs_to :user, optional: true
 
   has_one_attached :picture
 
