@@ -1,3 +1,8 @@
+# Before booting, remove `server.pid` (fixes issue in production where the app reboots constantly
+# with: `A server is already running. Check /app/test/tmp/pids/server.pid.`).
+require "fileutils"
+FileUtils.rm_rf("tmp/pids/server.pid")
+
 # Set up gems listed in the Gemfile.
 ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile", __dir__)
 require "bundler/setup"
