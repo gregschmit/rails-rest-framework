@@ -17,6 +17,3 @@ when "development"
 end
 
 port ENV.fetch("PORT", 3000)
-plugin :tmp_restart
-# pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
-pidfile ""
