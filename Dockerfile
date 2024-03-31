@@ -28,4 +28,5 @@ COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /app /app
 
 EXPOSE 3000
+ENTRYPOINT ["bin/entrypoint.sh"]
 CMD ["bin/rails", "server"]
