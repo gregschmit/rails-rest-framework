@@ -1,3 +1,4 @@
+/config/credentials/production.key
 /db/*.sqlite3*
 
 # Created by https://www.toptal.com/developers/gitignore/api/rails

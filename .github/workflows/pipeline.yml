@@ -72,6 +72,7 @@ jobs:
       - name: Build and deploy using Kamal
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRODUCTION_KEY: ${{ secrets.PRODUCTION_KEY }}
         run: bundle exec kamal deploy
   release:
     needs: test

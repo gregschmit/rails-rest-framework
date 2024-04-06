@@ -54,6 +54,10 @@ end
 gem "kramdown"
 gem "kramdown-parser-gfm"
 
+# Sentry
+gem "stackprof"
+gem "sentry-rails"
+
 group :development do
   gem "annotate"
   gem "better_errors", "2.9.1"  # Avoid `sassc` dependency.
@@ -69,7 +73,6 @@ group :development do
 
   # Profiling
   gem "rack-mini-profiler"
-  gem "stackprof"
   gem "bullet"
 end
 

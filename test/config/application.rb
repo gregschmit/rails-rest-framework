@@ -43,8 +43,6 @@ class Application < Rails::Application
   config.active_storage.service = :local
 
   config.session_store(:cookie_store, key: "rrf_session")
-  config.secret_token = "a_test_token"
-  config.secret_key_base = "a_test_secret"
 
   if defined?(Bullet)
     config.after_initialize do

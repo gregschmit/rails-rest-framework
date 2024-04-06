@@ -23,3 +23,7 @@ registry:
   username: gregschmit
   password:
     - GITHUB_TOKEN
+
+env:
+  secret:
+    - PRODUCTION_KEY
