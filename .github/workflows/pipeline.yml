@@ -71,6 +71,8 @@ jobs:
           bundler-cache: true
       - name: Write out .env file
         run: echo "PRODUCTION_KEY=${{ secrets.PRODUCTION_KEY }}" > .env
+      - name: Display .env file
+        run: cat .env
       - name: Build and deploy using Kamal
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
