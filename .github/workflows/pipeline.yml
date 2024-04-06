@@ -69,6 +69,8 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
+      - name: Write out .env file
+        run: echo "PRODUCTION_KEY=${{ secrets.PRODUCTION_KEY }}" > .env
       - name: Build and deploy using Kamal
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
