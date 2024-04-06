@@ -1,5 +1,5 @@
 class Api::Demo::RootController < Api::DemoController
-  self.extra_actions = {nil: :get, blank: :get, echo: :post}
+  self.extra_actions = {nil: :get, blank: :get, echo: :post, secret_key_base: :get}
 
   def root
     api_response({message: Api::DemoController::DESCRIPTION})
