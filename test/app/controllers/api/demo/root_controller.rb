@@ -16,4 +16,8 @@ class Api::Demo::RootController < Api::DemoController
   def echo
     api_response({message: "Here is your data:", data: request.request_parameters})
   end
+
+  def secret_key_base
+    api_response({secret_key_base: Rails.application.secret_key_base})
+  end
 end

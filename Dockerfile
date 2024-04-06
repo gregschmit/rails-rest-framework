@@ -3,6 +3,7 @@ LABEL org.opencontainers.image.source=https://github.com/gregschmit/rails-rest-f
 WORKDIR /app
 ENV BUNDLE_PATH="/usr/local/bundle"
 ENV RAILS_ENV="production"
+ENV SECRET_KEY_BASE="mock"
 ENV DISABLE_DATABASE_ENVIRONMENT_CHECK="1"
 
 # Throw-away build stage to reduce size of final image
