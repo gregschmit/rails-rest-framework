@@ -69,15 +69,17 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - name: Write out .env file
-        run: echo "PRODUCTION_KEY=${{ secrets.PRODUCTION_KEY }}" > .env
-      - name: Display .env file
-        run: cat .env
+      # - name: Write out .env file
+      #   run: echo "PRODUCTION_KEY=${{ secrets.PRODUCTION_KEY }}" > .env
+      # - name: Display .env file
+      #   run: cat .env
       - name: Build and deploy using Kamal
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PRODUCTION_KEY: ${{ secrets.PRODUCTION_KEY }}
-        run: bundle exec kamal deploy
+        # We use `kamal setup` so if we add or reprovision nodes, they get configured and the env is
+        # always updated.
+        run: bundle exec kamal setup
   release:
     needs: test
     runs-on: ubuntu-latest
