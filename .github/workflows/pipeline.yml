@@ -76,6 +76,10 @@ jobs:
         # We use `kamal setup` rather than `kamal deploy` so if we add or reprovision nodes, they
         # get configured and the env is always pushed.
         run: bundle exec kamal setup
+      - uses: dylanratcliffe/delete-untagged-containers@main
+        with:
+          package_name: rails-rest-framework
+          token: ${{ secrets.GITHUB_TOKEN }}
   release:
     needs: test
     runs-on: ubuntu-latest
