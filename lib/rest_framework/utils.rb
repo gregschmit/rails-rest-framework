@@ -15,13 +15,18 @@ module RESTFramework::Utils
         # Symbolize keys (which also makes a copy so we don't mutate the original).
         v = v.symbolize_keys
         methods = v.delete(:methods)
+        if v.key?(:method)
+          methods = v.delete(:method)
+        end
 
         # First, remove the route metadata.
         metadata = v.delete(:metadata) || {}
 
         # Add label to fields.
         if controller && metadata[:fields]
-          metadata[:fields] = metadata[:fields].map { |f| [f, {}] }.to_h if f.is_a?(Array)
+          metadata[:fields] = metadata[:fields].map { |f|
+            [f, {}]
+          }.to_h if metadata[:fields].is_a?(Array)
           metadata[:fields]&.each do |field, cfg|
             cfg[:label] = controller.get_label(field) unless cfg[:label]
           end
