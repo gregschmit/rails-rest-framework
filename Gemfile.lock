@@ -349,7 +349,7 @@ DEPENDENCIES
   simplecov
   simplecov-lcov (= 0.8.0)
   solid_queue
-  sqlite3
+  sqlite3 (~> 1.4)
   stackprof
   translate_enum
   web-console

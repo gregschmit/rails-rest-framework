@@ -15,7 +15,7 @@ RAILS_VERSION = Gem::Version.new(
 )
 gem "rails", "~> #{RAILS_VERSION}"
 gem "rake"
-gem "sqlite3"
+gem "sqlite3", "~> 1.4"
 gem "puma"
 
 # Only Rails >=7.1 gems.
