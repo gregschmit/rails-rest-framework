@@ -8,15 +8,16 @@ builder:
 
 servers:
   web:
-    - appserver.schmit.net
+    - app0.schmit.net
+    - app1.schmit.net
   worker:
     hosts:
-      - appserver.schmit.net
+      - app0.schmit.net
     cmd: bin/rails solid_queue:start
 
 ssh:
   user: deploy
-  proxy: "appserver@home.schmit.net"
+  proxy: appserver@home.schmit.net
 
 registry:
   server: ghcr.io
