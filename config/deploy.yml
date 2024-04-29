@@ -16,7 +16,6 @@ servers:
     cmd: bin/rails solid_queue:start
 
 ssh:
-  user: deploy
   proxy: appserver@home.schmit.net
 
 registry:
