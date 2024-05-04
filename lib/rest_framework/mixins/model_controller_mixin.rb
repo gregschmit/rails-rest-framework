@@ -22,8 +22,6 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
     # Options for what should be included/excluded from default fields.
     exclude_associations: false,
-    include_active_storage: false,
-    include_action_text: false,
   }
   RRF_BASE_MODEL_INSTANCE_CONFIG = {
     # Attributes for finding records.
