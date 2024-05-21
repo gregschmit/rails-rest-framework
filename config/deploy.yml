@@ -15,6 +15,11 @@ servers:
       - app0.schmit.net
     cmd: bin/rails solid_queue:start
 
+traefik:
+  options:
+    publish:
+      - 8081:3000
+
 ssh:
   proxy: deploy@home.schmit.net
 
