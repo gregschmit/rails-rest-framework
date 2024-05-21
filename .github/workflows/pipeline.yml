@@ -78,7 +78,7 @@ jobs:
         # We use `kamal setup` rather than `kamal deploy` so if we add or reprovision nodes, they
         # get configured and the env is always pushed.
         run: bundle exec kamal setup
-      - uses: snok/container-retention-policy@v2
+      - uses: snok/container-retention-policy@b95617ac96d929f7a37025691e1ad89be732fb46
         with:
           image-names: rails-rest-framework
           cut-off: one minute ago UTC+2
