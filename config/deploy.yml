@@ -16,9 +16,7 @@ servers:
     cmd: bin/rails solid_queue:start
 
 traefik:
-  options:
-    publish:
-      - 8081:3000
+  host_port: 8081
 
 ssh:
   proxy: deploy@home.schmit.net
