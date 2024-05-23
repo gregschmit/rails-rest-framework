@@ -8,15 +8,15 @@ builder:
 
 servers:
   web:
-    - app0.schmit.net
-    - app1.schmit.net
-  worker:
     hosts:
       - app0.schmit.net
+      - app1.schmit.net
+    labels:
+      traefik.http.routers.rrf.rule: HostRegexp(`^.+\.rails-rest-framework\.com$`) || Query(`int_route`, `rrf`)
+  worker:
     cmd: bin/rails solid_queue:start
-
-traefik:
-  host_port: 8081
+    hosts:
+      - app0.schmit.net
 
 ssh:
   proxy: deploy@home.schmit.net
