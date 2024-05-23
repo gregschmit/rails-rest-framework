@@ -12,7 +12,7 @@ servers:
       - app0.schmit.net
       - app1.schmit.net
     labels:
-      traefik.http.routers.rrf.rule: HostRegexp(`^.+\.rails-rest-framework\.com$`) || Query(`int_route`, `rrf`)
+      traefik.http.routers.rrf.rule: Host(`rails-rest-framework.com`) || HostRegexp(`^.+\.rails-rest-framework\.com$`) || Query(`_route_to`, `rrf`)
   worker:
     cmd: bin/rails solid_queue:start
     hosts:
