@@ -1,25 +1,3 @@
-# == Schema Information
-#
-# Table name: marbles
-#
-#  id            :integer          not null, primary key
-#  is_discounted :boolean          default(FALSE)
-#  name          :string           default(""), not null
-#  price         :decimal(6, 2)
-#  radius_mm     :integer          default(1), not null
-#  created_at    :datetime
-#  updated_at    :datetime
-#  user_id       :integer
-#
-# Indexes
-#
-#  index_marbles_on_name     (name) UNIQUE
-#  index_marbles_on_user_id  (user_id)
-#
-# Foreign Keys
-#
-#  user_id  (user_id => users.id) ON DELETE => cascade
-#
 class Marble < ApplicationRecord
   belongs_to :user, optional: true
 

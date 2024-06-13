@@ -59,7 +59,6 @@ gem "stackprof"
 gem "sentry-rails"
 
 group :development do
-  gem "annotate"
   gem "better_errors", "2.9.1"  # Avoid `sassc` dependency.
   gem "binding_of_caller"
   gem "byebug"

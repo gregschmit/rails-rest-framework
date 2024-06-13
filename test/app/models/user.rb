@@ -1,30 +1,3 @@
-# == Schema Information
-#
-# Table name: users
-#
-#  id         :integer          not null, primary key
-#  age        :integer
-#  balance    :decimal(8, 2)
-#  is_admin   :boolean          default(FALSE)
-#  login      :string           default(""), not null
-#  state      :integer          default("default"), not null
-#  status     :string           default(""), not null
-#  created_at :datetime
-#  updated_at :datetime
-#  email_id   :integer
-#  manager_id :integer
-#
-# Indexes
-#
-#  index_users_on_email_id    (email_id) UNIQUE
-#  index_users_on_login       (login) UNIQUE
-#  index_users_on_manager_id  (manager_id)
-#
-# Foreign Keys
-#
-#  email_id    (email_id => emails.id) ON DELETE => nullify
-#  manager_id  (manager_id => users.id) ON DELETE => nullify
-#
 class User < ApplicationRecord
   STATUS_OPTS = {
     "" => "Unknown",
