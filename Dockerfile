@@ -10,7 +10,7 @@ FROM base as build
 
 # Setup application gems.
 COPY .ruby-version .rails-version rest_framework.gemspec Gemfile Gemfile.lock ./
-RUN bundle install
+RUN bundle install --jobs 4
 
 # Setup application.
 COPY . .
