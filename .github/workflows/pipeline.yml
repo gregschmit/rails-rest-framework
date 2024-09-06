@@ -8,8 +8,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - name: Run code checks
-        run: bundle exec rubocop
+      - run: bundle exec rubocop
   test:
     needs: check
     runs-on: ubuntu-latest
@@ -41,10 +40,8 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
-      - name: Execute migrations
-        run: bin/rails db:migrate
-      - name: Run tests
-        run: BACKTRACE=1 bin/rails test
+      - run: bin/rails db:migrate
+      - run: BACKTRACE=1 bin/rails test
       - name: Check if coverage LCOV file exists
         id: lcov_exists
         uses: andstor/file-existence-action@v3
@@ -101,13 +98,9 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
       - uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - name: Build the gem
-        run: gem build rest_framework.gemspec -o rest_framework.gem
-      - name: Display VERSION
-        run: cat VERSION
-      - name: Push to RubyGems
-        env:
+      - run: git describe
+      - run: gem build rest_framework.gemspec -o rest_framework.gem
+      - run: cat VERSION
+      - env:
           GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
         run: gem push rest_framework.gem
