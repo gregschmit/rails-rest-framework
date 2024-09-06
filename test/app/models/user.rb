@@ -23,7 +23,7 @@ class User < ApplicationRecord
   has_many :marbles, foreign_key: "user_id"
   has_one :phone_number
 
-  if Rails.gem_version < "7.2"
+  if Rails.gem_version < Gem::Version.new("7.2")
     enum state: {default: 0, pending: 1, banned: 2, archived: 3}
   else
     enum :state, {default: 0, pending: 1, banned: 2, archived: 3}
