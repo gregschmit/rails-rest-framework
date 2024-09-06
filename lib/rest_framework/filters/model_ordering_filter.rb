@@ -16,7 +16,8 @@ class RESTFramework::Filters::ModelOrderingFilter < RESTFramework::Filters::Base
     if order_string.present?
       ordering = {}.with_indifferent_access
 
-      order_string.split(",").each do |field|
+      order_string = order_string.join(",") if order_string.is_a?(Array)
+      order_string.split(",").map(&:strip).each do |field|
         if field[0] == "-"
           column = field[1..-1]
           direction = :desc

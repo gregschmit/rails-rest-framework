@@ -48,6 +48,7 @@ class Application < Rails::Application
     config.after_initialize do
       Bullet.enable = true
       Bullet.alert = true
+      # Bullet.counter_cache_enable = false
       Bullet.console = true
       Bullet.add_footer = true
       Bullet.raise = true if Rails.env.test?
