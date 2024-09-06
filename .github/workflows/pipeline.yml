@@ -61,6 +61,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+      - run: git fetch --tags --force # Fix broken actions/checkout@v4.
       - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
@@ -97,6 +98,8 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+      - run: git fetch --tags --force # Fix broken actions/checkout@v4.
+      - run: git describe
       - uses: ruby/setup-ruby@v1
       - run: git describe
       - run: gem build rest_framework.gemspec -o rest_framework.gem
