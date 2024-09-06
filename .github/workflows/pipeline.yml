@@ -32,6 +32,7 @@ jobs:
     env:
       RAILS_VERSION: ${{ matrix.rails }}
       CUSTOM_RUBY_VERSION: ${{ matrix.ruby }}
+      MAKE: make --jobs 4
     steps:
       - uses: actions/checkout@v4
       - name: Remove `Gemfile.lock` because this is a matrix job

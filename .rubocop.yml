@@ -5,6 +5,7 @@ inherit_gem:
 AllCops:
   Exclude:
     - test/db/schema.rb
+    - test/db/solid_queue_schema.rb
     - vendor
   SuggestExtensions: false
   NewCops: disable
