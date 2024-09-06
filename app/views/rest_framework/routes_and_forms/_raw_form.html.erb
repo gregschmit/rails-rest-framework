@@ -32,12 +32,13 @@
   <% if @is_model_controller && model = controller.class.get_model %>
     <% if attachment_reflections = model.attachment_reflections.presence %>
       <div class="mb-2" style="display: none" id="rawFilesFormWrapper">
-        <%= form_with(
+        <%= form_with(**{
           model: @record,
           url: "",
           id: "rawFilesForm",
           scope: "",
-        ) do |form| %>
+          local: true,
+        }.compact) do |form| %>
           <% attachment_reflections.each do |field, ref| %>
             <label class="form-label w-100"><%= controller.class.get_label(field) %>
               <%= form.file_field field, multiple: ref.macro == :has_many_attached %>

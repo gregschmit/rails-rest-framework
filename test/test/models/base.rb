@@ -37,6 +37,8 @@ module BaseModelTests
   end
 
   def test_can_destroy_record
-    @model.first.destroy!
+    record = @model.first
+    record.destroy!
+    assert_not(@model.exists?(record.id))
   end
 end

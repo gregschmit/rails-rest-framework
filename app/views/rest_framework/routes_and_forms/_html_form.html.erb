@@ -10,13 +10,14 @@
     </label>
   </div>
 
-  <%= form_with(
+  <%= form_with(**{
     model: @record,
     url: "",
     method: :patch,
     id: "htmlForm",
     scope: "",
-  ) do |form| %>
+    local: true,
+  }.compact) do |form| %>
     <% controller.get_fields.map(&:to_s).each do |f| %>
       <%
         # Don't provide form fields for associations or primary keys.

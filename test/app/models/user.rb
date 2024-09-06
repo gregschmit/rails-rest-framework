@@ -23,7 +23,7 @@ class User < ApplicationRecord
   has_many :marbles, foreign_key: "user_id"
   has_one :phone_number
 
-  enum state: {default: 0, pending: 1, banned: 2, archived: 3}
+  enum :state, {default: 0, pending: 1, banned: 2, archived: 3}
   translate_enum :state
 
   attribute :secret_number, :integer

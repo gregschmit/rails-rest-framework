@@ -221,6 +221,14 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
             self.define_singleton_method(f) do |record|
               next record.send(f).limit(limit).as_json(**sub_config)
             end
+
+            # Disable this for now, as it's not clear if this improves performance of count.
+            #
+            # # Even though we use a serializer method, if the count will later be added, then put
+            # # this field into the includes_map.
+            # if @controller.native_serializer_include_associations_count
+            #   includes_map[f] = f.to_sym
+            # end
           else
             includes[f] = sub_config
             includes_map[f] = f.to_sym
