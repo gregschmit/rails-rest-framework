@@ -43,15 +43,15 @@ jobs:
       - run: bin/rails db:migrate
       - run: BACKTRACE=1 bin/rails test
       - name: Check if coverage LCOV file exists
-        id: lcov_exists
         uses: andstor/file-existence-action@v3
         with:
           files: coverage/lcov.info
+        id: lcov_exists
       - name: Submit coverage to `coveralls.io` if LCOV file exists
         uses: coverallsapp/github-action@master
-        if: steps.lcov_exists.outputs.files_exists == 'true'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.lcov_exists.outputs.files_exists == 'true'
   deploy:
     needs: test
     runs-on: ubuntu-latest
@@ -65,8 +65,7 @@ jobs:
       - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-      - name: Setup deploy known_hosts
-        run: cat config/deploy.known_hosts >> ~/.ssh/known_hosts
+      - run: cat config/deploy.known_hosts >> ~/.ssh/known_hosts
       - name: Set up Docker Buildx for cache
         uses: docker/setup-buildx-action@v3
       - name: Expose GitHub Runtime for cache
@@ -74,13 +73,12 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - name: Build and deploy using Kamal
+      - run: bundle exec kamal setup
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PRODUCTION_KEY: ${{ secrets.PRODUCTION_KEY }}
         # We use `kamal setup` rather than `kamal deploy` so if we add or reprovision nodes, they
         # get configured and the env is always pushed.
-        run: bundle exec kamal setup
       - uses: snok/container-retention-policy@b95617ac96d929f7a37025691e1ad89be732fb46
         with:
           image-names: rails-rest-framework
@@ -101,7 +99,6 @@ jobs:
       - run: git fetch --tags --force # Fix broken actions/checkout@v4.
       - run: git describe
       - uses: ruby/setup-ruby@v1
-      - run: git describe
       - run: gem build rest_framework.gemspec -o rest_framework.gem
       - run: cat VERSION
       - env:
