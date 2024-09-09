@@ -48,7 +48,7 @@ jobs:
           files: coverage/lcov.info
         id: lcov_exists
       - name: Submit coverage to `coveralls.io` if LCOV file exists
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         if: steps.lcov_exists.outputs.files_exists == 'true'
