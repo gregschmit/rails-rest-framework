@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+# Proxy this command to the test project.
+
+require "fileutils"
+FileUtils.chdir("test")
+
+require_relative "../test/config/environment"
+require "solid_queue/cli"
+
+SolidQueue::Cli.start(ARGV)

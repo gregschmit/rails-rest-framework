@@ -71,7 +71,7 @@ class Application < Rails::Application
     RESTFramework.config.use_vendored_assets = true
   end
 
-  if Rails::VERSION::MAJOR >= 7 && Rails::VERSION::MINOR < 1
+  if Rails::VERSION::MAJOR == 7 && Rails::VERSION::MINOR < 1
     config.active_record.legacy_connection_handling = false
     config.active_support.remove_deprecated_time_with_zone_name = true
   end
