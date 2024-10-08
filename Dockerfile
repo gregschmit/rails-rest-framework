@@ -1,4 +1,4 @@
-FROM ruby:3.2.2-bookworm as base
+FROM ruby:3.2.2-bookworm AS base
 LABEL org.opencontainers.image.source=https://github.com/gregschmit/rails-rest-framework
 WORKDIR /app
 ENV BUNDLE_PATH="/usr/local/bundle"
@@ -6,7 +6,7 @@ ENV RAILS_ENV="production"
 ENV DISABLE_DATABASE_ENVIRONMENT_CHECK="1"
 
 # Throw-away build stage to reduce size of final image
-FROM base as build
+FROM base AS build
 
 # Setup application gems.
 COPY .ruby-version .rails-version rest_framework.gemspec Gemfile Gemfile.lock ./
