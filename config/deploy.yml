@@ -1,22 +1,19 @@
 service: rails-rest-framework
-
 image: ghcr.io/gregschmit/rails-rest-framework
-labels:
-  org.opencontainers.image.source: https://github.com/gregschmit/rails-rest-framework
 builder:
-  multiarch: false
+  arch: amd64
 
 servers:
   web:
-    hosts:
-      - app0.schmit.net
-      - app1.schmit.net
-    labels:
-      traefik.http.routers.rrf.rule: Host(`rails-rest-framework.com`) || HostRegexp(`^.+\.rails-rest-framework\.com$`) || Query(`_route_to`, `rrf`)
+    - app0.schmit.net
   worker:
-    cmd: bin/rails solid_queue:start
+    cmd: bin/jobs
     hosts:
-      - app0.schmit.net
+      - app1.schmit.net
+
+proxy:
+  host: rails-rest-framework.com
+  app_port: 3000
 
 ssh:
   proxy: deploy@home.schmit.net
