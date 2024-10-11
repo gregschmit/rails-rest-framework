@@ -70,6 +70,7 @@ class Application < Rails::Application
 
   if defined?(WebConsole)
     config.web_console.permissions = config.x.trusted_ip
+    config.web_console.development_only = false
   end
 
   RESTFramework.config.freeze_config = true
