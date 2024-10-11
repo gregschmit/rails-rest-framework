@@ -69,7 +69,7 @@ class Application < Rails::Application
   end
 
   if defined?(WebConsole)
-    config.web_console.permissions = config.x.trusted_ip
+    config.web_console.permissions = "0.0.0.0/0"
     config.web_console.development_only = false
   end
 
