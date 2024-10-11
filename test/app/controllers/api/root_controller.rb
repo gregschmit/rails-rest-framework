@@ -28,8 +28,8 @@ class Api::RootController < ApiController
       {
         ip: request.ip,
         remote_ip: request.remote_ip,
-        forwarded_ip: request.headers["HTTP_X_FORWARDED_FOR"],
-        cloudflare_ip: request.headers["HTTP_CF_CONNECTING_IP"],
+        x_forwarded_for: request.headers["HTTP_X_FORWARDED_FOR"],
+        cf_connecting_ip: request.headers["HTTP_CF_CONNECTING_IP"],
       },
     )
   end

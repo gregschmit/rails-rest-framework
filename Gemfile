@@ -57,6 +57,10 @@ gem "kramdown-parser-gfm"
 gem "stackprof"
 gem "sentry-rails"
 
+group :production do
+  gem "cloudflare-rails"
+end
+
 group :development do
   gem "better_errors", "2.9.1"  # Avoid `sassc` dependency.
   gem "binding_of_caller"
