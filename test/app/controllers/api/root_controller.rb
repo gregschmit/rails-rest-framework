@@ -35,7 +35,12 @@ class Api::RootController < ApiController
   end
 
   def c
-    console
+    begin
+      console
+    rescue NameError
+      return api_response({message: "Console not available."})
+    end
+
     return api_response({message: "Console opened."})
   end
 end

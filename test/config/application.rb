@@ -68,11 +68,6 @@ class Application < Rails::Application
     config.solid_queue.connects_to = {database: {writing: :solid_queue, reading: :solid_queue}}
   end
 
-  if defined?(WebConsole)
-    config.web_console.permissions = "0.0.0.0/0"
-    config.web_console.development_only = false
-  end
-
   RESTFramework.config.freeze_config = true
 
   # Use vendored assets if testing `sprockets` or `propshaft`.
