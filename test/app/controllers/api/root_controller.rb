@@ -24,7 +24,14 @@ class Api::RootController < ApiController
   end
 
   def ip
-    return api_response({ip: request.ip, remote_ip: request.remote_ip})
+    return api_response(
+      {
+        ip: request.ip,
+        remote_ip: request.remote_ip,
+        forwarded_ip: request.headers["HTTP_X_FORWARDED_FOR"],
+        cloudflare_ip: request.headers["HTTP_CF_CONNECTING_IP"],
+      },
+    )
   end
 
   def c
