@@ -16,6 +16,7 @@ RUN bundle install --jobs 4
 COPY . .
 RUN SECRET_KEY_BASE=1 bin/rails runner "RESTFramework::Version.stamp_version"
 RUN SECRET_KEY_BASE=1 bin/rails db:reset
+RUN SECRET_KEY_BASE=1 bin/rails assets:precompile || true
 RUN SECRET_KEY_BASE=1 LOGS=all bin/rails log:clear tmp:clear
 RUN rm -rf ~/.bundle "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
 RUN rm -rf .git
