@@ -57,6 +57,8 @@ gem "kramdown-parser-gfm"
 gem "stackprof"
 gem "sentry-rails"
 
+gem "web-console"
+
 group :production do
   gem "cloudflare-rails"
 end
@@ -68,7 +70,6 @@ group :development do
   gem "foreman"
   gem "pry-rails"
   gem "rubocop-shopify", require: false
-  gem "web-console"
 
   # Vendoring external assets.
   gem "httparty"
