@@ -35,7 +35,7 @@ end
 gem "translate_enum"
 
 # Either test with Sprockets or Propshaft, or set to nil to use external assets.
-ENV["ASSET_PIPELINE"] = "propshaft"
+ENV["ASSET_PIPELINE"] = RAILS_VERSION >= Gem::Version.new("7.9") ? "propshaft" : nil
 if ENV["ASSET_PIPELINE"] == "sprockets"
   gem "sprockets-rails"
 
@@ -46,7 +46,7 @@ elsif ENV["ASSET_PIPELINE"] == "propshaft"
   gem "propshaft"
 end
 
-if ENV["ASSET_PIPELINE"]
+if ENV["ASSET_PIPELINE"] && RAILS_VERSION >= Gem::Version.new("7.9")
   gem "mission_control-jobs"
 end
 
