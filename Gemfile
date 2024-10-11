@@ -47,7 +47,7 @@ elsif ENV["ASSET_PIPELINE"] == "propshaft"
 end
 
 if ENV["ASSET_PIPELINE"] && RAILS_VERSION >= Gem::Version.new("7.9")
-  gem "mission_control-jobs"
+  # gem "mission_control-jobs"
 end
 
 gem "kramdown"
