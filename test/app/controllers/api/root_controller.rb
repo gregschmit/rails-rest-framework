@@ -1,7 +1,7 @@
 class Api::RootController < ApiController
   include RESTFramework::BaseControllerMixin
 
-  self.extra_actions = {dev_test: :get}
+  self.extra_actions = {dev_test: :get, ip: :get, c: :get}
 
   def root
     return api_response(
@@ -21,5 +21,14 @@ class Api::RootController < ApiController
         },
       },
     )
+  end
+
+  def ip
+    return api_response({ip: request.ip, remote_ip: request.remote_ip})
+  end
+
+  def c
+    console
+    return api_response({message: "Console opened."})
   end
 end

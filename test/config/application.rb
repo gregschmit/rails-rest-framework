@@ -23,6 +23,8 @@ class Application < Rails::Application
     config.load_defaults(7.0)
   end
 
+  config.x.trusted_ip = "199.27.253.42"
+
   config.hosts = nil
 
   config.autoloader = :zeitwerk
@@ -62,6 +64,10 @@ class Application < Rails::Application
   if defined?(SolidQueue)
     config.active_job.queue_adapter = :solid_queue
     config.solid_queue.connects_to = {database: {writing: :solid_queue, reading: :solid_queue}}
+  end
+
+  if defined?(WebConsole)
+    config.web_console.permissions = config.x.trusted_ip
   end
 
   RESTFramework.config.freeze_config = true

@@ -34,8 +34,8 @@ end
 # Include `translate_enum` for custom integration.
 gem "translate_enum"
 
-# Enable to test sprockets/propshaft.
-ENV["ASSET_PIPELINE"] = nil
+# Either test with Sprockets or Propshaft, or set to nil to use external assets.
+ENV["ASSET_PIPELINE"] = "propshaft"
 if ENV["ASSET_PIPELINE"] == "sprockets"
   gem "sprockets-rails"
 
@@ -47,9 +47,7 @@ elsif ENV["ASSET_PIPELINE"] == "propshaft"
 end
 
 if ENV["ASSET_PIPELINE"]
-  # Requires an asset pipeline. Originally to schedule a periodic data wipe for demo data, however
-  # that would require the worker to restart which is not currently possible in Ruby.
-  # gem "mission_control-jobs"
+  gem "mission_control-jobs"
 end
 
 gem "kramdown"
