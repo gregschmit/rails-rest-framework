@@ -443,7 +443,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       end
 
       if self.permit_nested_attributes_assignment
-        hash_variations["#{f}_attributes"] = self.class.get_field_config(f)[:sub_fields]
+        hash_variations["#{f}_attributes"] = (
+          self.class.get_field_config(f)[:sub_fields] + ["_destroy"]
+        )
       end
 
       # Associations are not allowed to be submitted in their bare form.
