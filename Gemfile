@@ -15,11 +15,11 @@ RAILS_VERSION = Gem::Version.new(
 )
 gem "rails", "~> #{RAILS_VERSION}"
 gem "rake"
-gem "sqlite3", RAILS_VERSION >= Gem::Version.new("7.9") ? ">= 2" : "~> 1.4"
+gem "sqlite3", RAILS_VERSION >= Gem::Version.new("8") ? ">= 2" : "~> 1.4"
 gem "puma"
 
-# Only Rails >=7.1 gems.
-if RAILS_VERSION >= Gem::Version.new("7.2")
+# Only Rails >=7 gems.
+if RAILS_VERSION >= Gem::Version.new("7")
   gem "kamal"
   gem "ransack", ">= 4.0"
   gem "solid_queue"
@@ -27,7 +27,7 @@ end
 
 # Include `active_model_serializers` for custom integration (Rails >=6 only).
 # TODO: Disabled in Rails 8 because AMS seems to be broken on a frozen object mutation error.
-if RAILS_VERSION >= Gem::Version.new("6") && RAILS_VERSION <= Gem::Version.new("7.9")
+if RAILS_VERSION >= Gem::Version.new("6") && RAILS_VERSION < Gem::Version.new("8")
   gem "active_model_serializers", "0.10.14"
 end
 
@@ -35,7 +35,7 @@ end
 gem "translate_enum"
 
 # Either test with Sprockets or Propshaft, or set to nil to use external assets.
-ENV["ASSET_PIPELINE"] = RAILS_VERSION >= Gem::Version.new("7.9") ? "propshaft" : nil
+ENV["ASSET_PIPELINE"] = RAILS_VERSION >= Gem::Version.new("8") ? "propshaft" : nil
 if ENV["ASSET_PIPELINE"] == "sprockets"
   gem "sprockets-rails"
 
@@ -46,7 +46,7 @@ elsif ENV["ASSET_PIPELINE"] == "propshaft"
   gem "propshaft"
 end
 
-if ENV["ASSET_PIPELINE"] && RAILS_VERSION >= Gem::Version.new("7.9")
+if ENV["ASSET_PIPELINE"] && RAILS_VERSION >= Gem::Version.new("8")
   # gem "mission_control-jobs"
 end
 
