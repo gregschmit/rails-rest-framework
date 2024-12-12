@@ -19,7 +19,7 @@ gem "sqlite3", RAILS_VERSION >= Gem::Version.new("7.9") ? ">= 2" : "~> 1.4"
 gem "puma"
 
 # Only Rails >=7.1 gems.
-if RAILS_VERSION >= Gem::Version.new("7")
+if RAILS_VERSION >= Gem::Version.new("7.2")
   gem "kamal"
   gem "ransack", ">= 4.0"
   gem "solid_queue"
