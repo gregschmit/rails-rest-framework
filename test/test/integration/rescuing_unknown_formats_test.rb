@@ -8,20 +8,20 @@ class RescuingUnknownFormatsTest < ActionDispatch::IntegrationTest
   # TODO: Disabled because test is broken in Rails 8, but behavior tested manually and working.
   def _test_raise_unknown_format
     assert_raises(ActionController::UnknownFormat) do
-      get("/api/test/marbles_without_rescue_unknown_format.jsom")
+      get("/api/test/users_without_rescue_unknown_format.jsom")
     end
   end
 
   # Test that we rescue an unknown format and also that it defaults to :json.
   def test_rescue_unknown_format
-    get("/api/test/marbles.json")
+    get("/api/test/users.json")
     assert_response(:success)
     resp1 = @response.body
 
-    get("/api/test/marbles.jsom")
+    get("/api/test/users.jsom")
     assert_response(:success)
     resp2 = @response.body
 
-    assert_equal(resp1, resp2.gsub("jsom", "json"))
+    assert_equal(resp1, resp2)
   end
 end
