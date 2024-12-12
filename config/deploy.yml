@@ -26,4 +26,5 @@ registry:
 
 env:
   secret:
+    - GITHUB_TOKEN
     - PRODUCTION_KEY
