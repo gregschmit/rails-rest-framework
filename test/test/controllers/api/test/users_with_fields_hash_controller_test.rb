@@ -1,6 +1,6 @@
 require_relative "base"
 
-class Api::Test::MarblesWithFieldsHashControllerTest < ActionController::TestCase
+class Api::Test::UsersWithFieldsHashControllerTest < ActionController::TestCase
   include BaseApi::TestControllerTests
 
   def test_list
@@ -9,8 +9,8 @@ class Api::Test::MarblesWithFieldsHashControllerTest < ActionController::TestCas
     assert_equal(
       [
         "id",
-        "name",
-        "price",
+        "login",
+        "age",
       ].sort,
       @response.parsed_body[0].keys.sort,
     )
@@ -19,20 +19,20 @@ class Api::Test::MarblesWithFieldsHashControllerTest < ActionController::TestCas
   # Test actions that shouldnt've changed.
 
   def test_show
-    id = Marble.first.id
+    id = User.first.id
     get(:show, params: {id: id})
     assert_response(:success)
   end
 
   def test_show_not_found
-    id = Marble.all.pluck(:id).max + 1
+    id = User.all.pluck(:id).max + 1
     get(:show, params: {id: id})
     assert_response(404)
   end
 
   def test_create
-    post(:create, as: :json, params: {name: "test with fields hash", price: 1})
+    post(:create, as: :json, params: {login: "test with fields hash", age: 1})
     assert_response(:success)
-    assert(Marble.find_by(id: @response.parsed_body["id"]))
+    assert(User.find_by(id: @response.parsed_body["id"]))
   end
 end

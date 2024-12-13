@@ -45,19 +45,13 @@ Rails.application.routes.draw do
 
     rest_root :test
     namespace :test do
-      rest_resource :user do
-        rest_resources :marbles
-      end
-
       rest_resources :genres_with_fields_hash
-      rest_resource :marble, force_singular: true
-      rest_resources :marbles
       rest_resources :users
-      rest_resources :marbles_with_added_select
+      rest_resources :users_with_added_select
       rest_resources :users_with_bare_create, force_plural: true, only: [:create]
-      rest_resources :marbles_with_fields_hash
-      rest_resources :marbles_with_string_serializer
-      rest_resources :marbles_with_sub_fields
+      rest_resources :users_with_fields_hash
+      rest_resources :users_with_string_serializer
+      rest_resources :users_with_sub_fields
       rest_resources :users_without_rescue_unknown_format
       rest_resources :read_only_users
 
@@ -65,7 +59,7 @@ Rails.application.routes.draw do
 
       if defined?(ActiveModel::Serializer)
         namespace :active_model_serializer do
-          rest_resources :marbles
+          rest_resources :users
         end
       end
     end

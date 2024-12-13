@@ -4,26 +4,26 @@ if defined?(ActiveModel::Serializer)
 
     self.extra_actions = {list_rest_serializer: :get, list_am_serializer: :get}
     self.extra_member_actions = {show_rest_serializer: :get, show_am_serializer: :get}
-    self.model = Marble
+    self.model = User
 
     def list_rest_serializer
-      @marbles = self.get_recordset
-      render(json: @marbles, each_serializer: Api::Test::MarblesController::MarblesSerializer)
+      @users = self.get_recordset
+      render(json: @users, each_serializer: Api::Test::UsersController::UsersSerializer)
     end
 
     def list_am_serializer
-      @marbles = self.get_recordset
-      render(json: @marbles, each_serializer: MarbleSerializer)
+      @users = self.get_recordset
+      render(json: @users, each_serializer: UserSerializer)
     end
 
     def show_rest_serializer
-      @marble = self.get_record
-      render(json: @marble, serializer: Api::Test::MarblesController::MarblesSerializer)
+      @user = self.get_record
+      render(json: @user, serializer: Api::Test::UsersController::UsersSerializer)
     end
 
     def show_am_serializer
-      @marble = self.get_record
-      render(json: @marble, serializer: MarbleSerializer)
+      @user = self.get_record
+      render(json: @user, serializer: UserSerializer)
     end
   end
 end
