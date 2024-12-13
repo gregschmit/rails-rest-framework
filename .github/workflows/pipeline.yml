@@ -62,7 +62,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         if: steps.lcov_exists.outputs.files_exists == 'true'
   deploy:
-    needs: test
+    needs: check
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
     steps:
