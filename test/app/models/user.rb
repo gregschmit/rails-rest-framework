@@ -32,9 +32,11 @@ class User < ApplicationRecord
 
   attribute :secret_number, :integer
 
-  accepts_nested_attributes_for :billing_email, allow_destroy: true
-  accepts_nested_attributes_for :marbles, :phone_number, allow_destroy: true
-  accepts_nested_attributes_for :phone_number, allow_destroy: true
+  accepts_nested_attributes_for :phone_number,
+    :manager,
+    :billing_email,
+    :marbles,
+    allow_destroy: true
 
   validates_presence_of :login
   validates_uniqueness_of :login

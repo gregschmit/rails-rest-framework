@@ -21,6 +21,7 @@ admin = User.create!(
     {name: "Admin Marble 2", radius_mm: 20, price: 149.23},
   ],
 )
+example.update!(manager: admin)
 
 Marble.create!(name: "Orphan Marble 1", radius_mm: 300, price: 4000)
 Marble.create!(name: "Orphan Marble 2", radius_mm: 314, price: 5000)
