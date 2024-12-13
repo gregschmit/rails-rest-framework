@@ -10,7 +10,6 @@ jobs:
           bundler-cache: true
       - run: bundle exec rubocop
   test:
-    if: false
     needs: check
     runs-on: ubuntu-latest
     strategy:
@@ -62,7 +61,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         if: steps.lcov_exists.outputs.files_exists == 'true'
   deploy:
-    needs: check
+    needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
     steps:
@@ -80,9 +79,6 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - run: 'echo "gns debugging: $GITHUB_TOKEN"'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: bundle exec kamal setup
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
