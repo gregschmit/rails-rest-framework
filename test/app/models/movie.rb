@@ -8,6 +8,8 @@ class Movie < ApplicationRecord
   has_one_attached :cover
   has_many_attached :pictures
 
+  validates_presence_of :name
+  validates_uniqueness_of :name
   validates_numericality_of :price, greater_than: 0, allow_nil: true
 
   def self.ransackable_attributes(*args)
@@ -16,5 +18,12 @@ class Movie < ApplicationRecord
 
   def self.ransackable_associations(*args)
     return []
+  end
+
+  before_destroy do
+    if self.name == "Undestroyable"
+      errors.add(:base, "This record is undestroyable.")
+      throw(:abort)
+    end
   end
 end

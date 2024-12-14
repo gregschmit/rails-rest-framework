@@ -24,7 +24,6 @@ Rails.application.routes.draw do
       rest_root
       rest_resources :emails
       rest_resources :genres
-      rest_resources :marbles
       rest_resources :movies
       rest_resources :phone_numbers
       rest_resources :users
@@ -34,11 +33,9 @@ Rails.application.routes.draw do
       rest_root
       rest_resources :emails
       rest_resources :genres
-      rest_resources :marbles
       rest_resources :movies
       rest_resources :phone_numbers
       rest_resources :users do
-        rest_resources :marbles
         rest_resources :movies
       end
     end

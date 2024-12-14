@@ -1,6 +1,6 @@
 require "test_helper"
 
-# The goal of this test is to ensure that the proper routes are defined for API1.
+# The goal of this test is to ensure that the proper routes are defined for the demo API.
 class Api::DemoRoutingTest < ActionDispatch::IntegrationTest
   def test_can_get_root
     get("/api/demo")
@@ -9,10 +9,10 @@ class Api::DemoRoutingTest < ActionDispatch::IntegrationTest
     assert_response(:success)
   end
 
-  def test_can_get_marbles
-    get("/api/demo/marbles")
+  def test_can_get_users
+    get("/api/demo/users")
     assert_response(:success)
-    get("/api/demo/marbles.json")
+    get("/api/demo/users.json")
     assert_response(:success)
   end
 
