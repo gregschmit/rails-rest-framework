@@ -6,7 +6,6 @@ if defined?(ActiveModel::Serializer)
       User.create!(login: "test", manager_attributes: {login: "test2"})
       get(:index, as: :json)
       assert_response(:success)
-      puts @response.parsed_body
       assert(@response.parsed_body[1]["login"])
       assert(@response.parsed_body[1]["manager"])
       assert_equal("working!", @response.parsed_body[1]["test_serializer_method"])
