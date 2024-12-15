@@ -1,6 +1,6 @@
 require_relative "base"
 
-class Api::Test::UsersWithFieldsHashControllerTest < ActionController::TestCase
+class Api::Test::FieldsHashOnlyExceptControllerTest < ActionController::TestCase
   include BaseApi::TestControllerTests
 
   def test_list

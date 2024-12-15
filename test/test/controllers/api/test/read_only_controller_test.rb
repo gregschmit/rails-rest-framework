@@ -1,6 +1,6 @@
 require_relative "base"
 
-class Api::Test::ReadOnlyUsersControllerTest < ActionController::TestCase
+class Api::Test::ReadOnlyControllerTest < ActionController::TestCase
   include BaseApi::TestControllerTests
 
   def test_list

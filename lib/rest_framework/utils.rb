@@ -159,9 +159,10 @@ module RESTFramework::Utils
     )
     parsed_fields += fields_hash[:include].map(&:to_s) if fields_hash[:include]
     parsed_fields -= fields_hash[:exclude].map(&:to_s) if fields_hash[:exclude]
+    parsed_fields -= fields_hash[:except].map(&:to_s) if fields_hash[:except]
 
     # Warn for any unknown keys.
-    (fields_hash.keys - [:only, :include, :exclude]).each do |k|
+    (fields_hash.keys - [:only, :except, :include, :exclude]).each do |k|
       Rails.logger.warn("RRF: Unknown key in fields hash: #{k}")
     end
 

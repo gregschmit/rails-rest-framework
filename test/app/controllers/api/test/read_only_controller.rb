@@ -1,4 +1,4 @@
-class Api::Test::ReadOnlyUsersController < Api::TestController
+class Api::Test::ReadOnlyController < Api::TestController
   include RESTFramework::ReadOnlyModelControllerMixin
 
   class SingularManagerSerializer < RESTFramework::NativeSerializer

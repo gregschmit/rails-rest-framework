@@ -1,4 +1,4 @@
-class Api::Test::GenresWithFieldsHashController < Api::TestController
+class Api::Test::FieldsHashExcludeController < Api::TestController
   include RESTFramework::ModelControllerMixin
 
   self.fields = {exclude: [:main_movies]}

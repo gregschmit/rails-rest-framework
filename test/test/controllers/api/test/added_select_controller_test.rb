@@ -1,6 +1,6 @@
 require_relative "base"
 
-class Api::Test::UsersWithAddedSelectControllerTest < ActionController::TestCase
+class Api::Test::AddedSelectControllerTest < ActionController::TestCase
   include BaseApi::TestControllerTests
 
   def test_only_works

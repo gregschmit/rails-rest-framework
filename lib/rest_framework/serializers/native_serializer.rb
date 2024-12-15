@@ -271,6 +271,9 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
         end
       elsif @model.method_defined?(f)
         methods << f
+      else
+        # Assume anything else is a virtual column.
+        columns << f
       end
     end
 
