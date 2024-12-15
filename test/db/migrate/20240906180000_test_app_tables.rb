@@ -28,17 +28,6 @@ class TestAppTables < ActiveRecord::Migration[6.0]
       t.references(:user, null: false, foreign_key: {on_delete: :cascade}, index: {unique: true})
     end
 
-    create_table(:marbles) do |t|
-      t.string(:name, null: false, default: "", index: {unique: true})
-      t.integer(:radius_mm, null: false, default: 1)
-      t.decimal(:price, precision: 6, scale: 2)
-      t.boolean(:is_discounted, default: false)
-
-      t.references(:user, foreign_key: {on_delete: :cascade})
-
-      t.timestamps(null: true)
-    end
-
     create_table(:genres) do |t|
       t.string(:name, null: false, default: "", index: {unique: true})
       t.string(:description, null: false, default: "")

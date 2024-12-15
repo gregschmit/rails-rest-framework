@@ -1,6 +1,6 @@
 require "test_helper"
 
-class UnserializableMarble
+class UnserializableUser
 end
 
 class UnserializableSerializer < RESTFramework::NativeSerializer
@@ -24,7 +24,7 @@ class RESTFrameworkTest < Minitest::Test
   end
 
   def test_unserializable_serializer
-    unserializable_object = UnserializableMarble.new
+    unserializable_object = UnserializableUser.new
     exception = assert_raises(NoMethodError) do
       UnserializableSerializer.new(object: unserializable_object).serialize
     end

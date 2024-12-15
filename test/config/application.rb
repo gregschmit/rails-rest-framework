@@ -65,7 +65,7 @@ class Application < Rails::Application
 
   if defined?(SolidQueue)
     config.active_job.queue_adapter = :solid_queue
-    config.solid_queue.connects_to = {database: {writing: :solid_queue, reading: :solid_queue}}
+    config.solid_queue.connects_to = {database: {writing: :queue}}
   end
 
   RESTFramework.config.freeze_config = true

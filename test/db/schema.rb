@@ -78,18 +78,6 @@ ActiveRecord::Schema[8.0].define(version: 2024_09_06_180000) do
     t.index ["movie_id", "genre_id"], name: "index_genres_movies_on_movie_id_and_genre_id", unique: true
   end
 
-  create_table "marbles", force: :cascade do |t|
-    t.string "name", default: "", null: false
-    t.integer "radius_mm", default: 1, null: false
-    t.decimal "price", precision: 6, scale: 2
-    t.boolean "is_discounted", default: false
-    t.integer "user_id"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.index ["name"], name: "index_marbles_on_name", unique: true
-    t.index ["user_id"], name: "index_marbles_on_user_id"
-  end
-
   create_table "movies", force: :cascade do |t|
     t.string "name", default: "", null: false
     t.decimal "price", precision: 8, scale: 2
@@ -134,7 +122,6 @@ ActiveRecord::Schema[8.0].define(version: 2024_09_06_180000) do
   add_foreign_key "emails", "users", on_delete: :nullify
   add_foreign_key "genres_movies", "genres", on_delete: :cascade
   add_foreign_key "genres_movies", "movies", on_delete: :cascade
-  add_foreign_key "marbles", "users", on_delete: :cascade
   add_foreign_key "movies", "genres", column: "main_genre_id", on_delete: :nullify
   add_foreign_key "movies_users", "movies", on_delete: :cascade
   add_foreign_key "movies_users", "users", on_delete: :cascade

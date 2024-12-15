@@ -6,25 +6,14 @@ example = User.create!(
   balance: 20.34,
   state: "pending",
   status: "online",
-  marbles_attributes: [
-    {name: "Example Marble 1", radius_mm: 10, price: 4},
-    {name: "Example Marble 2", radius_mm: 8, price: 8},
-  ],
 )
 admin = User.create!(
   login: "admin",
   is_admin: true,
   age: 34,
   balance: 230.34,
-  marbles_attributes: [
-    {name: "Admin Marble 1", radius_mm: 11, price: 9.23},
-    {name: "Admin Marble 2", radius_mm: 20, price: 149.23},
-  ],
 )
 example.update!(manager: admin)
-
-Marble.create!(name: "Orphan Marble 1", radius_mm: 300, price: 4000)
-Marble.create!(name: "Orphan Marble 2", radius_mm: 314, price: 5000)
 
 action = Genre.create!(name: "Action", description: "Action movies are fast-paced and exciting.")
 _comedy = Genre.create!(name: "Comedy", description: "Comedy movies are funny.")

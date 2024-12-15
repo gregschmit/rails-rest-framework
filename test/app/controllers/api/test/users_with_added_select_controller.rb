@@ -5,6 +5,6 @@ class Api::Test::UsersWithAddedSelectController < Api::TestController
   self.native_serializer_config = {except: [:balance]}
 
   def get_recordset
-    return Marble.select("*, 5 as selected_value")
+    return User.select("*, 5 as selected_value")
   end
 end

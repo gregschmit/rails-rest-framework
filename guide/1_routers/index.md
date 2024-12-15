@@ -21,7 +21,6 @@ app/controllers/
 ├── api
 │   ├── groups_controller.rb
 │   ├── movies_controller.rb
-│   ├── marbles_controller.rb
 │   └── users_controller.rb
 ├── api_controller.rb
 └── application_controller.rb
@@ -54,7 +53,6 @@ app/controllers/
 │   ├── groups_controller.rb
 │   ├── movies_controller.rb
 │   ├── root_controller.rb
-│   ├── marbles_controller.rb
 │   └── users_controller.rb
 ├── api_controller.rb
 └── application_controller.rb

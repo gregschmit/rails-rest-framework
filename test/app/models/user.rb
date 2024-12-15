@@ -20,7 +20,6 @@ class User < ApplicationRecord
   has_and_belongs_to_many :movies
   has_many :emails
   has_many :managed_users, class_name: "User", foreign_key: "manager_id"
-  has_many :marbles, foreign_key: "user_id"
   has_one :phone_number
 
   if Rails.gem_version < Gem::Version.new("7.2")
@@ -32,11 +31,7 @@ class User < ApplicationRecord
 
   attribute :secret_number, :integer
 
-  accepts_nested_attributes_for :phone_number,
-    :manager,
-    :billing_email,
-    :marbles,
-    allow_destroy: true
+  accepts_nested_attributes_for :phone_number, :manager, :billing_email, allow_destroy: true
 
   validates_presence_of :login
   validates_uniqueness_of :login

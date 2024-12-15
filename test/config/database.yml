@@ -7,25 +7,25 @@ development:
   primary:
     <<: *sqlite
     database: db/development.sqlite3
-  solid_queue:
+  queue:
     <<: *sqlite
     database: db/development_queue.sqlite3
-    migrations_paths: db/solid_queue_migrate
+    migrations_paths: db/queue_migrate
 
 test:
   primary:
     <<: *sqlite
     database: db/test.sqlite3
-  solid_queue:
+  queue:
     <<: *sqlite
     database: db/test_queue.sqlite3
-    migrations_paths: db/solid_queue_migrate
+    migrations_paths: db/queue_migrate
 
 production:
   primary:
     <<: *sqlite
     database: db/production.sqlite3
-  solid_queue:
+  queue:
     <<: *sqlite
     database: db/production_queue.sqlite3
-    migrations_paths: db/solid_queue_migrate
+    migrations_paths: db/queue_migrate
