@@ -43,14 +43,15 @@ Rails.application.routes.draw do
     rest_root :test
     namespace :test do
       rest_resources :users
+
       rest_resources :added_select
       rest_resources :bare_create, force_plural: true, only: [:create]
       rest_resources :fields_hash_exclude
       rest_resources :fields_hash_only_except
+      rest_resources :no_rescue_unknown_format
+      rest_resources :read_only
       rest_resources :users_with_string_serializer
       rest_resources :users_with_sub_fields
-      rest_resources :users_without_rescue_unknown_format
-      rest_resources :read_only
 
       rest_route :network
 

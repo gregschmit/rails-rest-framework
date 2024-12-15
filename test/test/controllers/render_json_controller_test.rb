@@ -2,8 +2,6 @@ require "test_helper"
 
 if defined?(ActiveModel::Serializer)
   class RenderJsonControllerTest < ActionController::TestCase
-    setup { Rails.application.load_seed }
-
     def test_list_rest_serializer
       get(:list_rest_serializer)
       assert_response(:success)

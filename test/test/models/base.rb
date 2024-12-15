@@ -8,8 +8,6 @@ module BaseModelTests
     base.setup do
       @model ||= self.class.name.match(/(.*)Test$/)[1].constantize
       @title_field ||= TITLE_FIELDS.select { |f| f.to_s.in?(@model.column_names) }[0]
-
-      Rails.application.load_seed
     end
   end
 

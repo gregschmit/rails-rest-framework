@@ -2,14 +2,10 @@ require "test_helper"
 
 # The goal of this test is to ensure unknown formats are rescued, when configured.
 class RescuingUnknownFormatsTest < ActionDispatch::IntegrationTest
-  setup { Rails.application.load_seed }
-
   # Test that an invalid format raises an uncaught exception.
-  # TODO: Disabled because test is broken in Rails 8, but behavior tested manually and working.
-  def _test_raise_unknown_format
-    assert_raises(ActionController::UnknownFormat) do
-      get("/api/test/users_without_rescue_unknown_format.jsom")
-    end
+  def test_raise_unknown_format
+    get("/api/test/no_rescue_unknown_format.jsom")
+    assert_response(:not_acceptable)
   end
 
   # Test that we rescue an unknown format and also that it defaults to :json.

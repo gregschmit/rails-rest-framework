@@ -2,8 +2,6 @@ require "test_helper"
 
 # The goal of this test is to ensure that the proper routes are defined for API2.
 class Api::TestRoutingTest < ActionDispatch::IntegrationTest
-  setup { Rails.application.load_seed }
-
   def test_can_get_root
     get("/api/test")
     assert_response(:success)

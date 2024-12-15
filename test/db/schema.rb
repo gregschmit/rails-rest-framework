@@ -103,11 +103,15 @@ ActiveRecord::Schema[8.0].define(version: 2024_09_06_180000) do
 
   create_table "users", force: :cascade do |t|
     t.string "login", default: "", null: false
-    t.boolean "is_admin", default: false
+    t.string "legal_name", default: "", null: false
+    t.string "short_name", default: "", null: false
     t.integer "age"
+    t.boolean "is_admin", default: false, null: false
     t.decimal "balance", precision: 8, scale: 2
     t.integer "state", default: 0, null: false
     t.string "status", default: "", null: false
+    t.time "day_start"
+    t.date "last_reviewed_on"
     t.integer "manager_id"
     t.datetime "created_at"
     t.datetime "updated_at"

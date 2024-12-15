@@ -1,5 +1,4 @@
-require_relative "base"
+require "test_helper"
 
 class Api::Test::UsersWithStringSerializerControllerTest < ActionController::TestCase
-  include BaseApi::TestControllerTests
 end

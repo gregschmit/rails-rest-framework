@@ -23,3 +23,7 @@ require_relative "../config/environment"
 # end
 
 require "rails/test_help"
+
+class ActiveSupport::TestCase
+  fixtures :all
+end

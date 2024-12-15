@@ -1,4 +1,4 @@
-class Api::Test::UsersWithoutRescueUnknownFormatController < Api::TestController
+class Api::Test::NoRescueUnknownFormatController < Api::TestController
   include RESTFramework::ModelControllerMixin
 
   self.fields = %w(id login)

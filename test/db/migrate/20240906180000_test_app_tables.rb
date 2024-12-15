@@ -2,11 +2,19 @@ class TestAppTables < ActiveRecord::Migration[6.0]
   def change
     create_table(:users) do |t|
       t.string(:login, null: false, default: "", index: {unique: true})
-      t.boolean(:is_admin, default: false)
+      t.string(:legal_name, null: false, default: "")
+      t.string(:short_name, null: false, default: "")
       t.integer(:age)
+
+      t.boolean(:is_admin, null: false, default: false)
+
       t.decimal(:balance, precision: 8, scale: 2)
+
       t.integer(:state, null: false, default: 0)
       t.string(:status, null: false, default: "")
+
+      t.time(:day_start)
+      t.date(:last_reviewed_on)
 
       t.references(:manager, foreign_key: {on_delete: :nullify, to_table: :users})
 

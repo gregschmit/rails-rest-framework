@@ -1,0 +1,19 @@
+example:
+  login: example
+  age: 23
+  balance: 20.34
+  state: 0
+  status: online
+  manager: admin
+  movies:
+    - dark_knight
+    - inception
+admin:
+  login: admin
+  is_admin: true
+  age: 34
+  balance: 230.34
+  state: 0
+  status: offline
+  movies:
+    - the_shawshank_redemption

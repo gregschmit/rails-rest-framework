@@ -1,8 +1,6 @@
-require_relative "base"
+require "test_helper"
 
 class Api::Test::FieldsHashOnlyExceptControllerTest < ActionController::TestCase
-  include BaseApi::TestControllerTests
-
   def test_list
     get(:index, as: :json)
     assert_response(:success)

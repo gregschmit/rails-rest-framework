@@ -13,10 +13,13 @@ ruby ENV["CUSTOM_RUBY_VERSION"] || File.read(
 RAILS_VERSION = Gem::Version.new(
   ENV["RAILS_VERSION"] || File.read(File.expand_path(".rails-version", __dir__)).strip,
 )
+
+gem "puma"
 gem "rails", "~> #{RAILS_VERSION}"
 gem "rake"
 gem "sqlite3", RAILS_VERSION >= Gem::Version.new("8") ? ">= 2" : "~> 1.4"
-gem "puma"
+
+gem "faker"
 gem "rack-cors"
 
 # Only Rails >=7 gems.

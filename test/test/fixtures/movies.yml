@@ -1,0 +1,16 @@
+dark_knight:
+  name: The Dark Knight
+  price: 10.0
+  main_genre: action
+inception:
+  name: Inception
+  price: 12.0
+  main_genre: action
+the_hangover:
+  name: The Hangover
+  price: 8.0
+  main_genre: comedy
+the_shawshank_redemption:
+  name: The Shawshank Redemption
+  price: 9.0
+  main_genre: drama

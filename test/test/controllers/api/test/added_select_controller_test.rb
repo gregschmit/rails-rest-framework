@@ -1,8 +1,6 @@
-require_relative "base"
+require "test_helper"
 
 class Api::Test::AddedSelectControllerTest < ActionController::TestCase
-  include BaseApi::TestControllerTests
-
   def test_only_works
     get(:index, as: :json, params: {only: "id,selected_value"})
     assert_response(:success)

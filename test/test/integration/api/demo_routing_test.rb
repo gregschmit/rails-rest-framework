@@ -16,13 +16,10 @@ class Api::DemoRoutingTest < ActionDispatch::IntegrationTest
     assert_response(:success)
   end
 
-  # TODO: Disabled because test is broken in Rails 8, but behavior tested manually and working.
-  def _test_can_not_get_network_resourceful_routes
-    assert_raises(ActionController::RoutingError) do
-      get("/api/demo/network.json")
-    end
-    assert_raises(ActionController::RoutingError) do
-      get("/api/demo/network")
-    end
+  def test_can_not_get_network_resourceful_routes
+    get("/api/demo/network.json")
+    assert_response(:not_found)
+    get("/api/demo/network")
+    assert_response(:not_found)
   end
 end

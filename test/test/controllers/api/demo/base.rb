@@ -6,7 +6,6 @@ module Api::Demo::Base
   def self.included(base)
     base.class_attribute(:create_params)
     base.class_attribute(:update_params)
-    base.setup { Rails.application.load_seed }
   end
 
   def test_index_with_filtering
