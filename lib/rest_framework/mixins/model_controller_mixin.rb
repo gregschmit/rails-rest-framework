@@ -6,9 +6,11 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     return {
       io: StringIO.new(Base64.decode64(payload)),
       content_type: content_type,
-      filename: "image_#{field}#{Rack::Mime::MIME_TYPES.invert[content_type]}",
+      filename: "file_#{field}#{Rack::Mime::MIME_TYPES.invert[content_type]}",
     }
   }
+  ACTIVESTORAGE_KEYS = [:io, :content_type, :filename, :identify, :key]
+
   include RESTFramework::BaseControllerMixin
 
   RRF_BASE_MODEL_CONFIG = {
@@ -411,18 +413,21 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     # For fields, automatically add `_id`/`_ids` and `_attributes` variations for associations.
     variations = []
     hash_variations = {}
+    alt_hash_variations = {}
     reflections = self.class.get_model.reflections
     @_get_allowed_parameters = self.get_fields.map { |f|
       f = f.to_s
 
       # ActiveStorage Integration: `has_one_attached`.
       if reflections.key?("#{f}_attachment")
+        hash_variations[f] = ACTIVESTORAGE_KEYS
         next f
       end
 
       # ActiveStorage Integration: `has_many_attached`.
       if reflections.key?("#{f}_attachments")
         hash_variations[f] = []
+        alt_hash_variations[f] = ACTIVESTORAGE_KEYS
         next nil
       end
 
@@ -453,6 +458,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     }.compact
     @_get_allowed_parameters += variations
     @_get_allowed_parameters << hash_variations
+    @_get_allowed_parameters << alt_hash_variations
     return @_get_allowed_parameters
   end
 
@@ -522,14 +528,22 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     #
     # rubocop:enable Layout/LineLength
     self.class.get_model.attachment_reflections.keys.each do |k|
-      next unless (body_params[k].is_a?(String) && body_params[k].match?(BASE64_REGEX)) ||
-        (body_params[k].is_a?(Array) && body_params[k].all? { |v|
-          v.is_a?(String) && v.match?(BASE64_REGEX)
-        })
-
       if body_params[k].is_a?(Array)
-        body_params[k] = body_params[k].map { |v| BASE64_TRANSLATE.call(k, v) }
-      else
+        body_params[k] = body_params[k].map { |v|
+          if v.is_a?(String)
+            BASE64_TRANSLATE.call(k, v)
+          elsif v.is_a?(ActionController::Parameters)
+            if v[:io].is_a?(String)
+              v[:io] = StringIO.new(Base64.decode64(v[:io]))
+            end
+            v
+          end
+        }
+      elsif body_params[k].is_a?(ActionController::Parameters)
+        if body_params[k][:io].is_a?(String)
+          body_params[k][:io] = StringIO.new(Base64.decode64(body_params[k][:io]))
+        end
+      elsif body_params[k].is_a?(String)
         body_params[k] = BASE64_TRANSLATE.call(k, body_params[k])
       end
     end
