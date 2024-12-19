@@ -88,8 +88,8 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       raise RESTFramework::UnknownModelError, self
     end
 
-    # Override `get_label` to include ActiveRecord i18n-translated column names.
-    def get_label(s)
+    # Override to include ActiveRecord i18n-translated column names.
+    def label_for(s)
       return self.get_model.human_attribute_name(s, default: super)
     end
 
@@ -173,7 +173,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         metadata = {
           type: nil,
           kind: nil,
-          label: self.get_label(f),
+          label: self.label_for(f),
           primary_key: nil,
           required: nil,
           read_only: nil,
@@ -378,8 +378,6 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
     return unless base.is_a?(Class)
 
-    base.extend(ClassMethods)
-
     # Add class attributes (with defaults) unless they already exist.
     RRF_BASE_MODEL_CONFIG.each do |a, default|
       next if base.respond_to?(a)
@@ -391,6 +389,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
       base.class_attribute(a, default: default)
     end
+
+    # Add class methods after attributes in case they depend on or override them.
+    base.extend(ClassMethods)
   end
 
   # Get a list of fields for this controller.
@@ -462,15 +463,12 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     return @_get_allowed_parameters
   end
 
-  # Get the configured serializer class, or `NativeSerializer` as a default.
-  def get_serializer_class
+  def serializer_class
     return super || RESTFramework::NativeSerializer
   end
 
-  # Get filtering backends, defaulting to using `ModelQueryFilter`, `ModelOrderingFilter`, and
-  # `ModelSearchFilter`.
-  def get_filter_backends
-    return self.filter_backends || [
+  def filter_backends
+    return super || [
       RESTFramework::ModelQueryFilter,
       RESTFramework::ModelOrderingFilter,
       RESTFramework::ModelSearchFilter,
@@ -570,10 +568,10 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     return @records ||= self.get_filtered_data(self.get_recordset)
   end
 
-  # Get a single record by primary key or another column, if allowed. The return value is cached and
-  # exposed to the view as the `@record` instance variable.
+  # Get a single record by primary key or another column, if allowed. The return value is memoized
+  # and exposed to the view as the `@record` instance variable.
   def get_record
-    # Cache the result.
+    # Memoize the result.
     return @record if @record
 
     find_by_key = self.class.get_model.primary_key
@@ -625,11 +623,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     # This is kinda slow, so perhaps we should eventually integrate `errors` serialization into
     # the serializer directly. This would fail for active model serializers, but maybe we don't
     # care?
-    serializer_class = self.get_serializer_class
+    s = RESTFramework::Utils.wrap_ams(self.serializer_class)
     serialized_records = records.map do |record|
-      serializer_class.new(record, controller: self).serialize.merge!(
-        {errors: record.errors.presence}.compact,
-      )
+      s.new(record, controller: self).serialize.merge!({errors: record.errors.presence}.compact)
     end
 
     return serialized_records

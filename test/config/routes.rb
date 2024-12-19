@@ -50,7 +50,6 @@ Rails.application.routes.draw do
       rest_resources :fields_hash_only_except
       rest_resources :no_rescue_unknown_format
       rest_resources :read_only
-      rest_resources :users_with_string_serializer
       rest_resources :users_with_sub_fields
 
       rest_route :network

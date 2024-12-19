@@ -26,14 +26,14 @@
       %>
       <div class="mb-2">
         <% if metadata[:kind] == "rich_text" %>
-          <label class="form-label w-100"><%= controller.class.get_label(f) %></label>
+          <label class="form-label w-100"><%= controller.class.label_for(f) %></label>
           <%= form.rich_text_area f %>
         <% elsif metadata[:kind] == "attachment" %>
-          <label class="form-label w-100"><%= controller.class.get_label(f) %>
+          <label class="form-label w-100"><%= controller.class.label_for(f) %>
             <%= form.file_field f, multiple: metadata.dig(:attachment, :macro) == :has_many_attached %>
           </label>
         <% else %>
-          <label class="form-label w-100"><%= controller.class.get_label(f) %>
+          <label class="form-label w-100"><%= controller.class.label_for(f) %>
             <%= form.text_field f, class: "form-control form-control-sm" %>
           </label>
         <% end %>

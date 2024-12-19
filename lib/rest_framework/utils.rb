@@ -28,7 +28,7 @@ module RESTFramework::Utils
             [f, {}]
           }.to_h if metadata[:fields].is_a?(Array)
           metadata[:fields]&.each do |field, cfg|
-            cfg[:label] = controller.get_label(field) unless cfg[:label]
+            cfg[:label] = controller.label_for(field) unless cfg[:label]
           end
         end
 
@@ -47,7 +47,7 @@ module RESTFramework::Utils
 
       # Insert action label if it's not provided.
       if controller
-        metadata[:label] ||= controller.get_label(k)
+        metadata[:label] ||= controller.label_for(k)
       end
 
       next [
@@ -233,5 +233,14 @@ module RESTFramework::Utils
     end
 
     return nil
+  end
+
+  # Wrap a serializer with an adapter if it is an ActiveModel::Serializer.
+  def self.wrap_ams(s)
+    if defined?(ActiveModel::Serializer) && (s < ActiveModel::Serializer)
+      return RESTFramework::ActiveModelSerializerAdapterFactory.for(s)
+    end
+
+    return s
   end
 end

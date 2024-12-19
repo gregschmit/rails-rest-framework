@@ -40,7 +40,7 @@
           local: true,
         }.compact) do |form| %>
           <% attachment_reflections.each do |field, ref| %>
-            <label class="form-label w-100"><%= controller.class.get_label(field) %>
+            <label class="form-label w-100"><%= controller.class.label_for(field) %>
               <%= form.file_field field, multiple: ref.macro == :has_many_attached %>
             </label>
           <% end %>

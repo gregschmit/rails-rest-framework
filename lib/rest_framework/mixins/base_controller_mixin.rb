@@ -39,17 +39,17 @@ module RESTFramework::Mixins::BaseControllerMixin
   end
 
   module ClassMethods
-    # Get the title of this controller. By default, this is the name of the controller class,
-    # titleized and with any custom inflection acronyms applied.
-    def get_title
-      return self.title || RESTFramework::Utils.inflect(
+    # By default, this is the name of the controller class, titleized and with any custom inflection
+    # acronyms applied.
+    def title
+      return super || RESTFramework::Utils.inflect(
         self.name.demodulize.chomp("Controller").titleize(keep_id_suffix: true),
         self.inflect_acronyms,
       )
     end
 
     # Get a label from a field/column name, titleized and inflected.
-    def get_label(s)
+    def label_for(s)
       return RESTFramework::Utils.inflect(
         s.to_s.titleize(keep_id_suffix: true),
         self.inflect_acronyms,
@@ -57,7 +57,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
 
     # Collect actions (including extra actions) metadata for this controller.
-    def get_actions_metadata
+    def actions_metadata
       actions = {}
 
       # Start with builtin actions.
@@ -67,7 +67,7 @@ module RESTFramework::Mixins::BaseControllerMixin
         next unless self.method_defined?(action)
 
         actions[action] = {
-          path: "", methods: methods, type: :builtin, metadata: {label: self.get_label(action)}
+          path: "", methods: methods, type: :builtin, metadata: {label: self.label_for(action)}
         }
       end
 
@@ -76,7 +76,7 @@ module RESTFramework::Mixins::BaseControllerMixin
         next unless self.method_defined?(action)
 
         actions[action] = {
-          path: "", methods: methods, type: :builtin, metadata: {label: self.get_label(action)}
+          path: "", methods: methods, type: :builtin, metadata: {label: self.label_for(action)}
         }
       end
 
@@ -89,7 +89,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
 
     # Collect member actions (including extra member actions) metadata for this controller.
-    def get_member_actions_metadata
+    def member_actions_metadata
       actions = {}
 
       # Start with builtin actions.
@@ -97,7 +97,7 @@ module RESTFramework::Mixins::BaseControllerMixin
         next unless self.method_defined?(action)
 
         actions[action] = {
-          path: "", methods: methods, type: :builtin, metadata: {label: self.get_label(action)}
+          path: "", methods: methods, type: :builtin, metadata: {label: self.label_for(action)}
         }
       end
 
@@ -109,18 +109,17 @@ module RESTFramework::Mixins::BaseControllerMixin
       return actions
     end
 
-    # Get a hash of metadata to be rendered in the `OPTIONS` response. Cache the result.
-    def get_options_metadata
+    def options_metadata
       return {
-        title: self.get_title,
+        title: self.title,
         description: self.description,
         renders: [
           "text/html",
           self.serialize_to_json ? "application/json" : nil,
           self.serialize_to_xml ? "application/xml" : nil,
         ].compact,
-        actions: self.get_actions_metadata,
-        member_actions: self.get_member_actions_metadata,
+        actions: self.actions_metadata,
+        member_actions: self.member_actions_metadata,
       }.compact
     end
 
@@ -140,8 +139,6 @@ module RESTFramework::Mixins::BaseControllerMixin
   def self.included(base)
     return unless base.is_a?(Class)
 
-    base.extend(ClassMethods)
-
     # By default, the layout should be set to `rest_framework`.
     base.layout("rest_framework")
 
@@ -156,6 +153,9 @@ module RESTFramework::Mixins::BaseControllerMixin
 
       base.class_attribute(a, default: default)
     end
+
+    # Add class methods after attributes in case they depend on or override them.
+    base.extend(ClassMethods)
 
     # Alias `extra_actions` to `extra_collection_actions`.
     unless base.respond_to?(:extra_collection_actions)
@@ -203,38 +203,35 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
   end
 
-  # Get the configured serializer class.
-  def get_serializer_class
-    return nil unless serializer_class = self.serializer_class
-
-    # Support dynamically resolving serializer given a symbol or string.
-    serializer_class = serializer_class.to_s if serializer_class.is_a?(Symbol)
-    if serializer_class.is_a?(String)
-      serializer_class = self.class.const_get(serializer_class)
+  def serializer_class
+    # TODO: Compatibility; remove in 1.0.
+    if klass = self.try(:get_serializer_class)
+      return klass
     end
 
-    # Wrap it with an adapter if it's an active_model_serializer.
-    if defined?(ActiveModel::Serializer) && (serializer_class < ActiveModel::Serializer)
-      serializer_class = RESTFramework::ActiveModelSerializerAdapterFactory.for(serializer_class)
-    end
-
-    return serializer_class
+    return super
   end
 
   # Serialize the given data using the `serializer_class`.
   def serialize(data, **kwargs)
-    return self.get_serializer_class.new(data, controller: self, **kwargs).serialize
+    return RESTFramework::Utils.wrap_ams(self.serializer_class).new(
+      data, controller: self, **kwargs
+    ).serialize
   end
 
-  # Get filtering backends, defaulting to no backends.
-  def get_filter_backends
-    return self.filter_backends || []
+  def filter_backends
+    # TODO: Compatibility; remove in 1.0.
+    if backends = self.try(:get_filter_backends)
+      return backends
+    end
+
+    return super
   end
 
   # Filter an arbitrary data set over all configured filter backends.
   def get_filtered_data(data)
     # Apply each filter sequentially.
-    self.get_filter_backends.each do |filter_class|
+    (self.filter_backends || []).each do |filter_class|
       filter = filter_class.new(controller: self)
       data = filter.get_filtered_data(data)
     end
@@ -242,8 +239,8 @@ module RESTFramework::Mixins::BaseControllerMixin
     return data
   end
 
-  def get_options_metadata
-    return self.class.get_options_metadata
+  def options_metadata
+    return self.class.options_metadata
   end
 
   def rrf_error_handler(e)
@@ -315,7 +312,7 @@ module RESTFramework::Mixins::BaseControllerMixin
             @json_payload = payload.to_json if self.serialize_to_json
             @xml_payload = payload.to_xml if self.serialize_to_xml
           end
-          @title ||= self.class.get_title
+          @title ||= self.class.title
           @description ||= self.class.description
           @route_props, @route_groups = RESTFramework::Utils.get_routes(
             Rails.application.routes, request
@@ -341,7 +338,7 @@ module RESTFramework::Mixins::BaseControllerMixin
 
   # Provide a generic `OPTIONS` response with metadata such as available actions.
   def options
-    return api_response(self.get_options_metadata)
+    return api_response(self.options_metadata)
   end
 end
 
