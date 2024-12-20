@@ -195,7 +195,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     attachment_reflections = @model.attachment_reflections
 
     fields.each do |f|
-      field_config = @controller.class.field_config_for(f)
+      field_config = @controller.class.field_configuration[f]
       next if field_config[:write_only]
 
       if f.in?(column_names)
