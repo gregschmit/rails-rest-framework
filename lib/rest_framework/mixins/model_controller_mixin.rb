@@ -410,7 +410,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     @_get_allowed_parameters = self.allowed_parameters
     return @_get_allowed_parameters if @_get_allowed_parameters
 
-    # For fields, automatically add `_id`/`_ids` and `_attributes` variations for associations.
+    # Assemble strong parameters.
     variations = []
     hash_variations = {}
     alt_hash_variations = {}
@@ -439,6 +439,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       # Return field if it's not an association.
       next f unless ref = reflections[f]
 
+      # Add `_id`/`_ids` variations for associations.
       if self.permit_id_assignment && id_field = RESTFramework::Utils.get_id_field(f, ref)
         if id_field.ends_with?("_ids")
           hash_variations[id_field] = []
@@ -447,18 +448,21 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         end
       end
 
+      # Add `_attributes` variations for associations.
       if self.permit_nested_attributes_assignment
         hash_variations["#{f}_attributes"] = (
           self.class.field_config_for(f)[:sub_fields] + ["_destroy"]
         )
       end
 
-      # Associations are not allowed to be submitted in their bare form.
+      # Associations are not allowed to be submitted in their bare form (if they are submitted that
+      # way, they will be translated to either ID assignment or nested attributes assignment).
       next nil
     }.compact
     @_get_allowed_parameters += variations
     @_get_allowed_parameters << hash_variations
     @_get_allowed_parameters << alt_hash_variations
+
     return @_get_allowed_parameters
   end
 
