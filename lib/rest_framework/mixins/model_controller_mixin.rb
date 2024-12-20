@@ -312,7 +312,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     end
 
     # Get a hash of metadata to be rendered in the `OPTIONS` response.
-    def get_options_metadata
+    def options_metadata
       return super.merge(
         {
           primary_key: self.get_model.primary_key,
@@ -399,9 +399,8 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     return self.class.get_fields(input_fields: self.class.fields)
   end
 
-  # Pass fields to get dynamic metadata based on which fields are available.
-  def get_options_metadata
-    return self.class.get_options_metadata
+  def options_metadata
+    return self.class.options_metadata
   end
 
   # Get a list of parameters allowed for the current action.
