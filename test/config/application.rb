@@ -41,6 +41,7 @@ class Application < Rails::Application
 
   config.cache_classes = false
   config.action_controller.perform_caching = false
+  config.reload_classes_only_on_change = Rails.env.development?
 
   config.active_storage.service = :local
 

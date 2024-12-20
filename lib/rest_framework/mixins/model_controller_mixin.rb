@@ -311,17 +311,6 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       }.to_h
     end
 
-    # Get a hash of metadata to be rendered in the `OPTIONS` response.
-    def options_metadata
-      return super.merge(
-        {
-          primary_key: self.get_model.primary_key,
-          fields: self.fields_metadata,
-          callbacks: self._process_action_callbacks.as_json,
-        },
-      )
-    end
-
     def setup_delegation
       # Delegate extra actions.
       self.extra_actions&.each do |action, config|
@@ -393,13 +382,18 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     end
   end
 
-  # Get a list of fields for this controller.
   def get_fields
     return self.class.get_fields(input_fields: self.class.fields)
   end
 
   def options_metadata
-    return self.class.options_metadata
+    return super.merge(
+      {
+        primary_key: self.get_model.primary_key,
+        fields: self.fields_metadata,
+        callbacks: self._process_action_callbacks.as_json,
+      },
+    )
   end
 
   # Get a list of parameters allowed for the current action.

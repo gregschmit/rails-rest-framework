@@ -3,7 +3,7 @@
     <label class="form-label w-100">Route
       <select class="form-control form-control-sm" id="htmlFormRoute">
         <% @_rrf_form_routes_html.each do |route| %>
-          <% path = @route_props[:with_path_args].call(route[:route]) %>
+          <% path = route[:path_with_params] %>
           <option value="<%= route[:verb] %>:<%= path %>"><%= route[:verb] %> <%= route[:relative_path] %></option>
         <% end %>
       </select>

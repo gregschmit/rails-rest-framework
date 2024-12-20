@@ -27,7 +27,17 @@ module ActionDispatch::Routing
         controller = mod.const_get(name)
       rescue NameError
         if fallback_reverse_pluralization
-          controller = mod.const_get(name_reverse)
+          reraise = false
+
+          begin
+            controller = mod.const_get(name_reverse)
+          rescue
+            reraise = true
+          end
+
+          if reraise
+            raise
+          end
         else
           raise
         end
