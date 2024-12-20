@@ -35,7 +35,7 @@ module RESTFramework::Mixins::BaseControllerMixin
 
   # Default action for API root.
   def root
-    api_response({message: "This is the API root."})
+    render_api({message: "This is the API root."})
   end
 
   module ClassMethods
