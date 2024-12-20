@@ -13,7 +13,7 @@ class RESTFramework::Filters::ModelSearchFilter < RESTFramework::Filters::BaseFi
   end
 
   # Filter data according to the request query parameters.
-  def get_filtered_data(data)
+  def filter_data(data)
     search = @controller.request.query_parameters[@controller.search_query_param]
 
     if search.present?

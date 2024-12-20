@@ -31,9 +31,9 @@ class RESTFrameworkTest < Minitest::Test
     assert(exception.message)
   end
 
-  def test_base_filter_get_filtered_data_not_implemented
+  def test_base_filter_data_not_implemented
     assert_raises(NotImplementedError) do
-      RESTFramework::BaseFilter.new(controller: nil).get_filtered_data([])
+      RESTFramework::BaseFilter.new(controller: nil).filter_data([])
     end
   end
 

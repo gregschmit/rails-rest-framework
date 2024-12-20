@@ -229,11 +229,16 @@ module RESTFramework::Mixins::BaseControllerMixin
   end
 
   # Filter an arbitrary data set over all configured filter backends.
-  def get_filtered_data(data)
+  def filter_data(data)
+    # TODO: Compatibility; remove in 1.0.
+    if filtered_data = self.try(:get_filtered_data, data)
+      return filtered_data
+    end
+
     # Apply each filter sequentially.
-    (self.filter_backends || []).each do |filter_class|
+    self.filter_backends&.each do |filter_class|
       filter = filter_class.new(controller: self)
-      data = filter.get_filtered_data(data)
+      data = filter.filter_data(data)
     end
 
     return data

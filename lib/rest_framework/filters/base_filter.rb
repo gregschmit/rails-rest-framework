@@ -3,7 +3,7 @@ class RESTFramework::Filters::BaseFilter
     @controller = controller
   end
 
-  def get_filtered_data(data)
+  def filter_data(data)
     raise NotImplementedError
   end
 end

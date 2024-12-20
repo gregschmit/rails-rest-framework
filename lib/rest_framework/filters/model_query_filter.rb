@@ -49,7 +49,7 @@ class RESTFramework::Filters::ModelQueryFilter < RESTFramework::Filters::BaseFil
   end
 
   # Filter data according to the request query parameters.
-  def get_filtered_data(data)
+  def filter_data(data)
     filter_params, includes = self._get_filter_params
 
     if filter_params.any?

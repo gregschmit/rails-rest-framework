@@ -38,7 +38,7 @@ class RESTFramework::Filters::ModelOrderingFilter < RESTFramework::Filters::Base
   end
 
   # Order data according to the request query parameters.
-  def get_filtered_data(data)
+  def filter_data(data)
     ordering = self._get_ordering
     reorder = !@controller.ordering_no_reorder
 

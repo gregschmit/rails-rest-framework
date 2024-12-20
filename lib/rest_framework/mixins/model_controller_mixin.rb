@@ -565,7 +565,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
   # Get the records this controller has access to *after* any filtering is applied.
   def get_records
-    return @records ||= self.get_filtered_data(self.get_recordset)
+    return @records ||= self.filter_data(self.get_recordset)
   end
 
   # Get a single record by primary key or another column, if allowed. The return value is memoized

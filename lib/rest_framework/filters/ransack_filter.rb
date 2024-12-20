@@ -1,7 +1,7 @@
 # Adapter for the `ransack` gem.
 class RESTFramework::Filters::RansackFilter < RESTFramework::Filters::BaseFilter
   # Filter data according to the request query parameters.
-  def get_filtered_data(data)
+  def filter_data(data)
     q = @controller.request.query_parameters[@controller.ransack_query_param]
 
     if q.present?
