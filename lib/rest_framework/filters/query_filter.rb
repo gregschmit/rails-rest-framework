@@ -22,7 +22,7 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
         field, sub_field = match[1..2]
         next false unless field.in?(fields)
 
-        sub_fields = @controller.class.field_config_for(field)[:sub_fields] || []
+        sub_fields = @controller.class.field_configuration[field][:sub_fields] || []
         if sub_field.in?(sub_fields)
           includes << field.to_sym
           next true

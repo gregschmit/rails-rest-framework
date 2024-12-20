@@ -39,8 +39,9 @@ class Application < Rails::Application
   config.consider_all_requests_local = !Rails.env.production?
   config.serve_static_files = true
 
-  config.cache_classes = false
-  config.action_controller.perform_caching = false
+  # Not working for some reason.
+  # lib_dir = root.join("../lib").to_s
+  # config.autoload_paths << lib_dir
 
   config.active_storage.service = :local
 

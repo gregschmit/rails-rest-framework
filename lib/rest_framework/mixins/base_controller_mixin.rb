@@ -10,6 +10,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     # Options related to metadata and display.
     title: nil,
     description: nil,
+    version: nil,
     inflect_acronyms: ["ID", "IDs", "REST", "API", "APIs"].freeze,
 
     # Options related to serialization.
@@ -56,73 +57,6 @@ module RESTFramework::Mixins::BaseControllerMixin
         s.to_s.titleize(keep_id_suffix: true),
         self.inflect_acronyms,
       )
-    end
-
-    # Collect actions (including extra actions) metadata for this controller.
-    def actions_metadata
-      actions = {}
-
-      # Start with builtin actions.
-      RESTFramework::BUILTIN_ACTIONS.merge(
-        RESTFramework::RRF_BUILTIN_ACTIONS,
-      ).each do |action, methods|
-        next unless self.method_defined?(action)
-
-        actions[action] = {
-          path: "", methods: methods, type: :builtin, metadata: {label: self.label_for(action)}
-        }
-      end
-
-      # Add builtin bulk actions.
-      RESTFramework::RRF_BUILTIN_BULK_ACTIONS.each do |action, methods|
-        next unless self.method_defined?(action)
-
-        actions[action] = {
-          path: "", methods: methods, type: :builtin, metadata: {label: self.label_for(action)}
-        }
-      end
-
-      # Add extra actions.
-      if extra_actions = self.try(:extra_actions)
-        actions.merge!(RESTFramework::Utils.parse_extra_actions(extra_actions, controller: self))
-      end
-
-      return actions
-    end
-
-    # Collect member actions (including extra member actions) metadata for this controller.
-    def member_actions_metadata
-      actions = {}
-
-      # Start with builtin actions.
-      RESTFramework::BUILTIN_MEMBER_ACTIONS.each do |action, methods|
-        next unless self.method_defined?(action)
-
-        actions[action] = {
-          path: "", methods: methods, type: :builtin, metadata: {label: self.label_for(action)}
-        }
-      end
-
-      # Add extra actions.
-      if extra_actions = self.try(:extra_member_actions)
-        actions.merge!(RESTFramework::Utils.parse_extra_actions(extra_actions, controller: self))
-      end
-
-      return actions
-    end
-
-    def options_metadata
-      return {
-        title: self.get_title,
-        description: self.description,
-        renders: [
-          "text/html",
-          self.serialize_to_json ? "application/json" : nil,
-          self.serialize_to_xml ? "application/xml" : nil,
-        ].compact,
-        actions: self.actions_metadata,
-        member_actions: self.member_actions_metadata,
-      }.compact
     end
 
     # Define any behavior to execute at the end of controller definition.
@@ -220,10 +154,6 @@ module RESTFramework::Mixins::BaseControllerMixin
     ).serialize
   end
 
-  def options_metadata
-    return self.class.options_metadata
-  end
-
   def rrf_error_handler(e)
     status = case e
     when ActiveRecord::RecordNotFound
@@ -240,6 +170,10 @@ module RESTFramework::Mixins::BaseControllerMixin
       }.compact,
       status: status,
     )
+  end
+
+  def route_groups
+    return @route_groups ||= RESTFramework::Utils.get_routes(Rails.application.routes, request)
   end
 
   # Render a browsable API for `html` format, along with basic `json`/`xml` formats, and with
@@ -295,9 +229,7 @@ module RESTFramework::Mixins::BaseControllerMixin
           end
           @title ||= self.class.get_title
           @description ||= self.class.description
-          @route_props, @route_groups = RESTFramework::Utils.get_routes(
-            Rails.application.routes, request
-          )
+          self.route_groups
           begin
             render(**kwargs.merge(html_kwargs))
           rescue ActionView::MissingTemplate
@@ -320,8 +252,78 @@ module RESTFramework::Mixins::BaseControllerMixin
   # TODO: Might make this the default render method in the future.
   alias_method :render_api, :api_response
 
+  def openapi_metadata
+    response_content_types = [
+      "text/html",
+      self.class.serialize_to_json ? "application/json" : nil,
+      self.class.serialize_to_xml ? "application/xml" : nil,
+    ].compact
+    request_content_types = [
+      "application/json",
+      "application/xml",
+      "application/x-www-form-urlencoded",
+      "multipart/form-data",
+    ].compact
+    routes = self.route_groups.values[0]
+    server = request.base_url + request.original_fullpath.gsub(/\?.*/, "")
+
+    return {
+      openapi: "3.1.1",
+      info: {
+        title: self.class.get_title,
+        description: self.class.description,
+        version: self.class.version.to_s,
+      }.compact,
+      servers: [{url: server}],
+      paths: routes.group_by { |r| r[:concat_path] }.map { |concat_path, routes|
+        [
+          concat_path.gsub(/:([0-9A-Za-z_-]+)/, "{\\1}"),
+          routes.map { |route|
+            metadata = route[:route].defaults[:metadata] || {}
+            summary = metadata[:label].presence || self.class.label_for(route[:action])
+            description = metadata[:description].presence
+            remaining_metadata = metadata.except(:label, :description).presence
+
+            [
+              route[:verb].downcase,
+              {
+                summary: summary,
+                description: description,
+                responses: {
+                  200 => {
+                    content: response_content_types.map { |ct|
+                      [ct, {}]
+                    }.to_h,
+                    description: "",
+                  },
+                },
+                requestBody: route[:verb].in?(["GET", "DELETE", "OPTIONS", "TRACE"]) ? nil : {
+                  content: request_content_types.map { |ct|
+                    [ct, {}]
+                  }.to_h,
+                },
+                "x-rrf-metadata": remaining_metadata,
+              }.compact,
+            ]
+          }.to_h.merge(
+            {
+              parameters: routes.first[:route].required_parts.map { |p|
+                {
+                  name: p,
+                  in: "path",
+                  required: true,
+                  schema: {type: "integer"},
+                }
+              },
+            },
+          ),
+        ]
+      }.to_h,
+    }.compact
+  end
+
   def options
-    return api_response(self.options_metadata)
+    return api_response(self.openapi_metadata)
   end
 end
 

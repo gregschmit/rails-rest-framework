@@ -1,7 +1,14 @@
 class Api::RootController < ApiController
   include RESTFramework::BaseControllerMixin
 
-  self.extra_actions = {dev_test: :get, ip: :get, c: [:get, :post]}
+  self.extra_actions = {
+    dev_test: :get,
+    ip: :get,
+    c: {
+      methods: [:get, :post],
+      metadata: {gns: 5},
+    },
+  }
 
   def root
     return api_response(

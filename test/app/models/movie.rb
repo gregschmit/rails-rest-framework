@@ -12,6 +12,8 @@ class Movie < ApplicationRecord
   validates_uniqueness_of :name
   validates_numericality_of :price, greater_than: 0, allow_nil: true
 
+  attribute :default_discount, :decimal, default: 5.0
+
   def self.ransackable_attributes(*args)
     return %w(name price created_at updated_at)
   end
