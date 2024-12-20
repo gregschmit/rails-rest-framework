@@ -3,7 +3,7 @@
     <%= render partial: "rest_framework/heading/actions" if @route_groups.present? %>
     <h1 style="margin: 0"><%= @heading_title || @title %></h1>
     <% if @description.present? %>
-      <br><br><p style="display: inline-block; margin-bottom: 0"><%= @description %></p>
+      <p style="display: inline-block; margin-bottom: 0; margin-top: 1em"><%= @description %></p>
     <% end %>
   </div>
 </div>
