@@ -6,27 +6,27 @@ accomplished through a generic mechanism called "filters". To control the filter
 controller uses, you can either adjust the `filter_backends` controller attribute or you can
 override the `get_filter_backends()` method.
 
-## ModelQueryFilter
+## QueryFilter
 
 This filter provides basic user-controllable filtering of the recordset using query params. For
 example, a request to `/api/movies?cool=true` would return movies where `cool` is `true`.
 
-If you include `ModelControllerMixin` into your controller, `ModelQueryFilter` is included in the filter
+If you include `ModelControllerMixin` into your controller, `QueryFilter` is included in the filter
 backends by default.
 
-## ModelOrderingFilter
+## OrderingFilter
 
 This filter provides basic user-controllable ordering of the recordset using query params. For
 example, a request to `/api/movies?ordering=name` could order the movies by `name` rather than `id`.
 `ordering=-name` would invert the ordering. You can also order with multiple parameters with a comma
 separated list, like: `ordering=director,-name`.
 
-If you include `ModelControllerMixin` into your controller, `ModelOrderingFilter` is included in the
+If you include `ModelControllerMixin` into your controller, `OrderingFilter` is included in the
 filter backends by default. You can use `ordering_fields` to controller which fields are allowed to
 be ordered by. To adjust the parameter that the user passes, adjust `ordering_query_param`; the
 default is `"ordering"`.
 
-## ModelSearchFilter
+## SearchFilter
 
 This filter provides basic user-controllable searching of the recordset using the `search` query
 parameter (adjustable with the `search_query_param`). For example, a request to

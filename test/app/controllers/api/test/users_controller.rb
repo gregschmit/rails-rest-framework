@@ -22,11 +22,6 @@ class Api::Test::UsersController < Api::TestController
   self.serializer_class = UsersSerializer
   self.extra_collection_actions = {alternate_list: :get}
   self.extra_member_actions = {description: :get}
-  self.filter_backends = [
-    RESTFramework::ModelOrderingFilter,
-    RESTFramework::ModelQueryFilter,
-    RESTFramework::ModelSearchFilter,
-  ]
 
   def alternate_list
     return self.index

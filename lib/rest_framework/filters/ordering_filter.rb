@@ -1,5 +1,5 @@
 # A filter backend which handles ordering of the recordset.
-class RESTFramework::Filters::ModelOrderingFilter < RESTFramework::Filters::BaseFilter
+class RESTFramework::Filters::OrderingFilter < RESTFramework::Filters::BaseFilter
   # Get a list of ordering fields for the current action.
   def _get_fields
     return @controller.ordering_fields&.map(&:to_s) || @controller.get_fields
@@ -51,4 +51,7 @@ class RESTFramework::Filters::ModelOrderingFilter < RESTFramework::Filters::Base
 end
 
 # Alias for convenience.
-RESTFramework::ModelOrderingFilter = RESTFramework::Filters::ModelOrderingFilter
+RESTFramework::OrderingFilter = RESTFramework::Filters::OrderingFilter
+
+# TODO: Compatibility; remove in 1.0.
+RESTFramework::ModelOrderingFilter = RESTFramework::Filters::OrderingFilter

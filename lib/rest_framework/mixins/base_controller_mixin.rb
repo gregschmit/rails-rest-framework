@@ -1,6 +1,6 @@
 # This module provides the common functionality for any controller mixins, a `root` action, and
-# the ability to route arbitrary actions with `extra_actions`. This is also where `api_response`
-# is defined.
+# the ability to route arbitrary actions with `extra_actions`. This is also where `render_api` is
+# implemented.
 module RESTFramework::Mixins::BaseControllerMixin
   RRF_BASE_CONFIG = {
     extra_actions: nil,
@@ -11,16 +11,14 @@ module RESTFramework::Mixins::BaseControllerMixin
     title: nil,
     description: nil,
     inflect_acronyms: ["ID", "IDs", "REST", "API", "APIs"].freeze,
-  }
-  RRF_BASE_INSTANCE_CONFIG = {
-    filter_backends: nil,
 
     # Options related to serialization.
     rescue_unknown_format_with: :json,
     serializer_class: nil,
     serialize_to_json: true,
     serialize_to_xml: true,
-
+  }
+  RRF_BASE_INSTANCE_CONFIG = {
     # Options related to pagination.
     paginator_class: nil,
     page_size: 20,
@@ -41,8 +39,8 @@ module RESTFramework::Mixins::BaseControllerMixin
   module ClassMethods
     # By default, this is the name of the controller class, titleized and with any custom inflection
     # acronyms applied.
-    def title
-      return super || RESTFramework::Utils.inflect(
+    def get_title
+      return self.title || RESTFramework::Utils.inflect(
         self.name.demodulize.chomp("Controller").titleize(keep_id_suffix: true),
         self.inflect_acronyms,
       )
@@ -111,7 +109,7 @@ module RESTFramework::Mixins::BaseControllerMixin
 
     def options_metadata
       return {
-        title: self.title,
+        title: self.get_title,
         description: self.description,
         renders: [
           "text/html",
@@ -139,6 +137,8 @@ module RESTFramework::Mixins::BaseControllerMixin
   def self.included(base)
     return unless base.is_a?(Class)
 
+    base.extend(ClassMethods)
+
     # By default, the layout should be set to `rest_framework`.
     base.layout("rest_framework")
 
@@ -153,9 +153,6 @@ module RESTFramework::Mixins::BaseControllerMixin
 
       base.class_attribute(a, default: default)
     end
-
-    # Add class methods after attributes in case they depend on or override them.
-    base.extend(ClassMethods)
 
     # Alias `extra_actions` to `extra_collection_actions`.
     unless base.respond_to?(:extra_collection_actions)
@@ -209,7 +206,7 @@ module RESTFramework::Mixins::BaseControllerMixin
       return klass
     end
 
-    return super
+    return self.class.serializer_class
   end
 
   # Serialize the given data using the `serializer_class`.
@@ -217,31 +214,6 @@ module RESTFramework::Mixins::BaseControllerMixin
     return RESTFramework::Utils.wrap_ams(self.serializer_class).new(
       data, controller: self, **kwargs
     ).serialize
-  end
-
-  def filter_backends
-    # TODO: Compatibility; remove in 1.0.
-    if backends = self.try(:get_filter_backends)
-      return backends
-    end
-
-    return super
-  end
-
-  # Filter an arbitrary data set over all configured filter backends.
-  def filter_data(data)
-    # TODO: Compatibility; remove in 1.0.
-    if filtered_data = self.try(:get_filtered_data, data)
-      return filtered_data
-    end
-
-    # Apply each filter sequentially.
-    self.filter_backends&.each do |filter_class|
-      filter = filter_class.new(controller: self)
-      data = filter.filter_data(data)
-    end
-
-    return data
   end
 
   def options_metadata
@@ -297,27 +269,27 @@ module RESTFramework::Mixins::BaseControllerMixin
     begin
       respond_to do |format|
         if payload == ""
-          format.json { head(kwargs[:status] || :no_content) } if self.serialize_to_json
-          format.xml { head(kwargs[:status] || :no_content) } if self.serialize_to_xml
+          format.json { head(kwargs[:status] || :no_content) } if self.class.serialize_to_json
+          format.xml { head(kwargs[:status] || :no_content) } if self.class.serialize_to_xml
         else
           format.json {
             render(json: payload, **kwargs.merge(json_kwargs))
-          } if self.serialize_to_json
+          } if self.class.serialize_to_json
           format.xml {
             render(xml: payload, **kwargs.merge(xml_kwargs))
-          } if self.serialize_to_xml
+          } if self.class.serialize_to_xml
           # TODO: possibly support more formats here if supported?
         end
         format.html {
           @payload = payload
           if payload == ""
-            @json_payload = "" if self.serialize_to_json
-            @xml_payload = "" if self.serialize_to_xml
+            @json_payload = "" if self.class.serialize_to_json
+            @xml_payload = "" if self.class.serialize_to_xml
           else
-            @json_payload = payload.to_json if self.serialize_to_json
-            @xml_payload = payload.to_xml if self.serialize_to_xml
+            @json_payload = payload.to_json if self.class.serialize_to_json
+            @xml_payload = payload.to_xml if self.class.serialize_to_xml
           end
-          @title ||= self.class.title
+          @title ||= self.class.get_title
           @description ||= self.class.description
           @route_props, @route_groups = RESTFramework::Utils.get_routes(
             Rails.application.routes, request
@@ -331,7 +303,7 @@ module RESTFramework::Mixins::BaseControllerMixin
         }
       end
     rescue ActionController::UnknownFormat
-      if !already_rescued_unknown_format && rescue_format = self.rescue_unknown_format_with
+      if !already_rescued_unknown_format && rescue_format = self.class.rescue_unknown_format_with
         request.format = rescue_format
         already_rescued_unknown_format = true
         retry

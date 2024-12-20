@@ -1,14 +1,14 @@
 # A simple filtering backend that supports filtering a recordset based on query parameters.
-class RESTFramework::Filters::ModelQueryFilter < RESTFramework::Filters::BaseFilter
+class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
   NIL_VALUES = ["nil", "null"].freeze
 
-  # Get a list of filterset fields for the current action.
+  # Get a list of filter fields for the current action.
   def _get_fields
     # Always return a list of strings; `@controller.get_fields` already does this.
-    return @controller.class.filterset_fields&.map(&:to_s) || @controller.get_fields
+    return @controller.class.filter_fields&.map(&:to_s) || @controller.get_fields
   end
 
-  # Filter params for keys allowed by the current action's filterset_fields/fields config.
+  # Filter params for keys allowed by the current action's filter_fields/fields config.
   def _get_filter_params
     fields = self._get_fields
     includes = []
@@ -65,4 +65,7 @@ class RESTFramework::Filters::ModelQueryFilter < RESTFramework::Filters::BaseFil
 end
 
 # Alias for convenience.
-RESTFramework::ModelQueryFilter = RESTFramework::Filters::ModelQueryFilter
+RESTFramework::QueryFilter = RESTFramework::Filters::QueryFilter
+
+# TODO: Compatibility; remove in 1.0.
+RESTFramework::ModelQueryFilter = RESTFramework::Filters::QueryFilter

@@ -12,9 +12,9 @@ class Api::DemoController < ApiController
   class_attribute(
     :filter_backends,
     default: [
-      RESTFramework::ModelQueryFilter,
-      RESTFramework::ModelOrderingFilter,
-      RESTFramework::ModelSearchFilter,
+      RESTFramework::QueryFilter,
+      RESTFramework::OrderingFilter,
+      RESTFramework::SearchFilter,
       RESTFramework::RansackFilter,
     ],
   )

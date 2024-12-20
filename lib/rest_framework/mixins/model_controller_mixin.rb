@@ -45,14 +45,24 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     native_serializer_associations_limit_query_param: "associations_limit",
     native_serializer_include_associations_count: false,
 
-    # Attributes for default model filtering, ordering, and searching.
-    filterset_fields: nil,
+    # Attributes for filtering, ordering, and searching.
+    filter_backends: [
+      RESTFramework::QueryFilter,
+      RESTFramework::OrderingFilter,
+      RESTFramework::SearchFilter,
+    ],
+    filter_recordset_before_find: true,
+    filter_fields: nil,
     ordering_fields: nil,
     ordering_query_param: "ordering",
     ordering_no_reorder: false,
     search_fields: nil,
     search_query_param: "search",
     search_ilike: false,
+    ransack_options: nil,
+    ransack_query_param: "q",
+    ransack_distinct: true,
+    ransack_distinct_query_param: "distinct",
 
     # Options for association assignment.
     permit_id_assignment: true,
@@ -60,21 +70,11 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
     # Option for `recordset.create` vs `Model.create` behavior.
     create_from_recordset: true,
-
-    # Control if filtering is done before find.
-    filter_recordset_before_find: true,
-
-    # Options for `ransack` filtering.
-    ransack_options: nil,
-    ransack_query_param: "q",
-    ransack_distinct: true,
-    ransack_distinct_query_param: "distinct",
   }
 
   module ClassMethods
     IGNORE_VALIDATORS_WITH_KEYS = [:if, :unless].freeze
 
-    # Get the model for this controller.
     def get_model
       return @model if @model
       return (@model = self.model) if self.model
@@ -378,6 +378,8 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
     return unless base.is_a?(Class)
 
+    base.extend(ClassMethods)
+
     # Add class attributes (with defaults) unless they already exist.
     RRF_BASE_MODEL_CONFIG.each do |a, default|
       next if base.respond_to?(a)
@@ -389,9 +391,6 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
       base.class_attribute(a, default: default)
     end
-
-    # Add class methods after attributes in case they depend on or override them.
-    base.extend(ClassMethods)
   end
 
   # Get a list of fields for this controller.
@@ -470,12 +469,15 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     return super || RESTFramework::NativeSerializer
   end
 
-  def filter_backends
-    return super || [
-      RESTFramework::ModelQueryFilter,
-      RESTFramework::ModelOrderingFilter,
-      RESTFramework::ModelSearchFilter,
-    ]
+  def apply_filters(data)
+    # TODO: Compatibility; remove in 1.0.
+    if filtered_data = self.try(:get_filtered_data, data)
+      return filtered_data
+    end
+
+    return self.filter_backends&.reduce(data) { |d, filter|
+      filter.new(controller: self).filter_data(d)
+    } || data
   end
 
   # Use strong parameters to filter the request body using the configured allowed parameters.
@@ -568,13 +570,12 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
   # Get the records this controller has access to *after* any filtering is applied.
   def get_records
-    return @records ||= self.filter_data(self.get_recordset)
+    return @records ||= self.apply_filters(self.get_recordset)
   end
 
   # Get a single record by primary key or another column, if allowed. The return value is memoized
   # and exposed to the view as the `@record` instance variable.
   def get_record
-    # Memoize the result.
     return @record if @record
 
     find_by_key = self.class.get_model.primary_key
@@ -599,7 +600,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       self.get_recordset
     end
 
-    # Return the record. Route key is always `:id` by Rails convention.
+    # Return the record. Route key is always `:id` by Rails' convention.
     if is_pk
       return @record = collection.find(request.path_parameters[:id])
     else
