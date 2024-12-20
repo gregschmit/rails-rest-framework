@@ -31,57 +31,57 @@ module RESTFramework
   EXTERNAL_ASSETS = {
     # Bootstrap
     "bootstrap.min.css" => {
-      url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css",
-      sri: "sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp",
+      url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
+      sri: "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH",
     },
     "bootstrap.min.js" => {
-      url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js",
-      sri: "sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N",
+      url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js",
+      sri: "sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz",
     },
 
     # Bootstrap Icons
     "bootstrap-icons.min.css" => {
-      url: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.4/font/bootstrap-icons.min.css",
+      url: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
       inline_fonts: true,
     },
 
     # Highlight.js
     "highlight.min.js" => {
-      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js",
-      sri: "sha512-bgHRAiTjGrzHzLyKOnpFvaEpGzJet3z4tZnXGjpsCcqOnAH6VGUx9frc5bcIhKTVLEiCO6vEhNAgx5jtLUYrfA==",
+      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.0/highlight.min.js",
+      sri: "sha512-6QBAC6Sxc4IF04SvIg0k78l5rP5YgVjmHX2NeArelbxM3JGj4imMqfNzEta3n+mi7iG3nupdLnl3QrbfjdXyTg==",
     },
     "highlight-json.min.js" => {
-      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/json.min.js",
-      sri: "sha512-0xYvyncS9OLE7GOpNBZFnwyh9+bq4HVgk4yVVYI678xRvE22ASicF1v6fZ1UiST+M6pn17MzFZdvVCI3jTHSyw==",
+      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.0/languages/json.min.js",
+      sri: "sha512-8JO7/pRnd1Ce8OBXWQg85e5wNPJdBaQdN8w4oDa+HelMXaLwCxTdbzdWHmJtWR9AmcI6dOln4FS5/KrzpxqqfQ==",
     },
     "highlight-xml.min.js" => {
-      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/xml.min.js",
-      sri: "sha512-5zBcw+OKRkaNyvUEPlTSfYylVzgpi7KpncY36b0gRudfxIYIH0q0kl2j26uCUB3YBRM6ytQQEZSgRg+ZlBTmdA==",
+      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.0/languages/xml.min.js",
+      sri: "sha512-/vq6wbS2Qkv8Hj4mP3Jd/m6MbnIrquzZiUt9tIluQfe332IQeFDrSIK7j2cjAyn6/9Ntb2WMPbo1CAxu26NViA==",
     },
     "highlight-a11y-dark.min.css" => {
-      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-dark.min.css",
+      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.0/styles/a11y-dark.min.css",
       sri: "sha512-Vj6gPCk8EZlqnoveEyuGyYaWZ1+jyjMPg8g4shwyyNlRQl6d3L9At02ZHQr5K6s5duZl/+YKMnM3/8pDhoUphg==",
       extra_tag_attrs: {class: "rrf-dark-mode"},
     },
     "highlight-a11y-light.min.css" => {
-      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-light.min.css",
+      url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.0/styles/a11y-light.min.css",
       sri: "sha512-WDk6RzwygsN9KecRHAfm9HTN87LQjqdygDmkHSJxVkVI7ErCZ8ZWxP6T8RvBujY1n2/E4Ac+bn2ChXnp5rnnHA==",
       extra_tag_attrs: {class: "rrf-light-mode"},
     },
 
     # NeatJSON
     "neatjson.min.js" => {
-      url: "https://cdn.jsdelivr.net/npm/neatjson@0.10.5/javascript/neatjson.min.js",
+      url: "https://cdn.jsdelivr.net/npm/neatjson@0.10.6/javascript/neatjson.min.js",
       exclude_from_docs: true,
     },
 
     # Trix
     "trix.min.css" => {
-      url: "https://unpkg.com/trix@2.0.0/dist/trix.css",
+      url: "https://unpkg.com/trix@2.0.8/dist/trix.css",
       exclude_from_docs: true,
     },
     "trix.min.js" => {
-      url: "https://unpkg.com/trix@2.0.0/dist/trix.umd.min.js",
+      url: "https://unpkg.com/trix@2.0.8/dist/trix.umd.min.js",
       exclude_from_docs: true,
     },
   }.map { |name, cfg|
