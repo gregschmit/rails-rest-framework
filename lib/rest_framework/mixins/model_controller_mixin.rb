@@ -117,10 +117,10 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     end
 
     # Get a field's config, including defaults.
-    def get_field_config(f)
+    def field_config_for(f)
       f = f.to_sym
-      @_get_field_config ||= {}
-      return @_get_field_config[f] if @_get_field_config[f]
+      @_field_config_for ||= {}
+      return @_field_config_for[f] if @_field_config_for[f]
 
       config = self.field_config&.dig(f) || {}
 
@@ -147,7 +147,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         }.to_h.compact.presence
       end
 
-      return @_get_field_config[f] = config.compact
+      return @_field_config_for[f] = config.compact
     end
 
     # Get metadata about the resource's fields.
@@ -305,7 +305,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         end
 
         # Serialize any field config.
-        metadata[:config] = self.get_field_config(f).presence
+        metadata[:config] = self.field_config_for(f).presence
 
         next [f, metadata.compact]
       }.to_h
@@ -450,7 +450,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
       if self.permit_nested_attributes_assignment
         hash_variations["#{f}_attributes"] = (
-          self.class.get_field_config(f)[:sub_fields] + ["_destroy"]
+          self.class.field_config_for(f)[:sub_fields] + ["_destroy"]
         )
       end
 

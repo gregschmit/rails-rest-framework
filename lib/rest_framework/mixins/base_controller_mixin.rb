@@ -341,7 +341,9 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
   end
 
-  # Provide a generic `OPTIONS` response with metadata such as available actions.
+  # TODO: Might make this the default render method in the future.
+  alias_method :render_api, :api_response
+
   def options
     return api_response(self.options_metadata)
   end
