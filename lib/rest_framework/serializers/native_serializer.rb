@@ -260,14 +260,24 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
           includes_map[f] = {"#{f}_attachment": :blob}
           self.define_singleton_method(f) do |record|
             attached = record.send(f)
-            next attached.attachment ? {signed_id: attached.signed_id, url: attached.url} : nil
+            next attached.attachment ? {
+              filename: attached.filename,
+              signed_id: attached.signed_id,
+              url: attached.url,
+            } : nil
           end
         elsif ref.macro == :has_many_attached
           serializer_methods[f] = f
           includes_map[f] = {"#{f}_attachments": :blob}
           self.define_singleton_method(f) do |record|
             # Iterating the collection yields attachment objects.
-            next record.send(f).map { |a| {signed_id: a.signed_id, url: a.url} }
+            next record.send(f).map { |a|
+              {
+                filename: a.filename,
+                signed_id: a.signed_id,
+                url: a.url,
+              }
+            }
           end
         end
       elsif @model.method_defined?(f)
