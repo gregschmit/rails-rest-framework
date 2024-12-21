@@ -2,6 +2,8 @@
 module RESTFramework::Mixins::BaseModelControllerMixin
   BASE64_REGEX = /data:(.*);base64,(.*)/
   BASE64_TRANSLATE = ->(field, value) {
+    return value unless BASE64_REGEX.match?(value)
+
     _, content_type, payload = value.match(BASE64_REGEX).to_a
     return {
       io: StringIO.new(Base64.decode64(payload)),
@@ -412,7 +414,6 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     # Assemble strong parameters.
     variations = []
     hash_variations = {}
-    alt_hash_variations = {}
     reflections = self.class.get_model.reflections
     @_get_allowed_parameters = self.get_fields.map { |f|
       f = f.to_s
@@ -425,8 +426,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
       # ActiveStorage Integration: `has_many_attached`.
       if reflections.key?("#{f}_attachments")
-        hash_variations[f] = []
-        alt_hash_variations[f] = ACTIVESTORAGE_KEYS
+        hash_variations[f] = ACTIVESTORAGE_KEYS
         next nil
       end
 
@@ -460,7 +460,6 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     }.compact
     @_get_allowed_parameters += variations
     @_get_allowed_parameters << hash_variations
-    @_get_allowed_parameters << alt_hash_variations
 
     return @_get_allowed_parameters
   end
@@ -503,6 +502,45 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       end
     end
 
+    # ActiveStorage Integration: Translate base64 encoded attachments to upload objects.
+    #
+    # rubocop:disable Layout/LineLength
+    #
+    # Example base64 images (red, green, and blue squares):
+    #   data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8z8BQz0AEYBxVSF+FABJADveWkH6oAAAAAElFTkSuQmCC
+    #   data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNk+M9Qz0AEYBxVSF+FAAhKDveksOjmAAAAAElFTkSuQmCC
+    #   data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FAP5FDvcfRYWgAAAAAElFTkSuQmCC
+    #
+    # rubocop:enable Layout/LineLength
+    has_many_attached_scalar_data = {}
+    self.class.get_model.attachment_reflections.keys.each do |k|
+      if data[k].is_a?(Array)
+        data[k] = data[k].map { |v|
+          if v.is_a?(String)
+            v = BASE64_TRANSLATE.call(k, v)
+
+            # Remember scalars because Rails strong params will remove it.
+            if v.is_a?(String)
+              has_many_attached_scalar_data[k] ||= []
+              has_many_attached_scalar_data[k] << v
+            end
+          elsif v.is_a?(Hash)
+            if v[:io].is_a?(String)
+              v[:io] = StringIO.new(Base64.decode64(v[:io]))
+            end
+          end
+
+          next v
+        }
+      elsif data[k].is_a?(Hash)
+        if data[k][:io].is_a?(String)
+          data[k][:io] = StringIO.new(Base64.decode64(data[k][:io]))
+        end
+      elsif data[k].is_a?(String)
+        data[k] = BASE64_TRANSLATE.call(k, data[k])
+      end
+    end
+
     # Filter the request body with strong params. If `bulk` is true, then we apply allowed
     # parameters to the `_json` key of the request body.
     body_params = if allowed_params == true
@@ -514,6 +552,15 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       ActionController::Parameters.new(data).permit(*allowed_params)
     end
 
+    # ActiveStorage Integration: Workaround for Rails strong params not allowing you to permit an
+    # array containing a mix of scalars and hashes. This is needed for `has_many_attached`, because
+    # API consumers must be able to provide scalar `signed_id` values for existing attachments along
+    # with hashes for new attachments. It's worth mentioning that base64 scalars are converted to
+    # hashes that conform to the ActiveStorage API.
+    has_many_attached_scalar_data.each do |k, v|
+      body_params[k].unshift(*v)
+    end
+
     # Filter primary key, if configured.
     if self.filter_pk_from_request_body && bulk_mode != :update
       body_params.delete(pk)
@@ -521,35 +568,6 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
     # Filter fields in `exclude_body_fields`.
     (self.exclude_body_fields || []).each { |f| body_params.delete(f) }
-
-    # ActiveStorage Integration: Translate base64 encoded attachments to upload objects.
-    #
-    # rubocop:disable Layout/LineLength
-    #
-    # Example base64 image:
-    #   data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAApgAAAKYB3X3/OAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAANCSURBVEiJtZZPbBtFFMZ/M7ubXdtdb1xSFyeilBapySVU8h8OoFaooFSqiihIVIpQBKci6KEg9Q6H9kovIHoCIVQJJCKE1ENFjnAgcaSGC6rEnxBwA04Tx43t2FnvDAfjkNibxgHxnWb2e/u992bee7tCa00YFsffekFY+nUzFtjW0LrvjRXrCDIAaPLlW0nHL0SsZtVoaF98mLrx3pdhOqLtYPHChahZcYYO7KvPFxvRl5XPp1sN3adWiD1ZAqD6XYK1b/dvE5IWryTt2udLFedwc1+9kLp+vbbpoDh+6TklxBeAi9TL0taeWpdmZzQDry0AcO+jQ12RyohqqoYoo8RDwJrU+qXkjWtfi8Xxt58BdQuwQs9qC/afLwCw8tnQbqYAPsgxE1S6F3EAIXux2oQFKm0ihMsOF71dHYx+f3NND68ghCu1YIoePPQN1pGRABkJ6Bus96CutRZMydTl+TvuiRW1m3n0eDl0vRPcEysqdXn+jsQPsrHMquGeXEaY4Yk4wxWcY5V/9scqOMOVUFthatyTy8QyqwZ+kDURKoMWxNKr2EeqVKcTNOajqKoBgOE28U4tdQl5p5bwCw7BWquaZSzAPlwjlithJtp3pTImSqQRrb2Z8PHGigD4RZuNX6JYj6wj7O4TFLbCO/Mn/m8R+h6rYSUb3ekokRY6f/YukArN979jcW+V/S8g0eT/N3VN3kTqWbQ428m9/8k0P/1aIhF36PccEl6EhOcAUCrXKZXXWS3XKd2vc/TRBG9O5ELC17MmWubD2nKhUKZa26Ba2+D3P+4/MNCFwg59oWVeYhkzgN/JDR8deKBoD7Y+ljEjGZ0sosXVTvbc6RHirr2reNy1OXd6pJsQ+gqjk8VWFYmHrwBzW/n+uMPFiRwHB2I7ih8ciHFxIkd/3Omk5tCDV1t+2nNu5sxxpDFNx+huNhVT3/zMDz8usXC3ddaHBj1GHj/As08fwTS7Kt1HBTmyN29vdwAw+/wbwLVOJ3uAD1wi/dUH7Qei66PfyuRj4Ik9is+hglfbkbfR3cnZm7chlUWLdwmprtCohX4HUtlOcQjLYCu+fzGJH2QRKvP3UNz8bWk1qMxjGTOMThZ3kvgLI5AzFfo379UAAAAASUVORK5CYII=
-    #
-    # rubocop:enable Layout/LineLength
-    self.class.get_model.attachment_reflections.keys.each do |k|
-      if body_params[k].is_a?(Array)
-        body_params[k] = body_params[k].map { |v|
-          if v.is_a?(String)
-            BASE64_TRANSLATE.call(k, v)
-          elsif v.is_a?(ActionController::Parameters)
-            if v[:io].is_a?(String)
-              v[:io] = StringIO.new(Base64.decode64(v[:io]))
-            end
-            v
-          end
-        }
-      elsif body_params[k].is_a?(ActionController::Parameters)
-        if body_params[k][:io].is_a?(String)
-          body_params[k][:io] = StringIO.new(Base64.decode64(body_params[k][:io]))
-        end
-      elsif body_params[k].is_a?(String)
-        body_params[k] = BASE64_TRANSLATE.call(k, body_params[k])
-      end
-    end
 
     return body_params
   end
