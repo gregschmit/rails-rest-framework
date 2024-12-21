@@ -296,8 +296,9 @@
     document.write(content)
     document.close()
 
-    // Trigger `DOMContentLoaded` manually so our custom JavaScript works.
-    document.dispatchEvent(new Event("DOMContentLoaded", {bubbles: true, cancelable: true}))
+    // It seems that `DOMContentLoaded` is already triggered on `document.close()`.
+    // // Trigger `DOMContentLoaded` manually so our custom JavaScript works.
+    // // document.dispatchEvent(new Event("DOMContentLoaded", {bubbles: true, cancelable: true}))
   }
 
   // Refresh the window as a `GET` request.
