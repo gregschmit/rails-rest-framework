@@ -17,6 +17,10 @@ module RESTFramework::Mixins::BaseControllerMixin
     serializer_class: nil,
     serialize_to_json: true,
     serialize_to_xml: true,
+
+    # Custom integrations (reduces serializer performance due to method calls).
+    enable_action_text: false,
+    enable_active_storage: false,
   }
   RRF_BASE_INSTANCE_CONFIG = {
     # Options related to pagination.

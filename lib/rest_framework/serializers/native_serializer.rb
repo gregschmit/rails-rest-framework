@@ -246,14 +246,14 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
           includes[f] = sub_config
           includes_map[f] = f.to_sym
         end
-      elsif ref = reflections["rich_text_#{f}"]
+      elsif @controller.class.enable_action_text && ref = reflections["rich_text_#{f}"]
         # ActionText Integration: Define rich text serializer method.
         includes_map[f] = :"rich_text_#{f}"
         serializer_methods[f] = f
         self.define_singleton_method(f) do |record|
           next record.send(f).to_s
         end
-      elsif ref = attachment_reflections[f]
+      elsif @controller.class.enable_active_storage && ref = attachment_reflections[f]
         # ActiveStorage Integration: Define attachment serializer method.
         if ref.macro == :has_one_attached
           serializer_methods[f] = f

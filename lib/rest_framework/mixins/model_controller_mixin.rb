@@ -103,13 +103,20 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       # If fields is a hash, then parse it.
       if input_fields.is_a?(Hash)
         return RESTFramework::Utils.parse_fields_hash(
-          input_fields, self.get_model, exclude_associations: self.exclude_associations
+          input_fields,
+          self.get_model,
+          exclude_associations: self.exclude_associations,
+          action_text: self.enable_action_text,
+          active_storage: self.enable_active_storage,
         )
       elsif !input_fields
         # Otherwise, if fields is nil, then fallback to columns.
         model = self.get_model
         return model ? RESTFramework::Utils.fields_for(
-          model, exclude_associations: self.exclude_associations
+          model,
+          exclude_associations: self.exclude_associations,
+          action_text: self.enable_action_text,
+          active_storage: self.enable_active_storage,
         ) : []
       elsif input_fields
         input_fields = input_fields.map(&:to_s)
@@ -418,21 +425,21 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     @_get_allowed_parameters = self.get_fields.map { |f|
       f = f.to_s
 
-      # ActiveStorage Integration: `has_one_attached`.
-      if reflections.key?("#{f}_attachment")
+      # ActionText Integration:
+      if self.class.enable_action_text && reflections.key?("rich_test_#{f}")
+        next f
+      end
+
+      # ActiveStorage Integration: `has_one_attached`
+      if self.class.enable_active_storage && reflections.key?("#{f}_attachment")
         hash_variations[f] = ACTIVESTORAGE_KEYS
         next f
       end
 
-      # ActiveStorage Integration: `has_many_attached`.
-      if reflections.key?("#{f}_attachments")
+      # ActiveStorage Integration: `has_many_attached`
+      if self.class.enable_active_storage && reflections.key?("#{f}_attachments")
         hash_variations[f] = ACTIVESTORAGE_KEYS
         next nil
-      end
-
-      # ActionText Integration.
-      if reflections.key?("rich_test_#{f}")
-        next f
       end
 
       # Return field if it's not an association.
@@ -513,31 +520,33 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     #
     # rubocop:enable Layout/LineLength
     has_many_attached_scalar_data = {}
-    self.class.get_model.attachment_reflections.keys.each do |k|
-      if data[k].is_a?(Array)
-        data[k] = data[k].map { |v|
-          if v.is_a?(String)
-            v = BASE64_TRANSLATE.call(k, v)
-
-            # Remember scalars because Rails strong params will remove it.
+    if self.class.enable_active_storage
+      self.class.get_model.attachment_reflections.keys.each do |k|
+        if data[k].is_a?(Array)
+          data[k] = data[k].map { |v|
             if v.is_a?(String)
-              has_many_attached_scalar_data[k] ||= []
-              has_many_attached_scalar_data[k] << v
-            end
-          elsif v.is_a?(Hash)
-            if v[:io].is_a?(String)
-              v[:io] = StringIO.new(Base64.decode64(v[:io]))
-            end
-          end
+              v = BASE64_TRANSLATE.call(k, v)
 
-          next v
-        }
-      elsif data[k].is_a?(Hash)
-        if data[k][:io].is_a?(String)
-          data[k][:io] = StringIO.new(Base64.decode64(data[k][:io]))
+              # Remember scalars because Rails strong params will remove it.
+              if v.is_a?(String)
+                has_many_attached_scalar_data[k] ||= []
+                has_many_attached_scalar_data[k] << v
+              end
+            elsif v.is_a?(Hash)
+              if v[:io].is_a?(String)
+                v[:io] = StringIO.new(Base64.decode64(v[:io]))
+              end
+            end
+
+            next v
+          }
+        elsif data[k].is_a?(Hash)
+          if data[k][:io].is_a?(String)
+            data[k][:io] = StringIO.new(Base64.decode64(data[k][:io]))
+          end
+        elsif data[k].is_a?(String)
+          data[k] = BASE64_TRANSLATE.call(k, data[k])
         end
-      elsif data[k].is_a?(String)
-        data[k] = BASE64_TRANSLATE.call(k, data[k])
       end
     end
 

@@ -6,6 +6,9 @@ class Api::DemoController < ApiController
     primarily pagination and nested resources.
   TEXT
 
+  self.enable_action_text = true
+  self.enable_active_storage = true
+
   class_attribute(:page_size, default: 30)
   class_attribute(:native_serializer_associations_limit, default: 6)
   class_attribute(:native_serializer_include_associations_count, default: true)

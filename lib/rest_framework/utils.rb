@@ -153,16 +153,21 @@ module RESTFramework::Utils
   end
 
   # Parse fields hashes.
-  def self.parse_fields_hash(fields_hash, model, exclude_associations: nil)
-    parsed_fields = fields_hash[:only] || (
-      model ? self.fields_for(model, exclude_associations: exclude_associations) : []
+  def self.parse_fields_hash(h, model, exclude_associations:, action_text:, active_storage:)
+    parsed_fields = h[:only] || (
+      model ? self.fields_for(
+        model,
+        exclude_associations: exclude_associations,
+        action_text: action_text,
+        active_storage: active_storage,
+      ) : []
     )
-    parsed_fields += fields_hash[:include].map(&:to_s) if fields_hash[:include]
-    parsed_fields -= fields_hash[:exclude].map(&:to_s) if fields_hash[:exclude]
-    parsed_fields -= fields_hash[:except].map(&:to_s) if fields_hash[:except]
+    parsed_fields += h[:include].map(&:to_s) if h[:include]
+    parsed_fields -= h[:exclude].map(&:to_s) if h[:exclude]
+    parsed_fields -= h[:except].map(&:to_s) if h[:except]
 
     # Warn for any unknown keys.
-    (fields_hash.keys - [:only, :except, :include, :exclude]).each do |k|
+    (h.keys - [:only, :except, :include, :exclude]).each do |k|
       Rails.logger.warn("RRF: Unknown key in fields hash: #{k}")
     end
 
@@ -173,16 +178,24 @@ module RESTFramework::Utils
   # Get the fields for a given model, including not just columns (which includes
   # foreign keys), but also associations. Note that we always return an array of
   # strings, not symbols.
-  def self.fields_for(model, exclude_associations: nil)
+  def self.fields_for(model, exclude_associations:, action_text:, active_storage:)
     foreign_keys = model.reflect_on_all_associations(:belongs_to).map(&:foreign_key)
     base_fields = model.column_names.reject { |c| c.in?(foreign_keys) }
 
     return base_fields if exclude_associations
 
-    # Add associations in addition to normal columns.
-    return base_fields + model.reflections.map { |association, ref|
+    # ActionText Integration: Determine the normalized field names for action text attributes.
+    atf = action_text ? model.reflect_on_all_associations(:has_one).collect(&:name).select { |n|
+      n.to_s.start_with?("rich_text_")
+    }.map { |n| n.to_s.delete_prefix("rich_text_") } : []
+
+    # ActiveStorage Integration: Determine the normalized field names for active storage attributes.
+    asf = active_storage ? model.attachment_reflections.keys : []
+
+    # Associations:
+    associations = model.reflections.map { |association, ref|
       # Ignore associations for which we have custom integrations.
-      if ref.class_name.in?(%w(ActiveStorage::Attachment ActiveStorage::Blob ActionText::RichText))
+      if ref.class_name.in?(%w(ActionText::RichText ActiveStorage::Attachment ActiveStorage::Blob))
         next nil
       end
 
@@ -193,11 +206,9 @@ module RESTFramework::Utils
       end
 
       next association
-    }.compact + model.reflect_on_all_associations(:has_one).collect(&:name).select { |n|
-      n.to_s.start_with?("rich_text_")
-    }.map { |n|
-      n.to_s.delete_prefix("rich_text_")
-    } + model.attachment_reflections.keys
+    }.compact
+
+    return base_fields + associations + atf + asf
   end
 
   # Get the sub-fields that may be serialized and filtered/ordered for a reflection.
