@@ -13,7 +13,7 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
   end
 
   def _page_size
-    page_size = nil
+    page_size = 1
 
     # Get from context, if allowed.
     if @controller.page_size_query_param
@@ -24,16 +24,16 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
 
     # Otherwise, get from config.
     if !page_size && @controller.page_size
-      page_size = @controller.page_size
+      page_size = @controller.page_size.to_i
     end
 
     # Ensure we don't exceed the max page size.
     if @controller.max_page_size && page_size > @controller.max_page_size
-      page_size = @controller.max_page_size
+      page_size = @controller.max_page_size.to_i
     end
 
     # Ensure we return at least 1.
-    return page_size.zero? ? 1 : page_size
+    return [page_size, 1].max
   end
 
   # Get the page and return it so the caller can serialize it.
