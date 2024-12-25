@@ -133,18 +133,13 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
   end
 
-  def serializer_class
-    # TODO: Compatibility; remove in 1.0.
-    if klass = self.try(:get_serializer_class)
-      return klass
-    end
-
+  def get_serializer_class
     return self.class.serializer_class
   end
 
   # Serialize the given data using the `serializer_class`.
   def serialize(data, **kwargs)
-    return RESTFramework::Utils.wrap_ams(self.serializer_class).new(
+    return RESTFramework::Utils.wrap_ams(self.get_serializer_class).new(
       data, controller: self, **kwargs
     ).serialize
   end

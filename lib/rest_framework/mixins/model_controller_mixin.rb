@@ -506,14 +506,8 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     return @_get_allowed_parameters
   end
 
-  def serializer_class
+  def get_serializer_class
     return super || RESTFramework::NativeSerializer
-  end
-
-  def apply_filters(data)
-    return self.class.filter_backends&.reduce(data) { |d, filter|
-      filter.new(controller: self).filter_data(d)
-    } || data
   end
 
   # Use strong parameters to filter the request body using the configured allowed parameters.
@@ -627,7 +621,11 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
   # Get the records this controller has access to *after* any filtering is applied.
   def get_records
-    return @records ||= self.apply_filters(self.get_recordset)
+    data = self.get_recordset
+
+    return @records ||= self.class.filter_backends&.reduce(data) { |d, filter|
+      filter.new(controller: self).filter_data(d)
+    } || data
   end
 
   # Get a single record by primary key or another column, if allowed. The return value is memoized
@@ -684,7 +682,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     # This is kinda slow, so perhaps we should eventually integrate `errors` serialization into
     # the serializer directly. This would fail for active model serializers, but maybe we don't
     # care?
-    s = RESTFramework::Utils.wrap_ams(self.serializer_class)
+    s = RESTFramework::Utils.wrap_ams(self.get_serializer_class)
     serialized_records = records.map do |record|
       s.new(record, controller: self).serialize.merge!({errors: record.errors.presence}.compact)
     end
