@@ -52,6 +52,3 @@ end
 
 # Alias for convenience.
 RESTFramework::OrderingFilter = RESTFramework::Filters::OrderingFilter
-
-# TODO: Compatibility; remove in 1.0.
-RESTFramework::ModelOrderingFilter = RESTFramework::Filters::OrderingFilter

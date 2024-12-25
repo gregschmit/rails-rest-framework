@@ -58,7 +58,7 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
     return @data.limit(@page_size).offset(page_index * @page_size)
   end
 
-  # Wrap the serialized page with appropriate metadata. TODO: include links.
+  # Wrap the serialized page with appropriate metadata.
   def get_paginated_response(serialized_page)
     page_query_param = @controller.class.page_query_param
     base_params = @controller.params.to_unsafe_h

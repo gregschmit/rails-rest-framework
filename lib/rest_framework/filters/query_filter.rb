@@ -66,6 +66,3 @@ end
 
 # Alias for convenience.
 RESTFramework::QueryFilter = RESTFramework::Filters::QueryFilter
-
-# TODO: Compatibility; remove in 1.0.
-RESTFramework::ModelQueryFilter = RESTFramework::Filters::QueryFilter

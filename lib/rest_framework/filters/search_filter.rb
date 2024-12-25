@@ -41,6 +41,3 @@ end
 
 # Alias for convenience.
 RESTFramework::SearchFilter = RESTFramework::Filters::SearchFilter
-
-# TODO: Compatibility; remove in 1.0.
-RESTFramework::ModelSearchFilter = RESTFramework::Filters::SearchFilter

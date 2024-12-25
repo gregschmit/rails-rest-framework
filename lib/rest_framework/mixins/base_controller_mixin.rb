@@ -168,7 +168,7 @@ module RESTFramework::Mixins::BaseControllerMixin
 
   # Render a browsable API for `html` format, along with basic `json`/`xml` formats, and with
   # support or passing custom `kwargs` to the underlying `render` calls.
-  def api_response(payload, **kwargs)
+  def render_api(payload, **kwargs)
     html_kwargs = kwargs.delete(:html_kwargs) || {}
     json_kwargs = kwargs.delete(:json_kwargs) || {}
     xml_kwargs = kwargs.delete(:xml_kwargs) || {}
@@ -240,7 +240,7 @@ module RESTFramework::Mixins::BaseControllerMixin
   end
 
   # TODO: Might make this the default render method in the future.
-  alias_method :render_api, :api_response
+  alias_method :api_response, :render_api
 
   def openapi_metadata
     response_content_types = [
