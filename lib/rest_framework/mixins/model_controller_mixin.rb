@@ -443,7 +443,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     )
   end
 
-  # Get a list of parameters allowed for the current action.
+  # Get a hash of strong parameters for the current action.
   def get_allowed_parameters
     return @_get_allowed_parameters if defined?(@_get_allowed_parameters)
 
@@ -510,7 +510,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     return super || RESTFramework::NativeSerializer
   end
 
-  # Use strong parameters to filter the request body using the configured allowed parameters.
+  # Use strong parameters to filter the request body.
   def get_body_params(bulk_mode: nil)
     data = self.request.request_parameters
     pk = self.class.get_model&.primary_key
@@ -619,7 +619,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     return nil
   end
 
-  # Get the records this controller has access to *after* any filtering is applied.
+  # Filter the recordset and return records this request has access to.
   def get_records
     data = self.get_recordset
 
@@ -628,8 +628,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     } || data
   end
 
-  # Get a single record by primary key or another column, if allowed. The return value is memoized
-  # and exposed to the view as the `@record` instance variable.
+  # Get a single record by primary key or another column, if allowed.
   def get_record
     return @record if @record
 
