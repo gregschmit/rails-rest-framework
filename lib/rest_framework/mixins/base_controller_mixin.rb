@@ -19,11 +19,6 @@ module RESTFramework::Mixins::BaseControllerMixin
     serialize_to_json: true,
     serialize_to_xml: true,
 
-    # Custom integrations (reduces serializer performance due to method calls).
-    enable_action_text: false,
-    enable_active_storage: false,
-  }
-  RRF_BASE_INSTANCE_CONFIG = {
     # Options related to pagination.
     paginator_class: nil,
     page_size: 20,
@@ -34,6 +29,10 @@ module RESTFramework::Mixins::BaseControllerMixin
     # Option to disable serializer adapters by default, mainly introduced because Active Model
     # Serializers will do things like serialize `[]` into `{"":[]}`.
     disable_adapters_by_default: true,
+
+    # Custom integrations (reduces serializer performance due to method calls).
+    enable_action_text: false,
+    enable_active_storage: false,
   }
 
   # Default action for API root.
@@ -63,7 +62,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     # :nocov:
     def rrf_finalize
       if RESTFramework.config.freeze_config
-        (self::RRF_BASE_CONFIG.keys + self::RRF_BASE_INSTANCE_CONFIG.keys).each { |k|
+        self::RRF_BASE_CONFIG.keys.each { |k|
           v = self.send(k)
           v.freeze if v.is_a?(Hash) || v.is_a?(Array)
         }
@@ -80,16 +79,12 @@ module RESTFramework::Mixins::BaseControllerMixin
     # By default, the layout should be set to `rest_framework`.
     base.layout("rest_framework")
 
-    # Add class attributes (with defaults) unless they already exist.
+    # Add class attributes unless they already exist.
     RRF_BASE_CONFIG.each do |a, default|
       next if base.respond_to?(a)
 
+      # Don't leak class attributes to the instance to avoid conflicting with action methods.
       base.class_attribute(a, default: default, instance_accessor: false)
-    end
-    RRF_BASE_INSTANCE_CONFIG.each do |a, default|
-      next if base.respond_to?(a)
-
-      base.class_attribute(a, default: default)
     end
 
     # Alias `extra_actions` to `extra_collection_actions`.
@@ -197,7 +192,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
 
     # Do not use any adapters by default, if configured.
-    if self.disable_adapters_by_default && !kwargs.key?(:adapter)
+    if self.class.disable_adapters_by_default && !kwargs.key?(:adapter)
       kwargs[:adapter] = nil
     end
 

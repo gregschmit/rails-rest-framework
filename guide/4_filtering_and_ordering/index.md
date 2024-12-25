@@ -3,8 +3,7 @@
 While you can control the recordset that the API exposes, sometimes you want the user to control the
 records they want to see, or the order of those records. Both filtering and ordering are
 accomplished through a generic mechanism called "filters". To control the filter backends that a
-controller uses, you can either adjust the `filter_backends` controller attribute or you can
-override the `get_filter_backends()` method.
+controller uses, you can set the `filter_backends` attribute.
 
 ## QueryFilter
 

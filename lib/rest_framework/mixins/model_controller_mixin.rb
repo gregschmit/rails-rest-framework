@@ -24,13 +24,12 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     fields: nil,
     field_config: nil,
 
-    # Options for what should be included/excluded from default fields.
-    exclude_associations: false,
-  }
-  RRF_BASE_MODEL_INSTANCE_CONFIG = {
     # Attributes for finding records.
     find_by_fields: nil,
     find_by_query_param: "find_by",
+
+    # Options for what should be included/excluded from default fields.
+    exclude_associations: false,
 
     # Options for handling request body parameters.
     allowed_parameters: nil,
@@ -136,7 +135,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       reflections = model.reflections
       attributes = model._default_attributes
       readonly_attributes = model.readonly_attributes
-      exclude_body_fields = self.exclude_body_fields.map(&:to_s)
+      exclude_body_fields = self.exclude_body_fields&.map(&:to_s)
       rich_text_association_names = model.reflect_on_all_associations(:has_one)
         .collect(&:name)
         .select { |n| n.to_s.start_with?("rich_text_") }
@@ -382,7 +381,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       # self.setup_channel
 
       if RESTFramework.config.freeze_config
-        (self::RRF_BASE_MODEL_CONFIG.keys + self::RRF_BASE_MODEL_INSTANCE_CONFIG.keys).each { |k|
+        self::RRF_BASE_MODEL_CONFIG.keys.each { |k|
           v = self.send(k)
           v.freeze if v.is_a?(Hash) || v.is_a?(Array)
         }
@@ -403,11 +402,6 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       next if base.respond_to?(a)
 
       base.class_attribute(a, default: default, instance_accessor: false)
-    end
-    RRF_BASE_MODEL_INSTANCE_CONFIG.each do |a, default|
-      next if base.respond_to?(a)
-
-      base.class_attribute(a, default: default)
     end
   end
 
@@ -453,7 +447,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
   def get_allowed_parameters
     return @_get_allowed_parameters if defined?(@_get_allowed_parameters)
 
-    @_get_allowed_parameters = self.allowed_parameters
+    @_get_allowed_parameters = self.class.allowed_parameters
     return @_get_allowed_parameters if @_get_allowed_parameters
 
     # Assemble strong parameters.
@@ -462,6 +456,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     reflections = self.class.get_model.reflections
     @_get_allowed_parameters = self.get_fields.map { |f|
       f = f.to_s
+      config = self.class.field_configuration[f]
 
       # ActionText Integration:
       if self.class.enable_action_text && reflections.key?("rich_test_#{f}")
@@ -480,9 +475,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         next nil
       end
 
-      if self.class.field_configuration[f][:reflection]
+      if config[:reflection]
         # Add `_id`/`_ids` variations for associations.
-        if self.permit_id_assignment && id_field = self.class.field_configuration[f][:id_field]
+        if id_field = config[:id_field]
           if id_field.ends_with?("_ids")
             hash_variations[id_field] = []
           else
@@ -491,9 +486,10 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         end
 
         # Add `_attributes` variations for associations.
-        if self.permit_nested_attributes_assignment
+        # TODO: Consider adjusting this based on `nested_attributes_options`.
+        if self.class.permit_nested_attributes_assignment
           hash_variations["#{f}_attributes"] = (
-            self.class.field_configuration[f][:sub_fields] + ["_destroy"]
+            config[:sub_fields] + ["_destroy"]
           )
         end
 
@@ -515,12 +511,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
   end
 
   def apply_filters(data)
-    # TODO: Compatibility; remove in 1.0.
-    if filtered_data = self.try(:get_filtered_data, data)
-      return filtered_data
-    end
-
-    return self.filter_backends&.reduce(data) { |d, filter|
+    return self.class.filter_backends&.reduce(data) { |d, filter|
       filter.new(controller: self).filter_data(d)
     } || data
   end
@@ -610,12 +601,12 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     end
 
     # Filter primary key, if configured.
-    if self.filter_pk_from_request_body && bulk_mode != :update
+    if self.class.filter_pk_from_request_body && bulk_mode != :update
       body_params.delete(pk)
     end
 
     # Filter fields in `exclude_body_fields`.
-    (self.exclude_body_fields || []).each { |f| body_params.delete(f) }
+    (self.class.exclude_body_fields || []).each { |f| body_params.delete(f) }
 
     return body_params
   end
@@ -648,9 +639,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     is_pk = true
 
     # Find by another column if it's permitted.
-    if find_by_param = self.find_by_query_param.presence
+    if find_by_param = self.class.find_by_query_param.presence
       if find_by = params[find_by_param].presence
-        find_by_fields = self.find_by_fields&.map(&:to_s)
+        find_by_fields = self.class.find_by_fields&.map(&:to_s)
 
         if !find_by_fields || find_by.in?(find_by_fields)
           is_pk = false unless find_by_key == find_by
@@ -660,7 +651,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     end
 
     # Get the recordset, filtering if configured.
-    collection = if self.filter_recordset_before_find
+    collection = if self.class.filter_recordset_before_find
       self.get_records
     else
       self.get_recordset
@@ -676,7 +667,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
   # Determine what collection to call `create` on.
   def get_create_from
-    if self.create_from_recordset
+    if self.class.create_from_recordset
       # Create with any properties inherited from the recordset. We exclude any `select` clauses
       # in case model callbacks need to call `count` on this collection, which typically raises a
       # SQL `SyntaxError`.
@@ -713,13 +704,13 @@ module RESTFramework::Mixins::ListModelMixin
     records = self.get_records
 
     # Handle pagination, if enabled.
-    if self.paginator_class
-      # If there is no `max_page_size`, `page_size_query_param` is not `nil`, and the page size is
-      # set to "0", then skip pagination.
-      unless !self.max_page_size &&
-          self.page_size_query_param &&
-          params[self.page_size_query_param] == "0"
-        paginator = self.paginator_class.new(data: records, controller: self)
+    if paginator_class = self.class.paginator_class
+      # Paginate if there is a `max_page_size`, or if there is no `page_size_query_param`, or if the
+      # page size is not set to "0".
+      max_page_size = self.class.max_page_size
+      page_size_query_param = self.class.page_size_query_param
+      if max_page_size || !page_size_query_param || params[page_size_query_param] != "0"
+        paginator = paginator_class.new(data: records, controller: self)
         page = paginator.get_page
         serialized_page = self.serialize(page)
         return paginator.get_paginated_response(serialized_page)

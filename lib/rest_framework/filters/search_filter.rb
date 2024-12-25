@@ -1,7 +1,7 @@
 class RESTFramework::Filters::SearchFilter < RESTFramework::Filters::BaseFilter
   # Get a list of search fields for the current action.
   def _get_fields
-    if search_fields = @controller.search_fields
+    if search_fields = @controller.class.search_fields
       return search_fields&.map(&:to_s)
     end
 
@@ -13,7 +13,7 @@ class RESTFramework::Filters::SearchFilter < RESTFramework::Filters::BaseFilter
 
   # Filter data according to the request query parameters.
   def filter_data(data)
-    search = @controller.request.query_parameters[@controller.search_query_param]
+    search = @controller.request.query_parameters[@controller.class.search_query_param]
 
     if search.present?
       if fields = self._get_fields.presence
@@ -28,7 +28,7 @@ class RESTFramework::Filters::SearchFilter < RESTFramework::Filters::BaseFilter
         # Ensure we pass user input as arguments to prevent SQL injection.
         return data.where(
           fields.map { |f|
-            "CAST(#{f} AS #{data_type}) #{@controller.search_ilike ? "ILIKE" : "LIKE"} ?"
+            "CAST(#{f} AS #{data_type}) #{@controller.class.search_ilike ? "ILIKE" : "LIKE"} ?"
           }.join(" OR "),
           *(["%#{search}%"] * fields.length),
         )
