@@ -349,9 +349,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           model = self.class.get_model
 
           if model.method(action).parameters.last&.first == :keyrest
-            return api_response(model.send(action, **params))
+            return render_api(model.send(action, **params))
           else
-            return api_response(model.send(action))
+            return render_api(model.send(action))
           end
         end
       end
@@ -365,9 +365,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           record = self.get_record
 
           if record.method(action).parameters.last&.first == :keyrest
-            return api_response(record.send(action, **params))
+            return render_api(record.send(action, **params))
           else
-            return api_response(record.send(action))
+            return render_api(record.send(action))
           end
         end
       end
@@ -691,7 +691,7 @@ end
 # Mixin for listing records.
 module RESTFramework::Mixins::ListModelMixin
   def index
-    return api_response(self.get_index_records)
+    return render_api(self.get_index_records)
   end
 
   # Get records with both filtering and pagination applied.
@@ -719,14 +719,14 @@ end
 # Mixin for showing records.
 module RESTFramework::Mixins::ShowModelMixin
   def show
-    return api_response(self.get_record)
+    return render_api(self.get_record)
   end
 end
 
 # Mixin for creating records.
 module RESTFramework::Mixins::CreateModelMixin
   def create
-    return api_response(self.create!, status: :created)
+    return render_api(self.create!, status: :created)
   end
 
   # Perform the `create!` call and return the created record.
@@ -738,7 +738,7 @@ end
 # Mixin for updating records.
 module RESTFramework::Mixins::UpdateModelMixin
   def update
-    return api_response(self.update!)
+    return render_api(self.update!)
   end
 
   # Perform the `update!` call and return the updated record.
@@ -753,7 +753,7 @@ end
 module RESTFramework::Mixins::DestroyModelMixin
   def destroy
     self.destroy!
-    return api_response("")
+    return render_api("")
   end
 
   # Perform the `destroy!` call and return the destroyed (and frozen) record.

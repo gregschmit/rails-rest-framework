@@ -8,9 +8,6 @@ class Api::Demo::MoviesController < Api::DemoController
   }
 
   def random
-    puts "GNS: #{page_size}"
-    self.page_size = 5
-    puts "GNS: #{page_size}"
-    return render_api({number: 4, message: "Chosen by fair dice roll. Guaranteed to be random."})
+    render_api({number: 4, message: "Chosen by fair dice roll. Guaranteed to be random."})
   end
 end

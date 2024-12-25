@@ -14,7 +14,7 @@ module RESTFramework::Mixins::BulkCreateModelMixin
     if params[:_json].is_a?(Array)
       records = self.create_all!
       serialized_records = self.bulk_serialize(records)
-      return api_response(serialized_records)
+      return render_api(serialized_records)
     end
 
     return super
@@ -36,7 +36,7 @@ module RESTFramework::Mixins::BulkUpdateModelMixin
   def update_all
     records = self.update_all!
     serialized_records = self.bulk_serialize(records)
-    return api_response(serialized_records)
+    render_api(serialized_records)
   end
 
   # Perform the `update` call and return the collection of (possibly) updated records.
@@ -62,10 +62,10 @@ module RESTFramework::Mixins::BulkDestroyModelMixin
     if params[:_json].is_a?(Array)
       records = self.destroy_all!
       serialized_records = self.bulk_serialize(records)
-      return api_response(serialized_records)
+      return render_api(serialized_records)
     end
 
-    return api_response(
+    render_api(
       {message: "Bulk destroy requires an array of primary keys as input."},
       status: 400,
     )

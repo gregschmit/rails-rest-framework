@@ -57,10 +57,11 @@ A fundamental feature that REST Framework provides is the ability to render a br
 allows developers to discover and interact with the API's functionality, while also providing faster
 and more lightweight JSON/XML formats for consumption by the systems these developers create.
 
-The `api_response` method is how this is accomplished. The first argument is the data to be
-rendered (often an array or hash), and keyword arguments can be provided to customize the response
-(e.g., setting the HTTP status code). Using this method instead of the classic Rails helpers, such
-as `render`, will automatically provide the browsable API as well as JSON/XML rendering.
+The `render_api` method is how this is accomplished. Note that this was called `render_api` prior
+to v1, and it is still aliased to provide backwards compatibility. The first argument is the data to
+be rendered (often an array or hash), and keyword arguments can be provided to customize the
+response (e.g., setting the HTTP status code). Using this method instead of the classic `render`
+will automatically provide the browsable API as well as JSON/XML rendering.
 
 Here is a simple example of rendering a hash with a `message` key:
 
@@ -70,7 +71,7 @@ class ApiController < ApplicationController
   self.extra_actions = {test: :get}
 
   def test
-    api_response({message: "Test successful!"})
+    render_api({message: "Test successful!"})
   end
 end
 ```
@@ -86,7 +87,7 @@ class ApiController < ApplicationController
   self.extra_actions = {test: :get}
 
   def test
-    api_response({message: "Test successful!"})
+    render_api({message: "Test successful!"})
   end
 end
 ```
@@ -99,7 +100,7 @@ class ApiController < ApplicationController
   self.extra_actions = {test: [:get, :post]}
 
   def test
-    api_response({message: "Test successful!"})
+    render_api({message: "Test successful!"})
   end
 end
 ```
@@ -115,7 +116,7 @@ class ApiController < ApplicationController
   self.extra_actions = {test_action: {path: :test, methods: :get}}
 
   def test_action
-    api_response({message: "Test successful!"})
+    render_api({message: "Test successful!"})
   end
 end
 ```
@@ -196,7 +197,7 @@ class Api::MoviesController < ApiController
     # REST Framework will rescue ActiveRecord::RecordInvalid or ActiveRecord::RecordNotSaved.
     @record.update!(enabled: false)
 
-    return api_response(@record)
+    render_api(@record)
   end
 end
 ```

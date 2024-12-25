@@ -152,7 +152,7 @@ module RESTFramework::Mixins::BaseControllerMixin
       400
     end
 
-    return api_response(
+    render_api(
       {
         message: e.message,
         errors: e.try(:record).try(:errors),
@@ -174,11 +174,11 @@ module RESTFramework::Mixins::BaseControllerMixin
     xml_kwargs = kwargs.delete(:xml_kwargs) || {}
 
     # Raise helpful error if payload is nil. Usually this happens when a record is not found (e.g.,
-    # when passing something like `User.find_by(id: some_id)` to `api_response`). The caller should
+    # when passing something like `User.find_by(id: some_id)` to `render_api`). The caller should
     # actually be calling `find_by!` to raise ActiveRecord::RecordNotFound and allowing the REST
     # framework to catch this error and return an appropriate error response.
     if payload.nil?
-      raise RESTFramework::NilPassedToAPIResponseError
+      raise RESTFramework::NilPassedToRenderAPIError
     end
 
     # If `payload` is an `ActiveRecord::Relation` or `ActiveRecord::Base`, then serialize it.
@@ -240,7 +240,7 @@ module RESTFramework::Mixins::BaseControllerMixin
   end
 
   # TODO: Might make this the default render method in the future.
-  alias_method :api_response, :render_api
+  alias_method :render_api, :render_api
 
   def openapi_metadata
     response_content_types = [
@@ -313,7 +313,7 @@ module RESTFramework::Mixins::BaseControllerMixin
   end
 
   def options
-    return api_response(self.openapi_metadata)
+    render_api(self.openapi_metadata)
   end
 end
 
