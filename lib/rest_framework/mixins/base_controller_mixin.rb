@@ -240,7 +240,7 @@ module RESTFramework::Mixins::BaseControllerMixin
   end
 
   # TODO: Might make this the default render method in the future.
-  alias_method :render_api, :render_api
+  alias_method :api_response, :render_api
 
   def openapi_metadata
     response_content_types = [
