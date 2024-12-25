@@ -1,10 +1,17 @@
 class Api::RootController < ApiController
   include RESTFramework::BaseControllerMixin
 
-  self.extra_actions = {dev_test: :get, ip: :get, c: [:get, :post]}
+  self.extra_actions = {
+    dev_test: :get,
+    ip: :get,
+    c: {
+      methods: [:get, :post],
+      metadata: {gns: 5},
+    },
+  }
 
   def root
-    return api_response(
+    render_api(
       {
         message: "This is the test app for Rails REST Framework. There are three APIs:",
         plain_api: {
@@ -24,7 +31,7 @@ class Api::RootController < ApiController
   end
 
   def ip
-    return api_response(
+    render_api(
       {
         ip: request.ip,
         remote_ip: request.remote_ip,
@@ -38,9 +45,9 @@ class Api::RootController < ApiController
     begin
       console
     rescue NameError
-      return api_response({message: "Console not available."})
+      render_api({message: "Console not available."})
     end
 
-    return api_response({message: "Console opened."})
+    render_api({message: "Console opened."})
   end
 end

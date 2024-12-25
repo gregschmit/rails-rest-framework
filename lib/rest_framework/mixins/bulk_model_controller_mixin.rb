@@ -4,17 +4,17 @@ require_relative "model_controller_mixin"
 # the existing `create` action to support bulk creation.
 module RESTFramework::Mixins::BulkCreateModelMixin
   # While bulk update/destroy are obvious because they create new router endpoints, bulk create
-  # overloads the existing collection `POST` endpoint, so we add a special key to the options
+  # overloads the existing collection `POST` endpoint, so we add a special key to the OpenAPI
   # metadata to indicate bulk create is supported.
-  def options_metadata
-    return super.merge({bulk_create: true})
+  def openapi_metadata
+    return super.merge({"x-rrf-bulk-create": true})
   end
 
   def create
     if params[:_json].is_a?(Array)
       records = self.create_all!
       serialized_records = self.bulk_serialize(records)
-      return api_response(serialized_records)
+      return render_api(serialized_records)
     end
 
     return super
@@ -36,7 +36,7 @@ module RESTFramework::Mixins::BulkUpdateModelMixin
   def update_all
     records = self.update_all!
     serialized_records = self.bulk_serialize(records)
-    return api_response(serialized_records)
+    render_api(serialized_records)
   end
 
   # Perform the `update` call and return the collection of (possibly) updated records.
@@ -62,10 +62,10 @@ module RESTFramework::Mixins::BulkDestroyModelMixin
     if params[:_json].is_a?(Array)
       records = self.destroy_all!
       serialized_records = self.bulk_serialize(records)
-      return api_response(serialized_records)
+      return render_api(serialized_records)
     end
 
-    return api_response(
+    render_api(
       {message: "Bulk destroy requires an array of primary keys as input."},
       status: 400,
     )

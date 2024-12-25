@@ -3,7 +3,7 @@
     <label class="form-label w-100">Route
       <select class="form-control form-control-sm" id="htmlFormRoute">
         <% @_rrf_form_routes_html.each do |route| %>
-          <% path = @route_props[:with_path_args].call(route[:route]) %>
+          <% path = route[:path_with_params] %>
           <option value="<%= route[:verb] %>:<%= path %>"><%= route[:verb] %> <%= route[:relative_path] %></option>
         <% end %>
       </select>
@@ -21,16 +21,16 @@
     <% controller.get_fields.map(&:to_s).each do |f| %>
       <%
         # Don't provide form fields for associations or primary keys.
-        metadata = controller.class.fields_metadata[f]
-        next if !metadata || metadata[:kind] == "association" || metadata[:read_only]
+        cfg = controller.class.field_configuration[f]
+        next if !cfg || cfg[:kind] == "association" || cfg[:readonly]
       %>
       <div class="mb-2">
-        <% if metadata[:kind] == "rich_text" %>
+        <% if cfg[:kind] == "rich_text" %>
           <label class="form-label w-100"><%= controller.class.label_for(f) %></label>
           <%= form.rich_text_area f %>
-        <% elsif metadata[:kind] == "attachment" %>
+        <% elsif cfg[:kind] == "attachment" %>
           <label class="form-label w-100"><%= controller.class.label_for(f) %>
-            <%= form.file_field f, multiple: metadata.dig(:attachment, :macro) == :has_many_attached %>
+            <%= form.file_field f, multiple: cfg[:attachment_type] == :has_many_attached %>
           </label>
         <% else %>
           <label class="form-label w-100"><%= controller.class.label_for(f) %>

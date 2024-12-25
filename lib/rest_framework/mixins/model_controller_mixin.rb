@@ -24,13 +24,12 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     fields: nil,
     field_config: nil,
 
-    # Options for what should be included/excluded from default fields.
-    exclude_associations: false,
-  }
-  RRF_BASE_MODEL_INSTANCE_CONFIG = {
     # Attributes for finding records.
     find_by_fields: nil,
     find_by_query_param: "find_by",
+
+    # Options for what should be included/excluded from default fields.
+    exclude_associations: false,
 
     # Options for handling request body parameters.
     allowed_parameters: nil,
@@ -125,113 +124,72 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       return input_fields
     end
 
-    # Get a field's config, including defaults.
-    def field_config_for(f)
-      f = f.to_sym
-      @_field_config_for ||= {}
-      return @_field_config_for[f] if @_field_config_for[f]
+    # Get a full field configuration, including defaults and inferred values.
+    def field_configuration
+      return @field_configuration if @field_configuration
 
-      config = self.field_config&.dig(f) || {}
-
-      # Default sub-fields if field is an association.
-      if ref = self.get_model.reflections[f.to_s]
-        if ref.polymorphic?
-          columns = {}
-        else
-          model = ref.klass
-          columns = model.columns_hash
-        end
-        config[:sub_fields] ||= RESTFramework::Utils.sub_fields_for(ref)
-        config[:sub_fields] = config[:sub_fields].map(&:to_s)
-
-        # Serialize very basic metadata about sub-fields.
-        config[:sub_fields_metadata] = config[:sub_fields].map { |sf|
-          v = {}
-
-          if columns[sf]
-            v[:kind] = "column"
-          end
-
-          next [sf, v]
-        }.to_h.compact.presence
-      end
-
-      return @_field_config_for[f] = config.compact
-    end
-
-    # Get metadata about the resource's fields.
-    def fields_metadata
-      return @_fields_metadata if @_fields_metadata
-
-      # Get metadata sources.
+      field_config = self.field_config&.with_indifferent_access || {}
       model = self.get_model
-      fields = self.get_fields.map(&:to_s)
       columns = model.columns_hash
       column_defaults = model.column_defaults
       reflections = model.reflections
       attributes = model._default_attributes
       readonly_attributes = model.readonly_attributes
-      exclude_body_fields = self.exclude_body_fields.map(&:to_s)
+      exclude_body_fields = self.exclude_body_fields&.map(&:to_s)
       rich_text_association_names = model.reflect_on_all_associations(:has_one)
         .collect(&:name)
         .select { |n| n.to_s.start_with?("rich_text_") }
       attachment_reflections = model.attachment_reflections
 
-      return @_fields_metadata = fields.map { |f|
-        # Initialize metadata to make the order consistent.
-        metadata = {
-          type: nil,
-          kind: nil,
-          label: self.label_for(f),
-          primary_key: nil,
-          required: nil,
-          read_only: nil,
-        }
+      return @field_configuration = self.get_fields.map { |f|
+        cfg = field_config[f]&.dup || {}
+        cfg[:label] ||= self.label_for(f)
 
-        # Determine `primary_key` based on model.
+        # Annotate primary key.
         if model.primary_key == f
-          metadata[:primary_key] = true
-        end
+          cfg[:primary_key] = true
 
-        # Determine if the field is a read-only attribute.
-        if metadata[:primary_key] || f.in?(readonly_attributes) || f.in?(exclude_body_fields)
-          metadata[:read_only] = true
-        end
-
-        # Determine `type`, `required`, `label`, and `kind` based on schema.
-        if column = columns[f]
-          metadata[:kind] = "column"
-          metadata[:type] = column.type
-          metadata[:required] = true unless column.null
-        end
-
-        # Determine `default` based on schema; we use `column_defaults` rather than `columns_hash`
-        # because these are casted to the proper type.
-        column_default = column_defaults[f]
-        unless column_default.nil?
-          metadata[:default] = column_default
-        end
-
-        # Extract details from the model's attributes hash.
-        if attributes.key?(f) && attribute = attributes[f]
-          unless metadata.key?(:default)
-            default = attribute.value_before_type_cast
-            metadata[:default] = default unless default.nil?
+          unless cfg.key?(:readonly)
+            cfg[:readonly] = true
           end
-          metadata[:kind] ||= "attribute"
+        end
+
+        # Annotate readonly attributes.
+        if f.in?(readonly_attributes) || f.in?(exclude_body_fields)
+          cfg[:readonly] = true
+        end
+
+        # Annotate column data.
+        if column = columns[f]
+          cfg[:kind] = "column"
+          cfg[:type] ||= column.type
+          cfg[:required] = true unless column.null
+        end
+
+        # Add default values from the model's schema.
+        if column_default = column_defaults[f] && !cfg[:default].nil?
+          cfg[:default] ||= column_default
+        end
+
+        # Add metadata from the model's attributes hash.
+        if attribute = attributes[f]
+          if cfg[:default].nil? && default = attribute.value_before_type_cast
+            cfg[:default] = default
+          end
+          cfg[:kind] ||= "attribute"
 
           # Get any type information from the attribute.
           if type = attribute.type
-            metadata[:type] ||= type.type
+            cfg[:type] ||= type.type if type.type
 
             # Get enum variants.
             if type.is_a?(ActiveRecord::Enum::EnumType)
-              metadata[:enum_variants] = type.send(:mapping)
+              cfg[:enum_variants] = type.send(:mapping)
 
-              # Custom integration with `translate_enum`.
+              # TranslateEnum Integration:
               translate_method = "translated_#{f.pluralize}"
               if model.respond_to?(translate_method)
-                metadata[:enum_translations] = model.send(translate_method)
+                cfg[:enum_translations] = model.send(translate_method)
               end
             end
           end
@@ -239,53 +197,65 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
         # Get association metadata.
         if ref = reflections[f]
-          metadata[:kind] = "association"
+          cfg[:kind] = "association"
+
+          # Determine sub-fields for associations.
+          if ref.polymorphic?
+            ref_columns = {}
+          else
+            ref_columns = ref.klass.columns_hash
+          end
+          cfg[:sub_fields] ||= RESTFramework::Utils.sub_fields_for(ref)
+          cfg[:sub_fields] = cfg[:sub_fields].map(&:to_s)
+
+          # Very basic metadata about sub-fields.
+          cfg[:sub_fields_metadata] = cfg[:sub_fields].map { |sf|
+            v = {}
+
+            if ref_columns[sf]
+              v[:kind] = "column"
+            else
+              v[:kind] = "method"
+            end
+
+            next [sf, v]
+          }.to_h.compact.presence
 
           # Determine if we render id/ids fields. Unfortunately, `has_one` does not provide this
           # interface.
-          if self.permit_id_assignment && id_field = RESTFramework::Utils.get_id_field(f, ref)
-            metadata[:id_field] = id_field
+          if self.permit_id_assignment && id_field = RESTFramework::Utils.id_field_for(f, ref)
+            cfg[:id_field] = id_field
           end
 
           # Determine if we render nested attributes options.
           if self.permit_nested_attributes_assignment && (
             nested_opts = model.nested_attributes_options[f.to_sym].presence
           )
-            metadata[:nested_attributes_options] = {field: "#{f}_attributes", **nested_opts}
+            cfg[:nested_attributes_options] = {field: "#{f}_attributes", **nested_opts}
           end
 
           begin
-            pk = ref.active_record_primary_key
+            cfg[:association_pk] = ref.active_record_primary_key
           rescue ActiveRecord::UnknownPrimaryKey
           end
-          metadata[:association] = {
-            macro: ref.macro,
-            collection: ref.collection?,
-            class_name: ref.class_name,
-            foreign_key: ref.foreign_key,
-            primary_key: pk,
-            polymorphic: ref.polymorphic?,
-            table_name: ref.polymorphic? ? nil : ref.table_name,
-            options: ref.options.as_json.presence,
-          }.compact
+
+          cfg[:reflection] = ref
         end
 
         # Determine if this is an ActionText "rich text".
         if :"rich_text_#{f}".in?(rich_text_association_names)
-          metadata[:kind] = "rich_text"
+          cfg[:kind] = "rich_text"
         end
 
         # Determine if this is an ActiveStorage attachment.
         if ref = attachment_reflections[f]
-          metadata[:kind] = "attachment"
-          metadata[:attachment] = {
-            macro: ref.macro,
-          }
+          cfg[:kind] = "attachment"
+          cfg[:attachment_type] = ref.macro
         end
 
         # Determine if this is just a method.
-        if !metadata[:kind] && model.method_defined?(f)
-          metadata[:kind] = "method"
+        if !cfg[:kind] && model.method_defined?(f)
+          cfg[:kind] = "method"
         end
 
         # Collect validator options into a hash on their type, while also updating `required` based
@@ -299,7 +269,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           next if IGNORE_VALIDATORS_WITH_KEYS.any? { |k| options.key?(k) }
 
           # Update `required` if we find a presence validator.
-          metadata[:required] = true if kind == :presence
+          cfg[:required] = true if kind == :presence
 
           # Resolve procs (and lambdas), and symbols for certain arguments.
           if options[:in].is_a?(Proc)
@@ -308,27 +278,65 @@ module RESTFramework::Mixins::BaseModelControllerMixin
             options = options.merge(in: model.send(options[:in]))
           end
 
-          metadata[:validators] ||= {}
-          metadata[:validators][kind] ||= []
-          metadata[:validators][kind] << options
+          cfg[:validators] ||= {}
+          cfg[:validators][kind] ||= []
+          cfg[:validators][kind] << options
         end
 
-        # Serialize any field config.
-        metadata[:config] = self.field_config_for(f).presence
-
-        next [f, metadata.compact]
-      }.to_h
+        next [f, cfg]
+      }.to_h.with_indifferent_access
     end
 
-    # Get a hash of metadata to be rendered in the `OPTIONS` response.
-    def options_metadata
-      return super.merge(
-        {
-          primary_key: self.get_model.primary_key,
-          fields: self.fields_metadata,
-          callbacks: self._process_action_callbacks.as_json,
-        },
-      )
+    def openapi_schema
+      return @openapi_schema if @openapi_schema
+
+      field_configuration = self.field_configuration
+      @openapi_schema = {
+        required: field_configuration.select { |_, cfg| cfg[:required] }.keys,
+        type: "object",
+        properties: field_configuration.map { |f, cfg|
+          v = {title: cfg[:label]}
+
+          if cfg[:kind] == "association"
+            v[:type] = cfg[:reflection].collection? ? "array" : "object"
+          elsif cfg[:kind] == "rich_text"
+            v[:type] = "string"
+            v[:"x-rrf-rich_text"] = true
+          elsif cfg[:kind] == "attachment"
+            v[:type] = "string"
+            v[:"x-rrf-attachment"] = cfg[:attachment_type]
+          else
+            v[:type] = cfg[:type]
+          end
+
+          v[:readOnly] = true if cfg[:readonly]
+          v[:default] = cfg[:default] if cfg.key?(:default)
+
+          if enum_variants = cfg[:enum_variants]
+            v[:enum] = enum_variants.keys
+            v[:"x-rrf-enum_variants"] = enum_variants
+          end
+
+          if validators = cfg[:validators]
+            v[:"x-rrf-validators"] = validators
+          end
+
+          v[:"x-rrf-kind"] = cfg[:kind] if cfg[:kind]
+
+          if cfg[:reflection]
+            v[:"x-rrf-reflection"] = cfg[:reflection]
+            v[:"x-rrf-association_pk"] = cfg[:association_pk]
+            v[:"x-rrf-sub_fields"] = cfg[:sub_fields]
+            v[:"x-rrf-sub_fields_metadata"] = cfg[:sub_fields_metadata]
+            v[:"x-rrf-id_field"] = cfg[:id_field]
+            v[:"x-rrf-nested_attributes_options"] = cfg[:nested_attributes_options]
+          end
+
+          next [f, v]
+        }.to_h,
+      }
+
+      return @openapi_schema
     end
 
     def setup_delegation
@@ -341,9 +349,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           model = self.class.get_model
 
           if model.method(action).parameters.last&.first == :keyrest
-            return api_response(model.send(action, **params))
+            return render_api(model.send(action, **params))
           else
-            return api_response(model.send(action))
+            return render_api(model.send(action))
           end
         end
       end
@@ -357,9 +365,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           record = self.get_record
 
           if record.method(action).parameters.last&.first == :keyrest
-            return api_response(record.send(action, **params))
+            return render_api(record.send(action, **params))
           else
-            return api_response(record.send(action))
+            return render_api(record.send(action))
           end
         end
       end
@@ -373,7 +381,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       # self.setup_channel
 
       if RESTFramework.config.freeze_config
-        (self::RRF_BASE_MODEL_CONFIG.keys + self::RRF_BASE_MODEL_INSTANCE_CONFIG.keys).each { |k|
+        self::RRF_BASE_MODEL_CONFIG.keys.each { |k|
           v = self.send(k)
           v.freeze if v.is_a?(Hash) || v.is_a?(Array)
         }
@@ -395,27 +403,51 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
       base.class_attribute(a, default: default, instance_accessor: false)
     end
-    RRF_BASE_MODEL_INSTANCE_CONFIG.each do |a, default|
-      next if base.respond_to?(a)
-
-      base.class_attribute(a, default: default)
-    end
   end
 
-  # Get a list of fields for this controller.
   def get_fields
     return self.class.get_fields(input_fields: self.class.fields)
   end
 
-  def options_metadata
-    return self.class.options_metadata
+  def openapi_metadata
+    data = super
+    routes = self.route_groups.values[0]
+    schema_name = routes[0][:controller].camelize.gsub("::", ".")
+
+    # Insert schema into metadata.
+    data[:components] ||= {}
+    data[:components][:schemas] ||= {}
+    data[:components][:schemas][schema_name] = self.class.openapi_schema
+
+    # Reference schema for specific actions with a `requestBody`.
+    data[:paths].each do |_path, actions|
+      actions.each do |_method, action|
+        next unless action.is_a?(Hash)
+
+        injectables = [action.dig(:requestBody, :content), *action[:responses].values.map { |r|
+          r[:content]
+        }].compact
+        injectables.each do |i|
+          i.each do |_, v|
+            v[:schema] = {"$ref" => "#/components/schemas/#{schema_name}"}
+          end
+        end
+      end
+    end
+
+    return data.merge(
+      {
+        "x-rrf-primary_key" => self.class.get_model.primary_key,
+        "x-rrf-callbacks" => self._process_action_callbacks.as_json,
+      },
+    )
   end
 
-  # Get a list of parameters allowed for the current action.
+  # Get a hash of strong parameters for the current action.
   def get_allowed_parameters
     return @_get_allowed_parameters if defined?(@_get_allowed_parameters)
 
-    @_get_allowed_parameters = self.allowed_parameters
+    @_get_allowed_parameters = self.class.allowed_parameters
     return @_get_allowed_parameters if @_get_allowed_parameters
 
     # Assemble strong parameters.
@@ -424,6 +456,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     reflections = self.class.get_model.reflections
     @_get_allowed_parameters = self.get_fields.map { |f|
       f = f.to_s
+      config = self.class.field_configuration[f]
 
       # ActionText Integration:
       if self.class.enable_action_text && reflections.key?("rich_test_#{f}")
@@ -442,28 +475,30 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         next nil
       end
 
-      # Return field if it's not an association.
-      next f unless ref = reflections[f]
-
-      # Add `_id`/`_ids` variations for associations.
-      if self.permit_id_assignment && id_field = RESTFramework::Utils.get_id_field(f, ref)
-        if id_field.ends_with?("_ids")
-          hash_variations[id_field] = []
-        else
-          variations << id_field
+      if config[:reflection]
+        # Add `_id`/`_ids` variations for associations.
+        if id_field = config[:id_field]
+          if id_field.ends_with?("_ids")
+            hash_variations[id_field] = []
+          else
+            variations << id_field
+          end
         end
+
+        # Add `_attributes` variations for associations.
+        # TODO: Consider adjusting this based on `nested_attributes_options`.
+        if self.class.permit_nested_attributes_assignment
+          hash_variations["#{f}_attributes"] = (
+            config[:sub_fields] + ["_destroy"]
+          )
+        end
+
+        # Associations are not allowed to be submitted in their bare form (if they are submitted
+        # that way, they will be translated to either id/ids or nested attributes assignment).
+        next nil
       end
 
-      # Add `_attributes` variations for associations.
-      if self.permit_nested_attributes_assignment
-        hash_variations["#{f}_attributes"] = (
-          self.class.field_config_for(f)[:sub_fields] + ["_destroy"]
-        )
-      end
-
-      # Associations are not allowed to be submitted in their bare form (if they are submitted that
-      # way, they will be translated to either ID assignment or nested attributes assignment).
-      next nil
+      next f
     }.compact
     @_get_allowed_parameters += variations
     @_get_allowed_parameters << hash_variations
@@ -471,22 +506,11 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     return @_get_allowed_parameters
   end
 
-  def serializer_class
+  def get_serializer_class
     return super || RESTFramework::NativeSerializer
   end
 
-  def apply_filters(data)
-    # TODO: Compatibility; remove in 1.0.
-    if filtered_data = self.try(:get_filtered_data, data)
-      return filtered_data
-    end
-
-    return self.filter_backends&.reduce(data) { |d, filter|
-      filter.new(controller: self).filter_data(d)
-    } || data
-  end
-
-  # Use strong parameters to filter the request body using the configured allowed parameters.
+  # Use strong parameters to filter the request body.
   def get_body_params(bulk_mode: nil)
     data = self.request.request_parameters
     pk = self.class.get_model&.primary_key
@@ -502,7 +526,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           # Assume nested attributes assignment.
           attributes_key = "#{name}_attributes"
           data[attributes_key] = data.delete(name) unless data[attributes_key]
-        elsif id_field = RESTFramework::Utils.get_id_field(name, ref)
+        elsif id_field = RESTFramework::Utils.id_field_for(name, ref)
           # Assume id/ids assignment.
           data[id_field] = data.delete(name) unless data[id_field]
         end
@@ -571,12 +595,12 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     end
 
     # Filter primary key, if configured.
-    if self.filter_pk_from_request_body && bulk_mode != :update
+    if self.class.filter_pk_from_request_body && bulk_mode != :update
       body_params.delete(pk)
     end
 
     # Filter fields in `exclude_body_fields`.
-    (self.exclude_body_fields || []).each { |f| body_params.delete(f) }
+    (self.class.exclude_body_fields || []).each { |f| body_params.delete(f) }
 
     return body_params
   end
@@ -595,13 +619,16 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     return nil
   end
 
-  # Get the records this controller has access to *after* any filtering is applied.
+  # Filter the recordset and return records this request has access to.
   def get_records
-    return @records ||= self.apply_filters(self.get_recordset)
+    data = self.get_recordset
+
+    return @records ||= self.class.filter_backends&.reduce(data) { |d, filter|
+      filter.new(controller: self).filter_data(d)
+    } || data
   end
 
-  # Get a single record by primary key or another column, if allowed. The return value is memoized
-  # and exposed to the view as the `@record` instance variable.
+  # Get a single record by primary key or another column, if allowed.
   def get_record
     return @record if @record
 
@@ -609,9 +636,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     is_pk = true
 
     # Find by another column if it's permitted.
-    if find_by_param = self.find_by_query_param.presence
+    if find_by_param = self.class.find_by_query_param.presence
       if find_by = params[find_by_param].presence
-        find_by_fields = self.find_by_fields&.map(&:to_s)
+        find_by_fields = self.class.find_by_fields&.map(&:to_s)
 
         if !find_by_fields || find_by.in?(find_by_fields)
           is_pk = false unless find_by_key == find_by
@@ -621,7 +648,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     end
 
     # Get the recordset, filtering if configured.
-    collection = if self.filter_recordset_before_find
+    collection = if self.class.filter_recordset_before_find
       self.get_records
     else
       self.get_recordset
@@ -637,7 +664,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
   # Determine what collection to call `create` on.
   def get_create_from
-    if self.create_from_recordset
+    if self.class.create_from_recordset
       # Create with any properties inherited from the recordset. We exclude any `select` clauses
       # in case model callbacks need to call `count` on this collection, which typically raises a
       # SQL `SyntaxError`.
@@ -654,19 +681,17 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     # This is kinda slow, so perhaps we should eventually integrate `errors` serialization into
     # the serializer directly. This would fail for active model serializers, but maybe we don't
     # care?
-    s = RESTFramework::Utils.wrap_ams(self.serializer_class)
-    serialized_records = records.map do |record|
+    s = RESTFramework::Utils.wrap_ams(self.get_serializer_class)
+    return records.map do |record|
       s.new(record, controller: self).serialize.merge!({errors: record.errors.presence}.compact)
     end
-
-    return serialized_records
   end
 end
 
 # Mixin for listing records.
 module RESTFramework::Mixins::ListModelMixin
   def index
-    return api_response(self.get_index_records)
+    return render_api(self.get_index_records)
   end
 
   # Get records with both filtering and pagination applied.
@@ -674,13 +699,13 @@ module RESTFramework::Mixins::ListModelMixin
     records = self.get_records
 
     # Handle pagination, if enabled.
-    if self.paginator_class
-      # If there is no `max_page_size`, `page_size_query_param` is not `nil`, and the page size is
-      # set to "0", then skip pagination.
-      unless !self.max_page_size &&
-          self.page_size_query_param &&
-          params[self.page_size_query_param] == "0"
-        paginator = self.paginator_class.new(data: records, controller: self)
+    if paginator_class = self.class.paginator_class
+      # Paginate if there is a `max_page_size`, or if there is no `page_size_query_param`, or if the
+      # page size is not set to "0".
+      max_page_size = self.class.max_page_size
+      page_size_query_param = self.class.page_size_query_param
+      if max_page_size || !page_size_query_param || params[page_size_query_param] != "0"
+        paginator = paginator_class.new(data: records, controller: self)
         page = paginator.get_page
         serialized_page = self.serialize(page)
         return paginator.get_paginated_response(serialized_page)
@@ -694,14 +719,14 @@ end
 # Mixin for showing records.
 module RESTFramework::Mixins::ShowModelMixin
   def show
-    return api_response(self.get_record)
+    return render_api(self.get_record)
   end
 end
 
 # Mixin for creating records.
 module RESTFramework::Mixins::CreateModelMixin
   def create
-    return api_response(self.create!, status: :created)
+    return render_api(self.create!, status: :created)
   end
 
   # Perform the `create!` call and return the created record.
@@ -713,7 +738,7 @@ end
 # Mixin for updating records.
 module RESTFramework::Mixins::UpdateModelMixin
   def update
-    return api_response(self.update!)
+    return render_api(self.update!)
   end
 
   # Perform the `update!` call and return the updated record.
@@ -728,7 +753,7 @@ end
 module RESTFramework::Mixins::DestroyModelMixin
   def destroy
     self.destroy!
-    return api_response("")
+    return render_api("")
   end
 
   # Perform the `destroy!` call and return the destroyed (and frozen) record.

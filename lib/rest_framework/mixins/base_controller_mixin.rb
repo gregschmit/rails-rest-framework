@@ -10,6 +10,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     # Options related to metadata and display.
     title: nil,
     description: nil,
+    version: nil,
     inflect_acronyms: ["ID", "IDs", "REST", "API", "APIs"].freeze,
 
     # Options related to serialization.
@@ -18,11 +19,6 @@ module RESTFramework::Mixins::BaseControllerMixin
     serialize_to_json: true,
     serialize_to_xml: true,
 
-    # Custom integrations (reduces serializer performance due to method calls).
-    enable_action_text: false,
-    enable_active_storage: false,
-  }
-  RRF_BASE_INSTANCE_CONFIG = {
     # Options related to pagination.
     paginator_class: nil,
     page_size: 20,
@@ -33,6 +29,10 @@ module RESTFramework::Mixins::BaseControllerMixin
     # Option to disable serializer adapters by default, mainly introduced because Active Model
     # Serializers will do things like serialize `[]` into `{"":[]}`.
     disable_adapters_by_default: true,
+
+    # Custom integrations (reduces serializer performance due to method calls).
+    enable_action_text: false,
+    enable_active_storage: false,
   }
 
   # Default action for API root.
@@ -58,78 +58,11 @@ module RESTFramework::Mixins::BaseControllerMixin
       )
     end
 
-    # Collect actions (including extra actions) metadata for this controller.
-    def actions_metadata
-      actions = {}
-
-      # Start with builtin actions.
-      RESTFramework::BUILTIN_ACTIONS.merge(
-        RESTFramework::RRF_BUILTIN_ACTIONS,
-      ).each do |action, methods|
-        next unless self.method_defined?(action)
-
-        actions[action] = {
-          path: "", methods: methods, type: :builtin, metadata: {label: self.label_for(action)}
-        }
-      end
-
-      # Add builtin bulk actions.
-      RESTFramework::RRF_BUILTIN_BULK_ACTIONS.each do |action, methods|
-        next unless self.method_defined?(action)
-
-        actions[action] = {
-          path: "", methods: methods, type: :builtin, metadata: {label: self.label_for(action)}
-        }
-      end
-
-      # Add extra actions.
-      if extra_actions = self.try(:extra_actions)
-        actions.merge!(RESTFramework::Utils.parse_extra_actions(extra_actions, controller: self))
-      end
-
-      return actions
-    end
-
-    # Collect member actions (including extra member actions) metadata for this controller.
-    def member_actions_metadata
-      actions = {}
-
-      # Start with builtin actions.
-      RESTFramework::BUILTIN_MEMBER_ACTIONS.each do |action, methods|
-        next unless self.method_defined?(action)
-
-        actions[action] = {
-          path: "", methods: methods, type: :builtin, metadata: {label: self.label_for(action)}
-        }
-      end
-
-      # Add extra actions.
-      if extra_actions = self.try(:extra_member_actions)
-        actions.merge!(RESTFramework::Utils.parse_extra_actions(extra_actions, controller: self))
-      end
-
-      return actions
-    end
-
-    def options_metadata
-      return {
-        title: self.get_title,
-        description: self.description,
-        renders: [
-          "text/html",
-          self.serialize_to_json ? "application/json" : nil,
-          self.serialize_to_xml ? "application/xml" : nil,
-        ].compact,
-        actions: self.actions_metadata,
-        member_actions: self.member_actions_metadata,
-      }.compact
-    end
-
     # Define any behavior to execute at the end of controller definition.
     # :nocov:
     def rrf_finalize
       if RESTFramework.config.freeze_config
-        (self::RRF_BASE_CONFIG.keys + self::RRF_BASE_INSTANCE_CONFIG.keys).each { |k|
+        self::RRF_BASE_CONFIG.keys.each { |k|
           v = self.send(k)
           v.freeze if v.is_a?(Hash) || v.is_a?(Array)
         }
@@ -146,16 +79,12 @@ module RESTFramework::Mixins::BaseControllerMixin
     # By default, the layout should be set to `rest_framework`.
     base.layout("rest_framework")
 
-    # Add class attributes (with defaults) unless they already exist.
+    # Add class attributes unless they already exist.
     RRF_BASE_CONFIG.each do |a, default|
       next if base.respond_to?(a)
 
+      # Don't leak class attributes to the instance to avoid conflicting with action methods.
       base.class_attribute(a, default: default, instance_accessor: false)
-    end
-    RRF_BASE_INSTANCE_CONFIG.each do |a, default|
-      next if base.respond_to?(a)
-
-      base.class_attribute(a, default: default)
     end
 
     # Alias `extra_actions` to `extra_collection_actions`.
@@ -204,24 +133,15 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
   end
 
-  def serializer_class
-    # TODO: Compatibility; remove in 1.0.
-    if klass = self.try(:get_serializer_class)
-      return klass
-    end
-
+  def get_serializer_class
     return self.class.serializer_class
   end
 
   # Serialize the given data using the `serializer_class`.
   def serialize(data, **kwargs)
-    return RESTFramework::Utils.wrap_ams(self.serializer_class).new(
+    return RESTFramework::Utils.wrap_ams(self.get_serializer_class).new(
       data, controller: self, **kwargs
     ).serialize
-  end
-
-  def options_metadata
-    return self.class.options_metadata
   end
 
   def rrf_error_handler(e)
@@ -232,7 +152,7 @@ module RESTFramework::Mixins::BaseControllerMixin
       400
     end
 
-    return api_response(
+    render_api(
       {
         message: e.message,
         errors: e.try(:record).try(:errors),
@@ -242,19 +162,23 @@ module RESTFramework::Mixins::BaseControllerMixin
     )
   end
 
+  def route_groups
+    return @route_groups ||= RESTFramework::Utils.get_routes(Rails.application.routes, request)
+  end
+
   # Render a browsable API for `html` format, along with basic `json`/`xml` formats, and with
   # support or passing custom `kwargs` to the underlying `render` calls.
-  def api_response(payload, **kwargs)
+  def render_api(payload, **kwargs)
     html_kwargs = kwargs.delete(:html_kwargs) || {}
     json_kwargs = kwargs.delete(:json_kwargs) || {}
     xml_kwargs = kwargs.delete(:xml_kwargs) || {}
 
     # Raise helpful error if payload is nil. Usually this happens when a record is not found (e.g.,
-    # when passing something like `User.find_by(id: some_id)` to `api_response`). The caller should
+    # when passing something like `User.find_by(id: some_id)` to `render_api`). The caller should
     # actually be calling `find_by!` to raise ActiveRecord::RecordNotFound and allowing the REST
     # framework to catch this error and return an appropriate error response.
     if payload.nil?
-      raise RESTFramework::NilPassedToAPIResponseError
+      raise RESTFramework::NilPassedToRenderAPIError
     end
 
     # If `payload` is an `ActiveRecord::Relation` or `ActiveRecord::Base`, then serialize it.
@@ -263,7 +187,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
 
     # Do not use any adapters by default, if configured.
-    if self.disable_adapters_by_default && !kwargs.key?(:adapter)
+    if self.class.disable_adapters_by_default && !kwargs.key?(:adapter)
       kwargs[:adapter] = nil
     end
 
@@ -295,9 +219,7 @@ module RESTFramework::Mixins::BaseControllerMixin
           end
           @title ||= self.class.get_title
           @description ||= self.class.description
-          @route_props, @route_groups = RESTFramework::Utils.get_routes(
-            Rails.application.routes, request
-          )
+          self.route_groups
           begin
             render(**kwargs.merge(html_kwargs))
           rescue ActionView::MissingTemplate
@@ -318,10 +240,80 @@ module RESTFramework::Mixins::BaseControllerMixin
   end
 
   # TODO: Might make this the default render method in the future.
-  alias_method :render_api, :api_response
+  alias_method :api_response, :render_api
+
+  def openapi_metadata
+    response_content_types = [
+      "text/html",
+      self.class.serialize_to_json ? "application/json" : nil,
+      self.class.serialize_to_xml ? "application/xml" : nil,
+    ].compact
+    request_content_types = [
+      "application/json",
+      "application/xml",
+      "application/x-www-form-urlencoded",
+      "multipart/form-data",
+    ].compact
+    routes = self.route_groups.values[0]
+    server = request.base_url + request.original_fullpath.gsub(/\?.*/, "")
+
+    return {
+      openapi: "3.1.1",
+      info: {
+        title: self.class.get_title,
+        description: self.class.description,
+        version: self.class.version.to_s,
+      }.compact,
+      servers: [{url: server}],
+      paths: routes.group_by { |r| r[:concat_path] }.map { |concat_path, routes|
+        [
+          concat_path.gsub(/:([0-9A-Za-z_-]+)/, "{\\1}"),
+          routes.map { |route|
+            metadata = route[:route].defaults[:metadata] || {}
+            summary = metadata[:label].presence || self.class.label_for(route[:action])
+            description = metadata[:description].presence
+            remaining_metadata = metadata.except(:label, :description).presence
+
+            [
+              route[:verb].downcase,
+              {
+                summary: summary,
+                description: description,
+                responses: {
+                  200 => {
+                    content: response_content_types.map { |ct|
+                      [ct, {}]
+                    }.to_h,
+                    description: "",
+                  },
+                },
+                requestBody: route[:verb].in?(["GET", "DELETE", "OPTIONS", "TRACE"]) ? nil : {
+                  content: request_content_types.map { |ct|
+                    [ct, {}]
+                  }.to_h,
+                },
+                "x-rrf-metadata": remaining_metadata,
+              }.compact,
+            ]
+          }.to_h.merge(
+            {
+              parameters: routes.first[:route].required_parts.map { |p|
+                {
+                  name: p,
+                  in: "path",
+                  required: true,
+                  schema: {type: "integer"},
+                }
+              },
+            },
+          ),
+        ]
+      }.to_h,
+    }.compact
+  end
 
   def options
-    return api_response(self.options_metadata)
+    render_api(self.openapi_metadata)
   end
 end
 

@@ -75,7 +75,7 @@ class Api::RootController < ApiController
   self.extra_actions = {test: :get}
 
   def root
-    return api_response(
+    render_api(
       {
         message: "Welcome to the API.",
         how_to_authenticate: <<~END.lines.map(&:strip).join(" "),
@@ -88,7 +88,7 @@ class Api::RootController < ApiController
   end
 
   def test
-    return api_response({message: "Hello, world!"})
+    render_api({message: "Hello, world!"})
   end
 end
 ```
@@ -105,7 +105,7 @@ class Api::MoviesController < ApiController
   def first
     # Always use the bang method, since the framework will rescue `RecordNotFound` and return a
     # sensible error response.
-    return api_response(self.get_records.first!)
+    render_api(self.get_records.first!)
   end
 
   def get_recordset
