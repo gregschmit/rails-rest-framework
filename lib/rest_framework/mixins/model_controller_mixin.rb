@@ -683,11 +683,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     # the serializer directly. This would fail for active model serializers, but maybe we don't
     # care?
     s = RESTFramework::Utils.wrap_ams(self.get_serializer_class)
-    serialized_records = records.map do |record|
+    return records.map do |record|
       s.new(record, controller: self).serialize.merge!({errors: record.errors.presence}.compact)
     end
-
-    return serialized_records
   end
 end
 
