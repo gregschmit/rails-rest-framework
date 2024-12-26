@@ -6,7 +6,7 @@ module RESTFramework::Mixins::BulkCreateModelMixin
   # While bulk update/destroy are obvious because they create new router endpoints, bulk create
   # overloads the existing collection `POST` endpoint, so we add a special key to the OpenAPI
   # metadata to indicate bulk create is supported.
-  def openapi_metadata
+  def openapi_document
     return super.merge({"x-rrf-bulk-create": true})
   end
 

@@ -15,15 +15,15 @@ class Api::RootController < ApiController
       {
         message: "This is the test app for Rails REST Framework. There are three APIs:",
         plain_api: {
-          message: Api::PlainController.description,
+          message: Api::PlainController::DESCRIPTION,
           url: api_plain_root_url,
         },
         demo_api: {
-          message: Api::DemoController.description,
+          message: Api::DemoController::DESCRIPTION,
           url: api_demo_root_url,
         },
         test_api: {
-          message: Api::TestController.description,
+          message: Api::TestController::DESCRIPTION,
           url: api_test_url,
         },
       },

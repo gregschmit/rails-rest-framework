@@ -12,6 +12,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     description: nil,
     version: nil,
     inflect_acronyms: ["ID", "IDs", "REST", "API", "APIs"].freeze,
+    openapi_include_children: false,
 
     # Options related to serialization.
     rescue_unknown_format_with: :json,
@@ -69,6 +70,82 @@ module RESTFramework::Mixins::BaseControllerMixin
       end
     end
     # :nocov:
+
+    def openapi_paths(routes, tag)
+      response_content_types = [
+        "text/html",
+        self.serialize_to_json ? "application/json" : nil,
+        self.serialize_to_xml ? "application/xml" : nil,
+      ].compact
+      request_content_types = [
+        "application/json",
+        "application/xml",
+        "application/x-www-form-urlencoded",
+        "multipart/form-data",
+      ]
+
+      return routes.group_by { |r| r[:concat_path] }.map { |concat_path, routes|
+        [
+          concat_path.gsub(/:([0-9A-Za-z_-]+)/, "{\\1}"),
+          routes.map { |route|
+            metadata = route[:route].defaults[:metadata] || {}
+            summary = metadata[:label].presence || self.label_for(route[:action])
+            description = metadata[:description].presence
+            remaining_metadata = metadata.except(:label, :description).presence
+
+            [
+              route[:verb].downcase,
+              {
+                tags: [tag],
+                summary: summary,
+                description: description,
+                responses: {
+                  200 => {
+                    content: response_content_types.map { |ct|
+                      [ct, {}]
+                    }.to_h,
+                    description: "",
+                  },
+                },
+                requestBody: route[:verb].in?(["GET", "DELETE", "OPTIONS", "TRACE"]) ? nil : {
+                  content: request_content_types.map { |ct|
+                    [ct, {}]
+                  }.to_h,
+                },
+                "x-rrf-metadata": remaining_metadata,
+              }.compact,
+            ]
+          }.to_h.merge(
+            {
+              parameters: routes.first[:route].required_parts.map { |p|
+                {
+                  name: p,
+                  in: "path",
+                  required: true,
+                  schema: {type: "integer"},
+                }
+              },
+            },
+          ),
+        ]
+      }.to_h
+    end
+
+    def openapi_document(request, route_group_name, routes)
+      server = request.base_url + request.original_fullpath.gsub(/\?.*/, "")
+
+      return {
+        openapi: "3.1.1",
+        info: {
+          title: self.get_title,
+          description: self.description,
+          version: self.version.to_s,
+        }.compact,
+        servers: [{url: server}],
+        paths: self.openapi_paths(routes, route_group_name),
+        tags: [{name: route_group_name, description: self.description}.compact],
+      }.compact
+    end
   end
 
   def self.included(base)
@@ -239,81 +316,36 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
   end
 
-  # TODO: Might make this the default render method in the future.
+  # Compatibility alias for deprecated `api_response`.
   alias_method :api_response, :render_api
 
-  def openapi_metadata
-    response_content_types = [
-      "text/html",
-      self.class.serialize_to_json ? "application/json" : nil,
-      self.class.serialize_to_xml ? "application/xml" : nil,
-    ].compact
-    request_content_types = [
-      "application/json",
-      "application/xml",
-      "application/x-www-form-urlencoded",
-      "multipart/form-data",
-    ].compact
-    routes = self.route_groups.values[0]
-    server = request.base_url + request.original_fullpath.gsub(/\?.*/, "")
+  def openapi_document
+    first, *rest = self.route_groups.to_a
+    document = self.class.openapi_document(request, *first)
 
-    return {
-      openapi: "3.1.1",
-      info: {
-        title: self.class.get_title,
-        description: self.class.description,
-        version: self.class.version.to_s,
-      }.compact,
-      servers: [{url: server}],
-      paths: routes.group_by { |r| r[:concat_path] }.map { |concat_path, routes|
-        [
-          concat_path.gsub(/:([0-9A-Za-z_-]+)/, "{\\1}"),
-          routes.map { |route|
-            metadata = route[:route].defaults[:metadata] || {}
-            summary = metadata[:label].presence || self.class.label_for(route[:action])
-            description = metadata[:description].presence
-            remaining_metadata = metadata.except(:label, :description).presence
+    if self.class.openapi_include_children
+      rest.each do |route_group_name, routes|
+        controller = "#{routes.first[:route].defaults[:controller]}_controller".camelize.constantize
+        child_document = controller.openapi_document(request, route_group_name, routes)
 
-            [
-              route[:verb].downcase,
-              {
-                summary: summary,
-                description: description,
-                responses: {
-                  200 => {
-                    content: response_content_types.map { |ct|
-                      [ct, {}]
-                    }.to_h,
-                    description: "",
-                  },
-                },
-                requestBody: route[:verb].in?(["GET", "DELETE", "OPTIONS", "TRACE"]) ? nil : {
-                  content: request_content_types.map { |ct|
-                    [ct, {}]
-                  }.to_h,
-                },
-                "x-rrf-metadata": remaining_metadata,
-              }.compact,
-            ]
-          }.to_h.merge(
-            {
-              parameters: routes.first[:route].required_parts.map { |p|
-                {
-                  name: p,
-                  in: "path",
-                  required: true,
-                  schema: {type: "integer"},
-                }
-              },
-            },
-          ),
-        ]
-      }.to_h,
-    }.compact
+        # Merge child paths and tags into the parent document.
+        document[:paths].merge!(child_document[:paths])
+        document[:tags] += child_document[:tags]
+
+        # If the child document has schemas, merge them into the parent document.
+        if schemas = child_document.dig(:components, :schemas)  # rubocop:disable Style/Next
+          document[:components] ||= {}
+          document[:components][:schemas] ||= {}
+          document[:components][:schemas].merge!(schemas)
+        end
+      end
+    end
+
+    return document
   end
 
   def options
-    render_api(self.openapi_metadata)
+    render_api(self.openapi_document)
   end
 end
 

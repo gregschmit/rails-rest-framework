@@ -339,6 +339,39 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       return @openapi_schema
     end
 
+    def openapi_document(request, route_group_name, routes)
+      document = super
+      schema_name = routes[0][:controller].camelize.gsub("::", ".")
+
+      # Insert schema into the document.
+      document[:components] ||= {}
+      document[:components][:schemas] ||= {}
+      document[:components][:schemas][schema_name] = self.openapi_schema
+
+      # Reference schema for specific actions with a `requestBody`.
+      document[:paths].each do |_path, actions|
+        actions.each do |_method, action|
+          next unless action.is_a?(Hash)
+
+          injectables = [action.dig(:requestBody, :content), *action[:responses].values.map { |r|
+            r[:content]
+          }].compact
+          injectables.each do |i|
+            i.each do |_, v|
+              v[:schema] = {"$ref" => "#/components/schemas/#{schema_name}"}
+            end
+          end
+        end
+      end
+
+      return document.merge(
+        {
+          "x-rrf-primary_key" => self.get_model.primary_key,
+          "x-rrf-callbacks" => self._process_action_callbacks.as_json,
+        },
+      )
+    end
+
     def setup_delegation
       # Delegate extra actions.
       self.extra_actions&.each do |action, config|
@@ -407,40 +440,6 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
   def get_fields
     return self.class.get_fields(input_fields: self.class.fields)
-  end
-
-  def openapi_metadata
-    data = super
-    routes = self.route_groups.values[0]
-    schema_name = routes[0][:controller].camelize.gsub("::", ".")
-
-    # Insert schema into metadata.
-    data[:components] ||= {}
-    data[:components][:schemas] ||= {}
-    data[:components][:schemas][schema_name] = self.class.openapi_schema
-
-    # Reference schema for specific actions with a `requestBody`.
-    data[:paths].each do |_path, actions|
-      actions.each do |_method, action|
-        next unless action.is_a?(Hash)
-
-        injectables = [action.dig(:requestBody, :content), *action[:responses].values.map { |r|
-          r[:content]
-        }].compact
-        injectables.each do |i|
-          i.each do |_, v|
-            v[:schema] = {"$ref" => "#/components/schemas/#{schema_name}"}
-          end
-        end
-      end
-    end
-
-    return data.merge(
-      {
-        "x-rrf-primary_key" => self.class.get_model.primary_key,
-        "x-rrf-callbacks" => self._process_action_callbacks.as_json,
-      },
-    )
   end
 
   # Get a hash of strong parameters for the current action.
