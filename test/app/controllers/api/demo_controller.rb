@@ -3,7 +3,7 @@ class Api::DemoController < ApiController
 
   DESCRIPTION = <<~TEXT.lines.map(&:strip).join(" ")
     The demo API is a more complex API that demonstrates the framework's more advanced features,
-    primarily paginationn, nested resources, and integration with Action Text and Active Storage.
+    primarily pagination, nested resources, and integration with Action Text and Active Storage.
   TEXT
 
   self.enable_action_text = true

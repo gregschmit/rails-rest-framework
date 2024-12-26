@@ -4,7 +4,7 @@ class Api::Demo::RootController < Api::DemoController
   self.openapi_include_children = true
 
   def root
-    render_api({message: Api::DemoController.description})
+    render_api({message: self.class.description})
   end
 
   def nil
