@@ -348,16 +348,23 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       document[:components][:schemas] ||= {}
       document[:components][:schemas][schema_name] = self.openapi_schema
 
-      # Reference schema for specific actions with a `requestBody`.
+      # Reference the model schema for request body and successful default responses.
       document[:paths].each do |_path, actions|
         actions.each do |_method, action|
           next unless action.is_a?(Hash)
 
-          injectables = [action.dig(:requestBody, :content), *action[:responses].values.map { |r|
-            r[:content]
-          }].compact
-          injectables.each do |i|
-            i.each do |_, v|
+          # Add schema to request body content types.
+          action.dig(:requestBody, :content)&.each do |t, v|
+            v[:schema] = {"$ref" => "#/components/schemas/#{schema_name}"}
+          end
+
+          # Add schema to response body content types.
+          action[:responses].each do |status, response|
+            next unless status.to_s.start_with?("2")
+
+            response[:content]&.each do |t, v|
+              next if t.in?(["text/html"])
+
               v[:schema] = {"$ref" => "#/components/schemas/#{schema_name}"}
             end
           end

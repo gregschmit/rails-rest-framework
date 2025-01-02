@@ -71,18 +71,25 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
     # :nocov:
 
-    def openapi_paths(routes, tag)
-      response_content_types = [
+    def openapi_response_content_types
+      return @openapi_response_content_types ||= [
         "text/html",
         self.serialize_to_json ? "application/json" : nil,
         self.serialize_to_xml ? "application/xml" : nil,
       ].compact
-      request_content_types = [
+    end
+
+    def openapi_request_content_types
+      return @openapi_request_content_types ||= [
         "application/json",
-        "application/xml",
         "application/x-www-form-urlencoded",
         "multipart/form-data",
       ]
+    end
+
+    def openapi_paths(routes, tag)
+      resp_cts = self.openapi_response_content_types
+      req_cts = self.openapi_request_content_types
 
       return routes.group_by { |r| r[:concat_path] }.map { |concat_path, routes|
         [
@@ -92,29 +99,35 @@ module RESTFramework::Mixins::BaseControllerMixin
             summary = metadata[:label].presence || self.label_for(route[:action])
             description = metadata[:description].presence
             remaining_metadata = metadata.except(:label, :description).presence
+            error_response = {"$ref" => "#/components/responses/BadRequest"}
+            not_found_response = {"$ref" => "#/components/responses/NotFound"}
+            spec = {tags: [tag], summary: summary, description: description}.compact
 
-            [
-              route[:verb].downcase,
-              {
-                tags: [tag],
-                summary: summary,
-                description: description,
-                responses: {
-                  200 => {
-                    content: response_content_types.map { |ct|
-                      [ct, {}]
-                    }.to_h,
-                    description: "",
-                  },
-                },
-                requestBody: route[:verb].in?(["GET", "DELETE", "OPTIONS", "TRACE"]) ? nil : {
-                  content: request_content_types.map { |ct|
-                    [ct, {}]
-                  }.to_h,
-                },
-                "x-rrf-metadata": remaining_metadata,
-              }.compact,
-            ]
+            # All routes should have a successful response.
+            spec[:responses] = {
+              200 => {content: resp_cts.map { |ct| [ct, {}] }.to_h, description: "Success."},
+            }
+
+            # All POST, PUT, PATCH, and DELETE should have a 400 and 404 response.
+            # TODO: maybe remove this and have ModelControllerMixin handle this?
+            if route[:verb].in?(["POST", "PUT", "PATCH", "DELETE"])
+              spec[:responses][400] = error_response
+              spec[:responses][404] = not_found_response
+            end
+
+            # All POST, PUT, PATCH should have a request body.
+            # TODO: maybe remove this and have ModelControllerMixin handle this?
+            if route[:verb].in?(["POST", "PUT", "PATCH"])
+              spec[:requestBody] ||= {
+                content: req_cts.map { |ct|
+                  [ct, {}]
+                }.to_h,
+              }
+            end
+
+            spec.merge!("x-rrf-metadata" => remaining_metadata) if remaining_metadata.present?
+
+            next route[:verb].downcase, spec
           }.to_h.merge(
             {
               parameters: routes.first[:route].required_parts.map { |p|
@@ -144,6 +157,31 @@ module RESTFramework::Mixins::BaseControllerMixin
         servers: [{url: server}],
         paths: self.openapi_paths(routes, route_group_name),
         tags: [{name: route_group_name, description: self.description}.compact],
+        components: {
+          schemas: {
+            "Error" => {
+              type: "object",
+              required: ["message"],
+              properties: {
+                message: {type: "string"}, errors: {type: "object"}, exception: {type: "string"}
+              },
+            },
+          },
+          responses: {
+            "BadRequest": {
+              description: "Bad request.",
+              content: self.openapi_response_content_types.map { |ct|
+                [ct, ct == "text/html" ? {} : {schema: {"$ref" => "#/components/schemas/Error"}}]
+              }.to_h,
+            },
+            "NotFound": {
+              description: "Not found.",
+              content: self.openapi_response_content_types.map { |ct|
+                [ct, ct == "text/html" ? {} : {schema: {"$ref" => "#/components/schemas/Error"}}]
+              }.to_h,
+            },
+          },
+        },
       }.compact
     end
   end
