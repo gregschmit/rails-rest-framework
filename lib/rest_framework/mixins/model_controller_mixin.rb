@@ -354,7 +354,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           next unless action.is_a?(Hash)
 
           # Add schema to request body content types.
-          action.dig(:requestBody, :content)&.each do |t, v|
+          action.dig(:requestBody, :content)&.each do |_t, v|
             v[:schema] = {"$ref" => "#/components/schemas/#{schema_name}"}
           end
 
