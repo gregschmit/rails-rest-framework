@@ -339,37 +339,62 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       return @openapi_schema
     end
 
-    def openapi_document(request, route_group_name, routes)
-      document = super
-      schema_name = routes[0][:controller].camelize.gsub("::", ".")
+    def openapi_schema_name
+      return @openapi_schema_name ||= self.name.chomp("Controller").gsub("::", ".")
+    end
 
-      # Insert schema into the document.
-      document[:components] ||= {}
-      document[:components][:schemas] ||= {}
-      document[:components][:schemas][schema_name] = self.openapi_schema
+    def openapi_paths(_routes, tag)
+      paths = super
+      schema_name = self.openapi_schema_name
 
       # Reference the model schema for request body and successful default responses.
-      document[:paths].each do |_path, actions|
-        actions.each do |_method, action|
+      paths.each do |_path, actions|
+        actions.each do |method, action|
           next unless action.is_a?(Hash)
 
-          # Add schema to request body content types.
-          action.dig(:requestBody, :content)&.each do |_t, v|
-            v[:schema] = {"$ref" => "#/components/schemas/#{schema_name}"}
-          end
+          extra_action = action.dig("x-rrf-metadata", :extra_action)
 
-          # Add schema to response body content types.
-          action[:responses].each do |status, response|
-            next unless status.to_s.start_with?("2")
-
-            response[:content]&.each do |t, v|
-              next if t.in?(["text/html"])
-
+          # Adjustments for builtin actions:
+          if !extra_action && method != "options"  # rubocop:disable Style/Next
+            # Add schema to request body content types.
+            action.dig(:requestBody, :content)&.each do |_t, v|
               v[:schema] = {"$ref" => "#/components/schemas/#{schema_name}"}
+            end
+
+            # Add schema to successful response body content types.
+            action[:responses].each do |status, response|
+              next unless status.to_s.start_with?("2")
+
+              response[:content]&.each do |t, v|
+                next if t == "text/html"
+
+                v[:schema] = {"$ref" => "#/components/schemas/#{schema_name}"}
+              end
+            end
+
+            # Translate 200->201 for the create action.
+            if action[:summary] == "Create"
+              action[:responses][201] = action[:responses].delete(200)
+            end
+
+            # Translate 200->204 for the destroy action.
+            if action[:summary] == "Destroy"
+              action[:responses][204] = action[:responses].delete(200)
             end
           end
         end
       end
+
+      return paths
+    end
+
+    def openapi_document(request, route_group_name, _routes)
+      document = super
+
+      # Insert schema into the document.
+      document[:components] ||= {}
+      document[:components][:schemas] ||= {}
+      document[:components][:schemas][self.openapi_schema_name] = self.openapi_schema
 
       return document.merge(
         {

@@ -95,28 +95,26 @@ module RESTFramework::Mixins::BaseControllerMixin
         [
           concat_path.gsub(/:([0-9A-Za-z_-]+)/, "{\\1}"),
           routes.map { |route|
-            metadata = route[:route].defaults[:metadata] || {}
-            summary = metadata[:label].presence || self.label_for(route[:action])
-            description = metadata[:description].presence
-            remaining_metadata = metadata.except(:label, :description).presence
+            metadata = RESTFramework::ROUTE_METADATA[route[:path]] || {}
+            summary = metadata.delete(:label).presence || self.label_for(route[:action])
+            description = metadata.delete(:description).presence
+            extra_action = RESTFramework::EXTRA_ACTION_ROUTES.include?(route[:path])
             error_response = {"$ref" => "#/components/responses/BadRequest"}
             not_found_response = {"$ref" => "#/components/responses/NotFound"}
             spec = {tags: [tag], summary: summary, description: description}.compact
 
             # All routes should have a successful response.
             spec[:responses] = {
-              200 => {content: resp_cts.map { |ct| [ct, {}] }.to_h, description: "Success."},
+              200 => {content: resp_cts.map { |ct| [ct, {}] }.to_h, description: "Success"},
             }
 
-            # All POST, PUT, PATCH, and DELETE should have a 400 and 404 response.
-            # TODO: maybe remove this and have ModelControllerMixin handle this?
-            if route[:verb].in?(["POST", "PUT", "PATCH", "DELETE"])
+            # Builtin POST, PUT, PATCH, and DELETE should have a 400 and 404 response.
+            if route[:verb].in?(["POST", "PUT", "PATCH", "DELETE"]) && !extra_action
               spec[:responses][400] = error_response
               spec[:responses][404] = not_found_response
             end
 
             # All POST, PUT, PATCH should have a request body.
-            # TODO: maybe remove this and have ModelControllerMixin handle this?
             if route[:verb].in?(["POST", "PUT", "PATCH"])
               spec[:requestBody] ||= {
                 content: req_cts.map { |ct|
@@ -125,7 +123,8 @@ module RESTFramework::Mixins::BaseControllerMixin
               }
             end
 
-            spec.merge!("x-rrf-metadata" => remaining_metadata) if remaining_metadata.present?
+            # Add remaining metadata as an extension.
+            spec["x-rrf-metadata"] = metadata if metadata.present?
 
             next route[:verb].downcase, spec
           }.to_h.merge(
@@ -169,13 +168,13 @@ module RESTFramework::Mixins::BaseControllerMixin
           },
           responses: {
             "BadRequest": {
-              description: "Bad request.",
+              description: "Bad Request",
               content: self.openapi_response_content_types.map { |ct|
                 [ct, ct == "text/html" ? {} : {schema: {"$ref" => "#/components/schemas/Error"}}]
               }.to_h,
             },
             "NotFound": {
-              description: "Not found.",
+              description: "Not Found",
               content: self.openapi_response_content_types.map { |ct|
                 [ct, ct == "text/html" ? {} : {schema: {"$ref" => "#/components/schemas/Error"}}]
               }.to_h,
@@ -220,6 +219,7 @@ module RESTFramework::Mixins::BaseControllerMixin
       base.rescue_from(
         ActionController::ParameterMissing,
         ActionController::UnpermittedParameters,
+        ActionDispatch::Http::Parameters::ParseError,
         ActiveRecord::AssociationTypeMismatch,
         ActiveRecord::NotNullViolation,
         ActiveRecord::RecordNotFound,

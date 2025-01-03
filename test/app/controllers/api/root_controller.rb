@@ -4,10 +4,7 @@ class Api::RootController < ApiController
   self.extra_actions = {
     dev_test: :get,
     ip: :get,
-    c: {
-      methods: [:get, :post],
-      metadata: {gns: 5},
-    },
+    c: {methods: [:get, :post], metadata: {test: 5}},
   }
 
   def root
@@ -45,7 +42,7 @@ class Api::RootController < ApiController
     begin
       console
     rescue NameError
-      render_api({message: "Console not available."})
+      return render_api({message: "Console not available."})
     end
 
     render_api({message: "Console opened."})

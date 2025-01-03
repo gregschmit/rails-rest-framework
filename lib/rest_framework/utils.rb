@@ -1,49 +1,32 @@
 module RESTFramework::Utils
   HTTP_VERB_ORDERING = %w(GET POST PUT PATCH DELETE OPTIONS HEAD)
 
-  # Convert `extra_actions` hash to a consistent format: `{path:, methods:, kwargs:}`.
-  #
-  # If a controller is provided, labels will be added to any metadata fields.
-  def self.parse_extra_actions(extra_actions, controller: nil)
+  # Convert `extra_actions` hash to a consistent format: `{path:, methods:, metadata:, kwargs:}`.
+  def self.parse_extra_actions(extra_actions)
     return (extra_actions || {}).map { |k, v|
       path = k
+      kwargs = {}
 
       # Convert structure to path/methods/kwargs.
-      if v.is_a?(Hash)  # Allow kwargs to be used to define path differently from the key.
+      if v.is_a?(Hash)
         # Symbolize keys (which also makes a copy so we don't mutate the original).
         v = v.symbolize_keys
-        methods = v.delete(:methods)
-        if v.key?(:method)
-          methods = v.delete(:method)
-        end
 
-        # Add label to metadata fields, if any exist.
-        metadata = v[:metadata]
-        if controller && metadata&.key?(:fields)
-          metadata[:fields] = metadata[:fields].map { |f|
-            [f, {}]
-          }.to_h if metadata[:fields].is_a?(Array)
-          metadata[:fields]&.each do |field, cfg|
-            cfg[:label] = controller.label_for(field) unless cfg[:label]
-          end
-        end
+        # Cast method/methods to an array.
+        methods = [v.delete(:methods), v.delete(:method)].flatten.compact
 
         # Override path if it's provided.
         if v.key?(:path)
           path = v.delete(:path)
         end
 
-        # Pass any further kwargs to the underlying Rails interface.
-        kwargs = v.presence
-      elsif v.is_a?(Array) && v.length == 1
-        methods = v[0]
-      else
-        methods = v
-      end
+        # Extract metadata, if provided.
+        metadata = v.delete(:metadata).presence
 
-      # Insert action label if it's not provided.
-      if controller
-        metadata[:label] ||= controller.label_for(k)
+        # Pass any further kwargs to the underlying Rails interface.
+        kwargs = v
+      else
+        methods = [v].flatten
       end
 
       next [
@@ -51,6 +34,7 @@ module RESTFramework::Utils
         {
           path: path,
           methods: methods,
+          metadata: metadata,
           kwargs: kwargs,
         }.compact,
       ]
@@ -139,7 +123,9 @@ module RESTFramework::Utils
       ]
     }.group_by { |r| r[:controller] }.sort_by { |c, _r|
       # Sort the controller groups by current controller first, then alphanumerically.
-      [request.params[:controller] == c ? 0 : 1, c]
+      # Note: Use `controller_path` instead of `params[:controller]` to avoid re-raising a
+      # `ActionDispatch::Http::Parameters::ParseError` exception.
+      [request.controller_class.controller_path == c ? 0 : 1, c]
     }.to_h
   end
 

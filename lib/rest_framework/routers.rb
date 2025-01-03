@@ -51,9 +51,16 @@ module ActionDispatch::Routing
       parsed_actions = RESTFramework::Utils.parse_extra_actions(actions)
 
       parsed_actions.each do |action, config|
-        [config[:methods]].flatten.each do |m|
-          public_send(m, config[:path], action: action, **(config[:kwargs] || {}))
+        config[:methods].each do |m|
+          public_send(m, config[:path], action: action, **config[:kwargs])
         end
+
+        # Record that this route is an extra action and any metadata associated with it.
+        metadata = config[:metadata]
+        key = "#{@scope[:path]}/#{config[:path]}"
+        RESTFramework::EXTRA_ACTION_ROUTES.add(key)
+        RESTFramework::ROUTE_METADATA[key] = metadata if metadata
+
         yield if block_given?
       end
     end

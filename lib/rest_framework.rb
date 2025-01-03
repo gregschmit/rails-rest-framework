@@ -20,6 +20,10 @@ module RESTFramework
     destroy_all: :delete,
   }.freeze
 
+  # Storage for extra routes and associated metadata.
+  EXTRA_ACTION_ROUTES = Set.new
+  ROUTE_METADATA = {}
+
   # We put most vendored external assets into these files to make precompilation and serving faster.
   EXTERNAL_CSS_NAME = "rest_framework/external.min.css"
   EXTERNAL_JS_NAME = "rest_framework/external.min.js"

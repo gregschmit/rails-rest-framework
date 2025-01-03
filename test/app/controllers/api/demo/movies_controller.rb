@@ -7,6 +7,13 @@ class Api::Demo::MoviesController < Api::DemoController
     },
   }
 
+  self.extra_member_actions = {
+    random: {
+      methods: :get,
+      metadata: {description: "Get a random number for this record.", method: "Still a dice roll."},
+    },
+  }
+
   def random
     render_api({number: 4, message: "Chosen by fair dice roll. Guaranteed to be random."})
   end
