@@ -414,9 +414,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           model = self.class.get_model
 
           if model.method(action).parameters.last&.first == :keyrest
-            render_api(model.send(action, **params))
+            render(api: model.send(action, **params))
           else
-            render_api(model.send(action))
+            render(api: model.send(action))
           end
         end
       end
@@ -430,9 +430,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           record = self.get_record
 
           if record.method(action).parameters.last&.first == :keyrest
-            render_api(record.send(action, **params))
+            render(api: record.send(action, **params))
           else
-            render_api(record.send(action))
+            render(api: record.send(action))
           end
         end
       end
@@ -722,7 +722,7 @@ end
 # Mixin for listing records.
 module RESTFramework::Mixins::ListModelMixin
   def index
-    render_api(self.get_index_records)
+    render(api: self.get_index_records)
   end
 
   # Get records with both filtering and pagination applied.
@@ -750,14 +750,14 @@ end
 # Mixin for showing records.
 module RESTFramework::Mixins::ShowModelMixin
   def show
-    render_api(self.get_record)
+    render(api: self.get_record)
   end
 end
 
 # Mixin for creating records.
 module RESTFramework::Mixins::CreateModelMixin
   def create
-    render_api(self.create!, status: :created)
+    render(api: self.create!, status: :created)
   end
 
   # Perform the `create!` call and return the created record.
@@ -769,7 +769,7 @@ end
 # Mixin for updating records.
 module RESTFramework::Mixins::UpdateModelMixin
   def update
-    render_api(self.update!)
+    render(api: self.update!)
   end
 
   # Perform the `update!` call and return the updated record.
@@ -784,7 +784,7 @@ end
 module RESTFramework::Mixins::DestroyModelMixin
   def destroy
     self.destroy!
-    render_api("")
+    render(api: "")
   end
 
   # Perform the `destroy!` call and return the destroyed (and frozen) record.

@@ -29,6 +29,6 @@ class Api::Test::UsersController < Api::TestController
 
   def description
     record = self.get_record
-    render_api({message: "This is record #{record.id} (#{record.login})"})
+    render(api: {message: "This is record #{record.id} (#{record.login})"})
   end
 end

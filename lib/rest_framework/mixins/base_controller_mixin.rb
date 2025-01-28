@@ -38,7 +38,7 @@ module RESTFramework::Mixins::BaseControllerMixin
 
   # Default action for API root.
   def root
-    render_api({message: "This is the API root."})
+    render(api: {message: "This is the API root."})
   end
 
   module ClassMethods
@@ -267,8 +267,8 @@ module RESTFramework::Mixins::BaseControllerMixin
       400
     end
 
-    render_api(
-      {
+    render(
+      api: {
         message: e.message,
         errors: e.try(:record).try(:errors),
         exception: RESTFramework.config.show_backtrace ? e.full_message : nil,
@@ -383,7 +383,7 @@ module RESTFramework::Mixins::BaseControllerMixin
   end
 
   def options
-    render_api(self.openapi_document)
+    render(api: self.openapi_document)
   end
 end
 

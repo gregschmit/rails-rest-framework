@@ -75,8 +75,8 @@ class Api::RootController < ApiController
   self.extra_actions = {test: :get}
 
   def root
-    render_api(
-      {
+    render(
+      api: {
         message: "Welcome to the API.",
         how_to_authenticate: <<~END.lines.map(&:strip).join(" "),
           You can use this API with your normal login session. Otherwise, you can insert your API
@@ -88,7 +88,7 @@ class Api::RootController < ApiController
   end
 
   def test
-    render_api({message: "Hello, world!"})
+    render(api: {message: "Hello, world!"})
   end
 end
 ```
@@ -105,7 +105,7 @@ class Api::MoviesController < ApiController
   def first
     # Always use the bang method, since the framework will rescue `RecordNotFound` and return a
     # sensible error response.
-    render_api(self.get_records.first!)
+    render(api: self.get_records.first!)
   end
 
   def get_recordset

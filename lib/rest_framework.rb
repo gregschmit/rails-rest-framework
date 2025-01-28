@@ -207,3 +207,8 @@ require_relative "rest_framework/routers"
 require_relative "rest_framework/serializers"
 require_relative "rest_framework/utils"
 require_relative "rest_framework/version"
+
+# Add API renderer:
+ActionController::Renderers.add(:api) do |data, kwargs|
+  render_api(data, **kwargs)
+end

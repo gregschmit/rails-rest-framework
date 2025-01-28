@@ -4,18 +4,18 @@ class Api::Demo::RootController < Api::DemoController
   self.openapi_include_children = true
 
   def root
-    render_api({message: self.class.description})
+    render(api: {message: self.class.description})
   end
 
   def nil
-    render_api(nil)
+    render(api: nil)
   end
 
   def blank
-    render_api("")
+    render(api: "")
   end
 
   def echo
-    render_api({message: "Here is your data:", data: request.request_parameters})
+    render(api: {message: "Here is your data:", data: request.request_parameters})
   end
 end

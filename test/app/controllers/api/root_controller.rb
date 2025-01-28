@@ -8,8 +8,8 @@ class Api::RootController < ApiController
   }
 
   def root
-    render_api(
-      {
+    render(
+      api: {
         message: "This is the test app for Rails REST Framework. There are three APIs:",
         plain_api: {
           message: Api::PlainController::DESCRIPTION,
@@ -28,8 +28,8 @@ class Api::RootController < ApiController
   end
 
   def ip
-    render_api(
-      {
+    render(
+      api: {
         ip: request.ip,
         remote_ip: request.remote_ip,
         x_forwarded_for: request.headers["HTTP_X_FORWARDED_FOR"],
@@ -42,9 +42,9 @@ class Api::RootController < ApiController
     begin
       console
     rescue NameError
-      return render_api({message: "Console not available."})
+      return render(api: {message: "Console not available."})
     end
 
-    render_api({message: "Console opened."})
+    render(api: {message: "Console opened."})
   end
 end

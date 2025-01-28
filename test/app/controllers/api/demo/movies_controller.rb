@@ -15,6 +15,6 @@ class Api::Demo::MoviesController < Api::DemoController
   }
 
   def random
-    render_api({number: 4, message: "Chosen by fair dice roll. Guaranteed to be random."})
+    render(api: {number: 4, message: "Chosen by fair dice roll. Guaranteed to be random."})
   end
 end
