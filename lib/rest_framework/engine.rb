@@ -8,6 +8,12 @@ class RESTFramework::Engine < Rails::Engine
           *RESTFramework::EXTERNAL_UNSUMMARIZED_ASSETS.keys.map { |name| "rest_framework/#{name}" },
         ]
       end
+
+      if RESTFramework.config.register_api_renderer
+        ActionController::Renderers.add(:api) do |data, kwargs|
+          render_api(data, **kwargs)
+        end
+      end
     end
   end
 end

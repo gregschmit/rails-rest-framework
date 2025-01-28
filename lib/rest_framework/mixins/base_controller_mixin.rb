@@ -233,7 +233,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
 
     # Use `TracePoint` hook to automatically call `rrf_finalize`.
-    unless RESTFramework.config.disable_auto_finalize
+    if RESTFramework.config.auto_finalize
       # :nocov:
       TracePoint.trace(:end) do |t|
         next if base != t.self

@@ -140,15 +140,18 @@ module RESTFramework
       authenticity_token
     ].freeze
 
-    # Do not run `rrf_finalize` on controllers automatically using a `TracePoint` hook. This is a
-    # performance option and must be global because we have to determine this before any
-    # controller-specific configuration is set. If this is set to `true`, then you must manually
-    # call `rrf_finalize` after any configuration on each controller that needs to participate
-    # in:
+    # Permits use of `render(api: obj)` syntax over `render_api(obj)`; `true` by default.
+    attr_accessor :register_api_renderer
+
+    # Run `rrf_finalize` on controllers automatically using a `TracePoint` hook. This is `true` by
+    # default, and can be disabled for performance, and must be global because we have to determine
+    # this before any controller-specific configuration is set. If this is set to `false`, then you
+    # must manually call `rrf_finalize` after any configuration on each controller that needs to
+    # participate in:
     #  - Model delegation, for the helper methods to be defined dynamically.
     #  - Websockets, for `::Channel` class to be defined dynamically.
     #  - Controller configuration freezing.
-    attr_accessor :disable_auto_finalize
+    attr_accessor :auto_finalize
 
     # Freeze configuration attributes during finalization to prevent accidental mutation.
     attr_accessor :freeze_config
@@ -177,7 +180,11 @@ module RESTFramework
     attr_accessor :use_vendored_assets
 
     def initialize
+      self.register_api_renderer = true
+      self.auto_finalize = true
+
       self.show_backtrace = Rails.env.development?
+
       self.label_fields = DEFAULT_LABEL_FIELDS
       self.search_columns = DEFAULT_SEARCH_COLUMNS
       self.exclude_body_fields = DEFAULT_EXCLUDE_BODY_FIELDS
@@ -207,8 +214,3 @@ require_relative "rest_framework/routers"
 require_relative "rest_framework/serializers"
 require_relative "rest_framework/utils"
 require_relative "rest_framework/version"
-
-# Add API renderer:
-ActionController::Renderers.add(:api) do |data, kwargs|
-  render_api(data, **kwargs)
-end
