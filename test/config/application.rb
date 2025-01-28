@@ -1,6 +1,9 @@
 require_relative "boot"
 require "uri"
 
+# Fix `uninitialized constant ActiveSupport::LoggerThreadSafeLevel::Logger` from `concurrent-ruby`.
+require "logger"
+
 require "rails/all"
 
 # Require `sprockets` if testing asset pipeline.
