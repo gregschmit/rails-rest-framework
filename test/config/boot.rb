@@ -1,10 +1,8 @@
-# Before booting, remove `server.pid` (fixes issue in production where the app reboots constantly
-# with: `A server is already running. Check /app/test/tmp/pids/server.pid.`).
-require "fileutils"
-FileUtils.rm_rf("tmp/pids/server.pid")
+# Fix `uninitialized constant ActiveSupport::LoggerThreadSafeLevel::Logger` from `concurrent-ruby`.
+require "logger"
 
-# Before booting, support passing production key via environment variable by writing them to disk
-# here if the key files don't exist.
+# Before booting, support passing production key via environment variable by writing it to disk here
+# if the key file doesn't exist.
 key_path = File.expand_path("credentials/production.key", __dir__)
 key_value = ENV["PRODUCTION_KEY"]&.strip
 if !File.file?(key_path) && key_value && !key_value.empty?
