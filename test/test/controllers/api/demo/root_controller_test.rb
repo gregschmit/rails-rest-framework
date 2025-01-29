@@ -27,6 +27,7 @@ class Api::Demo::RootControllerTest < ActionController::TestCase
   def test_blank_json
     get(:blank, as: :json)
 
+    # rubocop:disable Layout/LineLength
     # In Rails <8, `assert_response` will end up calling `@response.body` to precalculate a
     # message, which is kinda stupid given that `assert_response` should only check the status
     # code. However, this behavior is triggered by use of the `api` renderer with blank responses,
@@ -67,6 +68,7 @@ class Api::Demo::RootControllerTest < ActionController::TestCase
     #     minitest (5.25.4) lib/minitest.rb:332:in `__run'
     #     minitest (5.25.4) lib/minitest.rb:288:in `run'
     #     minitest (5.25.4) lib/minitest.rb:86:in `block in autorun'
+    # rubocop:enable Layout/LineLength
     if Rails::VERSION::MAJOR >= 8
       assert_response(:success)
     else
