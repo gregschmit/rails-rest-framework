@@ -1,6 +1,3 @@
-# Fix `uninitialized constant ActiveSupport::LoggerThreadSafeLevel::Logger` from `concurrent-ruby`.
-require "logger"
-
 # Before booting, support passing production key via environment variable by writing it to disk here
 # if the key file doesn't exist.
 key_path = File.expand_path("credentials/production.key", __dir__)
@@ -13,6 +10,9 @@ end
 # Set up gems listed in the Gemfile.
 ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile", __dir__)
 require "bundler/setup"
+
+# Fix `uninitialized constant ActiveSupport::LoggerThreadSafeLevel::Logger` from `concurrent-ruby`.
+require "logger"
 
 # Starting at Rails 7.1, we had to start requiring simplecov here to ensure it was loaded prior to
 # the lib/application code.
