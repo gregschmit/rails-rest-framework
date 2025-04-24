@@ -7,10 +7,12 @@
 
 A framework for DRY RESTful APIs in Ruby on Rails.
 
-**The Problem**: Building controllers for APIs usually involves writing a lot of redundant CRUD logic, and routing them can be obnoxious.
-Building and maintaining features like ordering, filtering, and pagination can be tedious.
+**The Problem**: Building controllers for APIs usually involves writing a lot of redundant CRUD
+logic, and routing them can be obnoxious. Building and maintaining features like ordering,
+filtering, and pagination can be tedious.
 
-**The Solution**: This framework implements browsable API responses, CRUD actions for your models, and features like ordering/filtering/pagination, so you can focus on building awesome APIs.
+**The Solution**: This framework implements browsable API responses, CRUD actions for your models,
+and features like ordering/filtering/pagination, so you can focus on your application logic.
 
 Website/Guide: [rails-rest-framework.com](https://rails-rest-framework.com)
 
@@ -38,7 +40,8 @@ bundle install
 
 This section provides some simple examples to quickly get you started using the framework.
 
-For the purpose of this example, you'll want to add an `api_controller.rb` to your controllers, as well as a directory for the resources:
+For the purpose of this example, you'll want to add an `api_controller.rb` to your controllers, as
+well as a directory for the resources:
 
 ```text
 controllers/
@@ -51,7 +54,8 @@ controllers/
 
 ### Controller Mixins
 
-The root `ApiController` can include any common behavior you want to share across all your API controllers:
+The root `ApiController` can include any common behavior you want to share across all your API
+controllers:
 
 ```ruby
 class ApiController < ApplicationController
@@ -59,16 +63,13 @@ class ApiController < ApplicationController
 
   # Setting up a paginator class here makes more sense than defining it on every child controller.
   self.paginator_class = RESTFramework::PageNumberPaginator
-
-  # The page_size attribute doesn't exist on the `BaseControllerMixin`, but for child controllers
-  # that include the `ModelControllerMixin`, they will inherit this attribute and will not overwrite
-  # it.
-  class_attribute(:page_size, default: 30)
+  self.page_size = 30
 end
 ```
 
-A root controller can provide actions that exist on the root of your API.
-It's best to define a dedicated root controller, rather than using the `ApiController` for this purpose, so that actions don't propagate to child controllers:
+A root controller can provide actions that exist on the root of your API. It's best to define a
+dedicated root controller, rather than using the `ApiController` for this purpose, so that actions
+don't propagate to child controllers:
 
 ```ruby
 class Api::RootController < ApiController
@@ -114,8 +115,8 @@ class Api::MoviesController < ApiController
 end
 ```
 
-When `fields` is nil, then it will default to all columns.
-The `fields` attribute can also be a hash to include or exclude fields rather than defining them manually:
+When `fields` is nil, then it will default to all columns. The `fields` attribute can also be a hash
+to include or exclude fields rather than defining them manually:
 
 ```ruby
 class Api::UsersController < ApiController
@@ -127,9 +128,10 @@ end
 
 ### Routing
 
-Use `rest_route` for non-resourceful controllers, or `rest_resource` / `rest_resources` resourceful routers.
-These routers add some features to the Rails builtin `resource`/`resources` routers, such as automatically routing extra actions defined on the controller.
-To route the root, use `rest_root`.
+Use `rest_route` for non-resourceful controllers, or `rest_resource` / `rest_resources` resourceful
+routers. These routers add some features to the Rails builtin `resource`/`resources` routers, such
+as automatically routing extra actions defined on the controller. To route the root, use
+`rest_root`.
 
 ```ruby
 Rails.application.routes.draw do
@@ -146,7 +148,9 @@ end
 
 ## Development/Testing
 
-After you clone the repository, cd'ing into the directory should create a new gemset if you are using RVM.
-Then run `bin/setup` to install the appropriate gems and set things up.
+After you clone the repository, cd'ing into the directory should create a new gemset if you are
+using RVM. Then run `bin/setup` to install the appropriate gems and set things up.
 
-The top-level `bin/rails` proxies all Rails commands to the test project, so you can operate it via the usual commands (e.g., `rails test`, `rails server` and `rails console`). For development, use `foreman start` to run the web server and the job queue.
+The top-level `bin/rails` proxies all Rails commands to the test project, so you can operate it via
+the usual commands (e.g., `rails test`, `rails server` and `rails console`). For development, use
+`foreman start` to run the web server and the job queue.
