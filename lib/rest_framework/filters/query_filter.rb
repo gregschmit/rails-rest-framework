@@ -14,7 +14,8 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
     false: false,
     null: nil,
     lt: ->(f, v) { {f => ...v} },
-    gt: ->(f, v) { {f => v...} },
+    # `gt` must negate `lte` because Rails doesn't support `>` with endless ranges.
+    gt: ->(f, v) { Not.new({f => ..v}) },
     lte: ->(f, v) { {f => ..v} },
     gte: ->(f, v) { {f => v..} },
     not: ->(f, v) { Not.new({f => v}) },
@@ -104,6 +105,7 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
       next nil
     }.compact.to_h.symbolize_keys
 
+    puts "GNS: #{base_query.inspect} #{pred_queries.inspect} #{includes.inspect}"
     return base_query, pred_queries, includes
   end
 
