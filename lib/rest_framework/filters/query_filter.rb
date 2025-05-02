@@ -13,18 +13,18 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
     true: true,
     false: false,
     null: nil,
-    lt: ->(f, v) { {f => ...v} },
+    lt: ->(f, v) { { f => ...v } },
     # `gt` must negate `lte` because Rails doesn't support `>` with endless ranges.
-    gt: ->(f, v) { Not.new({f => ..v}) },
-    lte: ->(f, v) { {f => ..v} },
-    gte: ->(f, v) { {f => v..} },
-    not: ->(f, v) { Not.new({f => v}) },
-    cont: ->(f, v) { ["#{f} LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(v)}%"] },
+    gt: ->(f, v) { Not.new({ f => ..v }) },
+    lte: ->(f, v) { { f => ..v } },
+    gte: ->(f, v) { { f => v.. } },
+    not: ->(f, v) { Not.new({ f => v }) },
+    cont: ->(f, v) { [ "#{f} LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(v)}%" ] },
     in: ->(f, v) {
       if v.is_a?(Array)
-        {f => v.map { |v| v == "null" ? nil : v }}
+        { f => v.map { |v| v == "null" ? nil : v } }
       elsif v.is_a?(String)
-        {f => v.split(",").map { |v| v == "null" ? nil : v }}
+        { f => v.split(",").map { |v| v == "null" ? nil : v } }
       end
     },
   }.freeze
@@ -33,7 +33,7 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
   # Get a list of filter fields for the current action.
   def _get_fields
     # Always return a list of strings; `@controller.get_fields` already does this.
-    return @controller.class.filter_fields&.map(&:to_s) || @controller.get_fields
+    @controller.class.filter_fields&.map(&:to_s) || @controller.get_fields
   end
 
   # Helper to find a variation of a field using a predicate. For example, there could be a field
@@ -62,7 +62,7 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
     base_query = @controller.request.query_parameters.map { |field, v|
       # First, if field is a simple filterable field, return early.
       if field.in?(fields)
-        next [field, v]
+        next [ field, v ]
       end
 
       # First, try to parse a simple predicate and check if it is filterable.
@@ -81,7 +81,7 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
           sub_fields = @controller.class.field_configuration[root_field][:sub_fields] || []
           if sub_field.in?(sub_fields)
             includes << root_field.to_sym
-            next [field, v]
+            next [ field, v ]
           elsif pred_sub_field && pred_sub_field.in?(sub_fields)
             includes << root_field.to_sym
             field = pred_field
@@ -99,13 +99,12 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
       if cfg.is_a?(Proc)
         pred_queries << cfg.call(field, v)
       else
-        pred_queries << {field => cfg}
+        pred_queries << { field => cfg }
       end
 
       next nil
     }.compact.to_h.symbolize_keys
 
-    puts "GNS: #{base_query.inspect} #{pred_queries.inspect} #{includes.inspect}"
     return base_query, pred_queries, includes
   end
 
@@ -129,7 +128,7 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
       end
     end
 
-    return data
+    data
   end
 end
 

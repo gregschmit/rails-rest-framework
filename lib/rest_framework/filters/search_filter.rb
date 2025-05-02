@@ -6,7 +6,7 @@ class RESTFramework::Filters::SearchFilter < RESTFramework::Filters::BaseFilter
     end
 
     columns = @controller.class.get_model.column_names
-    return @controller.get_fields.select { |f|
+    @controller.get_fields.select { |f|
       f.in?(RESTFramework.config.search_columns) && f.in?(columns)
     }
   end
@@ -30,12 +30,12 @@ class RESTFramework::Filters::SearchFilter < RESTFramework::Filters::BaseFilter
           fields.map { |f|
             "CAST(#{f} AS #{data_type}) #{@controller.class.search_ilike ? "ILIKE" : "LIKE"} ?"
           }.join(" OR "),
-          *(["%#{search}%"] * fields.length),
+          *([ "%#{search}%" ] * fields.length),
         )
       end
     end
 
-    return data
+    data
   end
 end
 

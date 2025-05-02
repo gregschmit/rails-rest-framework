@@ -71,7 +71,8 @@ group :development do
   gem "byebug"
   gem "foreman"
   gem "pry-rails"
-  gem "rubocop-shopify", require: false
+  gem "rubocop-rails-omakase", require: false
+  gem "ruby-lsp", require: false
   gem "web-console"
 
   # Vendoring external assets.

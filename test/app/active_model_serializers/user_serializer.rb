@@ -4,7 +4,7 @@ if defined?(ActiveModel::Serializer)
     has_one :manager
 
     def test_serializer_method
-      return "working!"
+      "working!"
     end
   end
 end

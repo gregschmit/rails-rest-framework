@@ -13,15 +13,15 @@ end
 Gem::Specification.new do |spec|
   spec.name = "rest_framework"
   spec.version = rrf_version
-  spec.authors = ["Gregory N. Schmit"]
-  spec.email = ["schmitgreg@gmail.com"]
+  spec.authors = [ "Gregory N. Schmit" ]
+  spec.email = [ "schmitgreg@gmail.com" ]
 
   spec.summary = "A framework for DRY RESTful APIs in Ruby on Rails."
   spec.description = "A framework for DRY RESTful APIs in Ruby on Rails."
   spec.homepage = "https://rails-rest-framework.com"
   spec.license = "MIT"
 
-  spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
+  spec.required_ruby_version = Gem::Requirement.new(">= 2.7.5")
 
   spec.add_dependency("rails", ">= 4.0")
 

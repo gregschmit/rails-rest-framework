@@ -11,7 +11,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     title: nil,
     description: nil,
     version: nil,
-    inflect_acronyms: ["ID", "IDs", "REST", "API", "APIs"].freeze,
+    inflect_acronyms: [ "ID", "IDs", "REST", "API", "APIs" ].freeze,
     openapi_include_children: false,
 
     # Options related to serialization.
@@ -38,14 +38,14 @@ module RESTFramework::Mixins::BaseControllerMixin
 
   # Default action for API root.
   def root
-    render(api: {message: "This is the API root."})
+    render(api: { message: "This is the API root." })
   end
 
   module ClassMethods
     # By default, this is the name of the controller class, titleized and with any custom inflection
     # acronyms applied.
     def get_title
-      return self.title || RESTFramework::Utils.inflect(
+      self.title || RESTFramework::Utils.inflect(
         self.name.demodulize.chomp("Controller").titleize(keep_id_suffix: true),
         self.inflect_acronyms,
       )
@@ -53,10 +53,7 @@ module RESTFramework::Mixins::BaseControllerMixin
 
     # Get a label from a field/column name, titleized and inflected.
     def label_for(s)
-      return RESTFramework::Utils.inflect(
-        s.to_s.titleize(keep_id_suffix: true),
-        self.inflect_acronyms,
-      )
+      RESTFramework::Utils.inflect(s.to_s.titleize(keep_id_suffix: true), self.inflect_acronyms)
     end
 
     # Define any behavior to execute at the end of controller definition.
@@ -72,7 +69,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     # :nocov:
 
     def openapi_response_content_types
-      return @openapi_response_content_types ||= [
+      @openapi_response_content_types ||= [
         "text/html",
         self.serialize_to_json ? "application/json" : nil,
         self.serialize_to_xml ? "application/xml" : nil,
@@ -80,7 +77,7 @@ module RESTFramework::Mixins::BaseControllerMixin
     end
 
     def openapi_request_content_types
-      return @openapi_request_content_types ||= [
+      @openapi_request_content_types ||= [
         "application/json",
         "application/x-www-form-urlencoded",
         "multipart/form-data",
@@ -91,7 +88,7 @@ module RESTFramework::Mixins::BaseControllerMixin
       resp_cts = self.openapi_response_content_types
       req_cts = self.openapi_request_content_types
 
-      return routes.group_by { |r| r[:concat_path] }.map { |concat_path, routes|
+      routes.group_by { |r| r[:concat_path] }.map { |concat_path, routes|
         [
           concat_path.gsub(/:([0-9A-Za-z_-]+)/, "{\\1}"),
           routes.map { |route|
@@ -99,28 +96,24 @@ module RESTFramework::Mixins::BaseControllerMixin
             summary = metadata.delete(:label).presence || self.label_for(route[:action])
             description = metadata.delete(:description).presence
             extra_action = RESTFramework::EXTRA_ACTION_ROUTES.include?(route[:path])
-            error_response = {"$ref" => "#/components/responses/BadRequest"}
-            not_found_response = {"$ref" => "#/components/responses/NotFound"}
-            spec = {tags: [tag], summary: summary, description: description}.compact
+            error_response = { "$ref" => "#/components/responses/BadRequest" }
+            not_found_response = { "$ref" => "#/components/responses/NotFound" }
+            spec = { tags: [ tag ], summary: summary, description: description }.compact
 
             # All routes should have a successful response.
             spec[:responses] = {
-              200 => {content: resp_cts.map { |ct| [ct, {}] }.to_h, description: "Success"},
+              200 => { content: resp_cts.map { |ct| [ ct, {} ] }.to_h, description: "Success" },
             }
 
             # Builtin POST, PUT, PATCH, and DELETE should have a 400 and 404 response.
-            if route[:verb].in?(["POST", "PUT", "PATCH", "DELETE"]) && !extra_action
+            if route[:verb].in?([ "POST", "PUT", "PATCH", "DELETE" ]) && !extra_action
               spec[:responses][400] = error_response
               spec[:responses][404] = not_found_response
             end
 
             # All POST, PUT, PATCH should have a request body.
-            if route[:verb].in?(["POST", "PUT", "PATCH"])
-              spec[:requestBody] ||= {
-                content: req_cts.map { |ct|
-                  [ct, {}]
-                }.to_h,
-              }
+            if route[:verb].in?([ "POST", "PUT", "PATCH" ])
+              spec[:requestBody] ||= { content: req_cts.map { |ct| [ ct, {} ] }.to_h }
             end
 
             # Add remaining metadata as an extension.
@@ -134,7 +127,7 @@ module RESTFramework::Mixins::BaseControllerMixin
                   name: p,
                   in: "path",
                   required: true,
-                  schema: {type: "integer"},
+                  schema: { type: "integer" },
                 }
               },
             },
@@ -146,23 +139,25 @@ module RESTFramework::Mixins::BaseControllerMixin
     def openapi_document(request, route_group_name, routes)
       server = request.base_url + request.original_fullpath.gsub(/\?.*/, "")
 
-      return {
+      {
         openapi: "3.1.1",
         info: {
           title: self.get_title,
           description: self.description,
           version: self.version.to_s,
         }.compact,
-        servers: [{url: server}],
+        servers: [ { url: server } ],
         paths: self.openapi_paths(routes, route_group_name),
-        tags: [{name: route_group_name, description: self.description}.compact],
+        tags: [ { name: route_group_name, description: self.description }.compact ],
         components: {
           schemas: {
             "Error" => {
               type: "object",
-              required: ["message"],
+              required: [ "message" ],
               properties: {
-                message: {type: "string"}, errors: {type: "object"}, exception: {type: "string"}
+                message: { type: "string" },
+                errors: { type: "object" },
+                exception: { type: "string" },
               },
             },
           },
@@ -170,13 +165,19 @@ module RESTFramework::Mixins::BaseControllerMixin
             "BadRequest": {
               description: "Bad Request",
               content: self.openapi_response_content_types.map { |ct|
-                [ct, ct == "text/html" ? {} : {schema: {"$ref" => "#/components/schemas/Error"}}]
+                [
+                  ct,
+                  ct == "text/html" ? {} : { schema: { "$ref" => "#/components/schemas/Error" } },
+                ]
               }.to_h,
             },
             "NotFound": {
               description: "Not Found",
               content: self.openapi_response_content_types.map { |ct|
-                [ct, ct == "text/html" ? {} : {schema: {"$ref" => "#/components/schemas/Error"}}]
+                [
+                  ct,
+                  ct == "text/html" ? {} : { schema: { "$ref" => "#/components/schemas/Error" } },
+                ]
               }.to_h,
             },
           },
@@ -249,12 +250,12 @@ module RESTFramework::Mixins::BaseControllerMixin
   end
 
   def get_serializer_class
-    return self.class.serializer_class
+    self.class.serializer_class
   end
 
   # Serialize the given data using the `serializer_class`.
   def serialize(data, **kwargs)
-    return RESTFramework::Utils.wrap_ams(self.get_serializer_class).new(
+    RESTFramework::Utils.wrap_ams(self.get_serializer_class).new(
       data, controller: self, **kwargs
     ).serialize
   end
@@ -278,7 +279,7 @@ module RESTFramework::Mixins::BaseControllerMixin
   end
 
   def route_groups
-    return @route_groups ||= RESTFramework::Utils.get_routes(Rails.application.routes, request)
+    @route_groups ||= RESTFramework::Utils.get_routes(Rails.application.routes, request)
   end
 
   # Render a browsable API for `html` format, along with basic `json`/`xml` formats, and with
@@ -379,7 +380,7 @@ module RESTFramework::Mixins::BaseControllerMixin
       end
     end
 
-    return document
+    document
   end
 
   def options

@@ -34,11 +34,11 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
     end
 
     # Ensure we return at least 1.
-    return [page_size, 1].max
+    [ page_size, 1 ].max
   end
 
   # Get the page and return it so the caller can serialize it.
-  def get_page(page_number=nil)
+  def get_page(page_number = nil)
     # If page number isn't provided, infer from the params or use 1 as a fallback value.
     unless page_number
       page_number = @controller&.params&.[](@controller.class.page_query_param&.to_sym)
@@ -55,7 +55,7 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
 
     # Get the data page and return it so the caller can serialize the data in the proper format.
     page_index = @page_number - 1
-    return @data.limit(@page_size).offset(page_index * @page_size)
+    @data.limit(@page_size).offset(page_index * @page_size)
   end
 
   # Wrap the serialized page with appropriate metadata.
@@ -63,13 +63,13 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
     page_query_param = @controller.class.page_query_param
     base_params = @controller.params.to_unsafe_h
     next_url = if @page_number < @total_pages
-      @controller.url_for({**base_params, page_query_param => @page_number + 1})
+      @controller.url_for({ **base_params, page_query_param => @page_number + 1 })
     end
     previous_url = if @page_number > 1
-      @controller.url_for({**base_params, page_query_param => @page_number - 1})
+      @controller.url_for({ **base_params, page_query_param => @page_number - 1 })
     end
 
-    return {
+    {
       count: @count,
       page: @page_number,
       page_size: @page_size,

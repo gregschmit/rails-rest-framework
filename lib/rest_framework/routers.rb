@@ -43,7 +43,7 @@ module ActionDispatch::Routing
         end
       end
 
-      return controller
+      controller
     end
 
     # Interal interface for routing extra actions.
@@ -114,7 +114,7 @@ module ActionDispatch::Routing
           RESTFramework::RRF_BUILTIN_ACTIONS.each do |action, methods|
             next unless controller_class.method_defined?(action)
 
-            [methods].flatten.each do |m|
+            [ methods ].flatten.each do |m|
               public_send(m, "", action: action) if self.respond_to?(m)
             end
           end
@@ -123,7 +123,7 @@ module ActionDispatch::Routing
           RESTFramework::RRF_BUILTIN_BULK_ACTIONS.each do |action, methods|
             next unless controller_class.method_defined?(action)
 
-            [methods].flatten.each do |m|
+            [ methods ].flatten.each do |m|
               public_send(m, "", action: action) if self.respond_to?(m)
             end
           end
@@ -154,7 +154,7 @@ module ActionDispatch::Routing
     end
 
     # Route a controller without the default resourceful paths.
-    def rest_route(name=nil, **kwargs, &block)
+    def rest_route(name = nil, **kwargs, &block)
       controller = kwargs.delete(:controller) || name
       route_root_to = kwargs.delete(:route_root_to)
       if controller.is_a?(Class)
@@ -184,7 +184,7 @@ module ActionDispatch::Routing
           RESTFramework::RRF_BUILTIN_ACTIONS.each do |action, methods|
             next unless controller_class.method_defined?(action)
 
-            [methods].flatten.each do |m|
+            [ methods ].flatten.each do |m|
               public_send(m, "", action: action) if self.respond_to?(m)
             end
           end
@@ -201,7 +201,7 @@ module ActionDispatch::Routing
     end
 
     # Route a controller's `#root` to '/' in the current scope/namespace, along with other actions.
-    def rest_root(name=nil, **kwargs, &block)
+    def rest_root(name = nil, **kwargs, &block)
       # By default, use RootController#root.
       root_action = kwargs.delete(:action) || :root
       controller = kwargs.delete(:controller) || name || :root
@@ -211,7 +211,7 @@ module ActionDispatch::Routing
         kwargs[:path] = ""
       end
 
-      return rest_route(controller, route_root_to: root_action, **kwargs) do
+      rest_route(controller, route_root_to: root_action, **kwargs) do
         yield if block_given?
       end
     end

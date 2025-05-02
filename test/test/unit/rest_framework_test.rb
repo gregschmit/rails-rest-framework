@@ -4,7 +4,7 @@ class UnserializableUser
 end
 
 class UnserializableSerializer < RESTFramework::NativeSerializer
-  self.config = {only: [:id, :name]}
+  self.config = { only: [ :id, :name ] }
 end
 
 class RESTFrameworkTest < Minitest::Test

@@ -29,11 +29,11 @@ example.update!(manager: admin)
       age: rand(18..65),
       is_admin: rand < 0.2,
       balance: rand(0.0..10000.0),
-      state: [0, 0, 0, 0, User.states.keys.sample].sample,
+      state: [ 0, 0, 0, 0, User.states.keys.sample ].sample,
       status: User::STATUS_OPTS.keys.sample,
-      day_start: ["7:30", "8:00", "8:30", "9:00", "9:30"].sample,
+      day_start: [ "7:30", "8:00", "8:30", "9:00", "9:30" ].sample,
       last_reviewed_on: Time.zone.today - rand(0..365).days,
-      manager: [nil, example, admin, User.first(10).sample].sample,
+      manager: [ nil, example, admin, User.first(10).sample ].sample,
     )
   rescue ActiveRecord::RecordInvalid
   end

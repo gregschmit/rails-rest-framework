@@ -7,7 +7,7 @@ module RESTFramework::Mixins::BulkCreateModelMixin
   # overloads the existing collection `POST` endpoint, so we add a special key to the OpenAPI
   # metadata to indicate bulk create is supported.
   def openapi_document
-    return super.merge({"x-rrf-bulk-create": true})
+    super.merge({ "x-rrf-bulk-create": true })
   end
 
   def create
@@ -17,7 +17,7 @@ module RESTFramework::Mixins::BulkCreateModelMixin
       return render(api: serialized_records)
     end
 
-    return super
+    super
   end
 
   # Perform the `create` call, and return the collection of (possibly) created records.
@@ -25,9 +25,7 @@ module RESTFramework::Mixins::BulkCreateModelMixin
     create_data = self.get_create_params(bulk_mode: true)[:_json]
 
     # Perform bulk create in a transaction.
-    return ActiveRecord::Base.transaction do
-      next self.get_create_from.create(create_data)
-    end
+    ActiveRecord::Base.transaction { self.get_create_from.create(create_data) }
   end
 end
 
@@ -42,17 +40,15 @@ module RESTFramework::Mixins::BulkUpdateModelMixin
   # Perform the `update` call and return the collection of (possibly) updated records.
   def update_all!
     pk = self.class.get_model.primary_key
-    update_data = if params[:_json].is_a?(Array)
+    data = if params[:_json].is_a?(Array)
       self.get_create_params(bulk_mode: :update)[:_json].index_by { |r| r[pk] }
     else
       create_params = self.get_create_params
-      {create_params[pk] => create_params}
+      { create_params[pk] => create_params }
     end
 
     # Perform bulk update in a transaction.
-    return ActiveRecord::Base.transaction do
-      next self.get_recordset.update(update_data.keys, update_data.values)
-    end
+    ActiveRecord::Base.transaction { self.get_recordset.update(data.keys, data.values) }
   end
 end
 
@@ -66,8 +62,7 @@ module RESTFramework::Mixins::BulkDestroyModelMixin
     end
 
     render(
-      api: {message: "Bulk destroy requires an array of primary keys as input."},
-      status: 400,
+      api: { message: "Bulk destroy requires an array of primary keys as input." }, status: 400,
     )
   end
 
@@ -77,9 +72,7 @@ module RESTFramework::Mixins::BulkDestroyModelMixin
     destroy_data = self.request.request_parameters[:_json]
 
     # Perform bulk destroy in a transaction.
-    return ActiveRecord::Base.transaction do
-      next self.get_recordset.where(pk => destroy_data).destroy_all
-    end
+    ActiveRecord::Base.transaction { self.get_recordset.where(pk => destroy_data).destroy_all }
   end
 end
 

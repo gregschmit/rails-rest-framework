@@ -11,7 +11,7 @@ end
 # Patch for Ransack (fixes `undefined method 'table_name' for #<Arel::Table`).
 class Arel::Table
   def table_name
-    return self.name
+    self.name
   end
 end
 
@@ -47,7 +47,7 @@ class Application < Rails::Application
 
   config.session_store(:cookie_store, key: "rrf_session")
 
-  config.cache_store = :memory_store, {size: 64.megabytes}
+  config.cache_store = :memory_store, { size: 64.megabytes }
 
   if defined?(Bullet)
     config.after_initialize do
@@ -66,7 +66,7 @@ class Application < Rails::Application
 
   if defined?(SolidQueue)
     config.active_job.queue_adapter = :solid_queue
-    config.solid_queue.connects_to = {database: {writing: :queue}}
+    config.solid_queue.connects_to = { database: { writing: :queue } }
   end
 
   RESTFramework.config.freeze_config = true

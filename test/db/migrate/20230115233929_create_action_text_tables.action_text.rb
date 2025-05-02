@@ -12,7 +12,7 @@ class CreateActionTextTables < ActiveRecord::Migration[6.0]
       t.timestamps
 
       t.index(
-        [:record_type, :record_id, :name],
+        [ :record_type, :record_id, :name ],
         name: "index_action_text_rich_texts_uniqueness",
         unique: true,
       )
@@ -26,6 +26,6 @@ class CreateActionTextTables < ActiveRecord::Migration[6.0]
     setting = config.options[config.orm][:primary_key_type]
     primary_key_type = setting || :primary_key
     foreign_key_type = setting || :bigint
-    [primary_key_type, foreign_key_type]
+    [ primary_key_type, foreign_key_type ]
   end
 end

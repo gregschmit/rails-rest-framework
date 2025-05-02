@@ -3,7 +3,7 @@ require "test_helper"
 if defined?(ActiveModel::Serializer)
   class Api::Test::ActiveModelSerializer::UsersControllerTest < ActionController::TestCase
     def test_list
-      User.create!(login: "test", manager_attributes: {login: "test2"})
+      User.create!(login: "test", manager_attributes: { login: "test2" })
       get(:index, as: :json)
       assert_response(:success)
       assert(@response.parsed_body[1]["login"])
@@ -13,8 +13,8 @@ if defined?(ActiveModel::Serializer)
     end
 
     def test_show
-      t = User.create!(login: "test", manager_attributes: {login: "test2"})
-      get(:show, as: :json, params: {id: t.id})
+      t = User.create!(login: "test", manager_attributes: { login: "test2" })
+      get(:show, as: :json, params: { id: t.id })
       assert_response(:success)
       assert(@response.parsed_body["manager"])
     end
