@@ -31,11 +31,11 @@ jobs:
           - ruby: 3.0.6
             rails: 7.2.1
           - ruby: 2.7.5
-            rails: 8.0.0
+            rails: 8.0.2
           - ruby: 3.0.6
-            rails: 8.0.0
+            rails: 8.0.2
           - ruby: 3.1.4
-            rails: 8.0.0
+            rails: 8.0.2
     env:
       RAILS_VERSION: ${{ matrix.rails }}
       CUSTOM_RUBY_VERSION: ${{ matrix.ruby }}
