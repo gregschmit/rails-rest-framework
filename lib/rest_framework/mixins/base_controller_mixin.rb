@@ -116,11 +116,7 @@ module RESTFramework::Mixins::BaseControllerMixin
 
             # All POST, PUT, PATCH should have a request body.
             if route[:verb].in?(["POST", "PUT", "PATCH"])
-              spec[:requestBody] ||= {
-                content: req_cts.map { |ct|
-                  [ct, {}]
-                }.to_h,
-              }
+              spec[:requestBody] ||= {content: req_cts.map { |ct| [ct, {}] }.to_h}
             end
 
             # Add remaining metadata as an extension.

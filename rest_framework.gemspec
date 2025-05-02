@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://rails-rest-framework.com"
   spec.license = "MIT"
 
-  spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
+  spec.required_ruby_version = Gem::Requirement.new(">= 2.7.5")
 
   spec.add_dependency("rails", ">= 4.0")
 

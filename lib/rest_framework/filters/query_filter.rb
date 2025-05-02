@@ -105,7 +105,6 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
       next nil
     }.compact.to_h.symbolize_keys
 
-    puts "GNS: #{base_query.inspect} #{pred_queries.inspect} #{includes.inspect}"
     return base_query, pred_queries, includes
   end
 

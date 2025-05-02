@@ -15,7 +15,7 @@ RAILS_VERSION = Gem::Version.new(
 )
 
 gem "puma"
-gem "rails", "~> #{RAILS_VERSION}"
+gem "rails", RAILS_VERSION
 gem "rake"
 gem "sqlite3", RAILS_VERSION >= Gem::Version.new("8") ? ">= 2" : "~> 1.4"
 
@@ -72,6 +72,7 @@ group :development do
   gem "foreman"
   gem "pry-rails"
   gem "rubocop-shopify", require: false
+  gem "ruby-lsp", require: false
   gem "web-console"
 
   # Vendoring external assets.
