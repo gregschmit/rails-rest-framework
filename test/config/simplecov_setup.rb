@@ -19,6 +19,7 @@ SimpleCov.start do
 
   # The `rest_framework` project directory should be the root for coverage purposes.
   root ".."
+  coverage_dir "reports/coverage"
 
   # Filter out everything but the lib directory.
   add_filter "app/"

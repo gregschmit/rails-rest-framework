@@ -102,4 +102,9 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
     assert(parsed_body[1]["errors"])
     assert_equal(1, movies.count)
   end
+
+  # TODO:
+  # def test_filtering_predicates
+  #   m = Movies.where()
+  # end
 end

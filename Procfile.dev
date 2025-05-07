@@ -1,0 +1,4 @@
+web: env RUBY_DEBUG_OPEN=true bin/rails server -p 3000
+worker: bin/jobs
+reloader: bin/reloader
+reports: bin/reports_server

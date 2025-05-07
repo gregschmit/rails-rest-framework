@@ -5,6 +5,7 @@ class Api::RootController < ApiController
     dev_test: :get,
     ip: :get,
     c: {methods: [:get, :post], metadata: {test: 5}},
+    d: :get,
   }
 
   def root
@@ -46,5 +47,9 @@ class Api::RootController < ApiController
     end
 
     render(api: {message: "Console opened."})
+  end
+
+  def d
+    debugger  # rubocop:disable Lint/Debugger
   end
 end
