@@ -4,7 +4,7 @@ if defined?(ActiveModel::Serializer)
   class Api::Test::ActiveModelSerializer::UsersControllerTest < ActionController::TestCase
     def test_list
       manager = User.first
-      new = User.create!(login: "test_ams", manager: manager)
+      User.create!(login: "test_ams", manager: manager)
       get(:index, as: :json, params: {ordering: "-id"})
       assert_response(:success)
       assert(@response.parsed_body[0]["login"])
