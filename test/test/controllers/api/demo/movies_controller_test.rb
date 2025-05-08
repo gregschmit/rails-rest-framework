@@ -153,7 +153,7 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
     get(:index, as: :json, params: {"main_genre.name_in" => "History,Fantasy", page_size: 0})
     assert_response(:success)
     assert_equal(
-      Genre.where(name: ["History", "Fantasy"]).collect { |g| g.main_movies }.flatten.count,
+      Genre.where(name: ["History", "Fantasy"]).collect(&:main_movies).flatten.count,
       @response.parsed_body.length,
     )
   end
