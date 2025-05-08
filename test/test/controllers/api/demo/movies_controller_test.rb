@@ -104,6 +104,9 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
   end
 
   def test_filtering_predicates
+    # This feature is only available in Rails 7 and above.
+    return if Rails::VERSION::MAJOR < 7
+
     get(:index, as: :json, params: {price_gt: 10, page_size: 0})
     assert_response(:success)
     assert_equal(Movie.where("price > 10").count, @response.parsed_body.length)
