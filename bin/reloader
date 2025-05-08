@@ -23,7 +23,7 @@ def reload(skip_seed: false)
   system("kill -USR1 $(cat #{PUMA_PID_PATH})")
 
   # Run the test suite (generates coverage report).
-  system("#{"SKIP_SEED=1" if skip_seed} bin/rails test".strip)
+  system("#{"SKIP_SEED=1" if skip_seed} SIMPLECOV_INLINE_ASSETS=1 bin/rails test".strip)
 
   # Generate brakeman report.
   system("bin/brakeman")

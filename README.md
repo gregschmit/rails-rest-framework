@@ -153,8 +153,8 @@ using RVM. Then run `bin/setup` to install the appropriate gems and set things u
 
 The top-level `bin/rails` proxies all Rails commands to the test project, so you can operate it via
 the usual commands (e.g., `rails test`, `rails console`). For development, use `bin/dev` to run the
-web server and the job queue, which serves the test app  and coverage/brakeman reports:
+web server and the job queue, which serves the test app and coverage/brakeman reports:
 
 - Test App: [http://127.0.0.1:3000](http://127.0.0.1:3000)
-- Test App API: [http://127.0.0.1:3000/api](http://127.0.0.1:3000/api)
-- Reports: [http://127.0.0.1:3001](http://127.0.0.1:3001)
+- API: [http://127.0.0.1:3000/api](http://127.0.0.1:3000/api)
+- Reports: [http://127.0.0.1:3000/reports](http://127.0.0.1:3000/reports)

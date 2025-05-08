@@ -76,7 +76,6 @@ group :development do
   gem "pry-rails"
   gem "rubocop-shopify", require: false
   gem "ruby-lsp", require: false
-  gem "webrick"
   gem "web-console"
 
   # Vendoring external assets.
