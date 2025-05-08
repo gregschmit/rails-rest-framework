@@ -155,6 +155,6 @@ The top-level `bin/rails` proxies all Rails commands to the test project, so you
 the usual commands (e.g., `rails test`, `rails console`). For development, use `bin/dev` to run the
 web server and the job queue, which serves the test app  and coverage/brakeman reports:
 
-- Test App: http://127.0.0.1:3000
-- Test App API: http://127.0.0.1:3000/api
-- Reports: http://127.0.0.1:8000
+- Test App: [http://127.0.0.1:3000](http://127.0.0.1:3000)
+- Test App API: [http://127.0.0.1:3000/api](http://127.0.0.1:3000/api)
+- Reports: [http://127.0.0.1:8000](http://127.0.0.1:8000)
