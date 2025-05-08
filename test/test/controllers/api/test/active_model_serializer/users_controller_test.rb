@@ -16,7 +16,7 @@ if defined?(ActiveModel::Serializer)
     def test_show
       manager = User.first
       user = User.create!(login: "test_ams", manager: manager)
-      get(:show, as: :json, params: {id: manager.id})
+      get(:show, as: :json, params: {id: user.id})
       assert_response(:success)
       assert(@response.parsed_body["manager"])
     end
