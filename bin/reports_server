@@ -2,4 +2,4 @@
 
 require "webrick"
 
-WEBrick::HTTPServer.new(Port: 8000, DocumentRoot: "./reports").start
+WEBrick::HTTPServer.new(Port: 3001, DocumentRoot: "./reports").start
