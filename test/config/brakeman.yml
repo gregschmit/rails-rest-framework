@@ -1,4 +1,4 @@
 ---
 :output_files:
-  - test/public/reports/brakeman-lib.html
+  - public/reports/brakeman-app.html
 :combine_locations: false

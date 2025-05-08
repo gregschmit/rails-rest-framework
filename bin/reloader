@@ -25,8 +25,13 @@ def reload(skip_seed: false)
   # Run the test suite (generates coverage report).
   system("#{"SKIP_SEED=1" if skip_seed} SIMPLECOV_INLINE_ASSETS=1 bin/rails test".strip)
 
-  # Generate brakeman report.
+  # Generate lib brakeman report.
   system("bin/brakeman")
+
+  # Generage app brakeman report.
+  Dir.chdir(File.join(PROJECT_ROOT, "test")) do
+    system("bin/brakeman")
+  end
 end
 
 # Load to generate initial reports.

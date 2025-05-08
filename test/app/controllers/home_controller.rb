@@ -25,6 +25,10 @@ class HomeController < ApplicationController
 
   protected
 
+  def sanitize_path(path)
+    return path&.gsub(/[^a-zA-Z0-9-_\/]+/, "")&.gsub(/^\/+/, "")&.gsub(/\/+$/, "")
+  end
+
   def render_content(path)
     file_content = File.read(path)
 
@@ -42,7 +46,7 @@ class HomeController < ApplicationController
   def lookup_section(section, asset: nil)
     if path = self.get_sections.dig(section, :path)
       if asset
-        f = File.join(path, "assets/#{asset}")
+        f = File.join(path, "assets/#{sanitize_path(asset)}")
         return f if File.exist?(f)
       else
         return File.join(path, "index.md")
