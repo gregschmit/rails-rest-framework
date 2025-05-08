@@ -30,18 +30,8 @@ class Application < Rails::Application
   config.autoloader = :zeitwerk
   config.eager_load = false
 
-  if Rails::VERSION::MAJOR >= 7 && Rails::VERSION::MINOR >= 1
-    config.action_dispatch.show_exceptions = Rails.env.test? ? :none : :all
-  else
-    config.action_dispatch.show_exceptions = !Rails.env.test?
-  end
-
   config.consider_all_requests_local = !Rails.env.production?
   config.serve_static_files = true
-
-  # Not working for some reason.
-  # lib_dir = root.join("../lib").to_s
-  # config.autoload_paths << lib_dir
 
   config.active_storage.service = :local
 
@@ -74,6 +64,22 @@ class Application < Rails::Application
   # Use vendored assets if testing `sprockets` or `propshaft`.
   if ENV["ASSET_PIPELINE"] == "sprockets" || ENV["ASSET_PIPELINE"] == "propshaft"
     RESTFramework.config.use_vendored_assets = true
+  end
+
+  # Version specific settings:
+
+  if Rails::VERSION::MAJOR >= 8
+    deprecators.debug = true
+  end
+
+  if Rails::VERSION::MAJOR == 8 && Rails::VERSION::MINOR < 1
+    config.active_support.to_time_preserves_timezone = :zone
+  end
+
+  if Rails::VERSION::MAJOR >= 7 && Rails::VERSION::MINOR >= 1
+    config.action_dispatch.show_exceptions = Rails.env.test? ? :none : :all
+  else
+    config.action_dispatch.show_exceptions = !Rails.env.test?
   end
 
   if Rails::VERSION::MAJOR == 7 && Rails::VERSION::MINOR < 1

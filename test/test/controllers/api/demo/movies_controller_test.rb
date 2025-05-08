@@ -8,9 +8,9 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
 
   if defined?(Ransack)
     def test_ransack_simple
-      get(:index, as: :json, params: {q: {price_gt: 9}})
+      get(:index, as: :json, params: {q: {price_gt: 9}, page_size: 0})
       assert_response(:success)
-      assert_equal(2, @response.parsed_body["results"].length)
+      assert_equal(Movie.where("price > 9").count, @response.parsed_body.length)
     end
   end
 
@@ -101,5 +101,39 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
     assert_nil(parsed_body[0]["errors"])
     assert(parsed_body[1]["errors"])
     assert_equal(1, movies.count)
+  end
+
+  def test_filtering_predicates
+    get(:index, as: :json, params: {price_gt: 10, page_size: 0})
+    assert_response(:success)
+    assert_equal(Movie.where("price > 10").count, @response.parsed_body.length)
+
+    get(:index, as: :json, params: {price_gte: 11, page_size: 0})
+    assert_response(:success)
+    assert_equal(Movie.where("price >= 11").count, @response.parsed_body.length)
+
+    get(:index, as: :json, params: {price_lt: 10, page_size: 0})
+    assert_response(:success)
+    assert_equal(Movie.where("price < 10").count, @response.parsed_body.length)
+
+    get(:index, as: :json, params: {price_lte: 11, page_size: 0})
+    assert_response(:success)
+    assert_equal(Movie.where("price <= 11").count, @response.parsed_body.length)
+
+    get(:index, as: :json, params: {name_not: Movie.first.name, page_size: 0})
+    assert_response(:success)
+    assert_equal(Movie.count - 1, @response.parsed_body.length)
+
+    get(:index, as: :json, params: {name_cont: "for", page_size: 0})
+    assert_response(:success)
+    assert_equal(Movie.where("name LIKE ?", "%for%").count, @response.parsed_body.length)
+
+    get(:index, as: :json, params: {id_in: Movie.first(5).pluck(:id).join(","), page_size: 0})
+    assert_response(:success)
+    assert_equal(5, @response.parsed_body.length)
+
+    get(:index, as: :json, params: {id_in: Movie.first(5).pluck(:id), page_size: 0})
+    assert_response(:success)
+    assert_equal(5, @response.parsed_body.length)
   end
 end

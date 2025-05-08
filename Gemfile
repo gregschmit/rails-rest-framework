@@ -68,11 +68,15 @@ end
 group :development do
   gem "better_errors", "2.9.1"  # Avoid `sassc` dependency.
   gem "binding_of_caller"
+  gem "brakeman"
   gem "byebug"
+  gem "debug"
   gem "foreman"
+  gem "listen"
   gem "pry-rails"
   gem "rubocop-shopify", require: false
   gem "ruby-lsp", require: false
+  gem "webrick"
   gem "web-console"
 
   # Vendoring external assets.
