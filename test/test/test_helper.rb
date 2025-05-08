@@ -26,3 +26,5 @@ require "rails/test_help"
 
 class ActiveSupport::TestCase
 end
+
+Rails.application.load_seed unless ENV["SKIP_SEED"]

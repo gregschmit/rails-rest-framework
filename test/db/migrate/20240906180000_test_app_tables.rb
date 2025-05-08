@@ -28,7 +28,12 @@ class TestAppTables < ActiveRecord::Migration[6.0]
       t.references(:user, null: true, foreign_key: {on_delete: :nullify})
     end
 
-    add_reference(:users, :email, foreign_key: {on_delete: :nullify}, index: {unique: true})
+    add_reference(
+      :users,
+      :finance_email,
+      foreign_key: {to_table: :emails, on_delete: :nullify},
+      index: {unique: true},
+    )
 
     create_table(:phone_numbers) do |t|
       t.string(:number, null: false, default: "", index: {unique: true})

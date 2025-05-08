@@ -115,8 +115,8 @@ ActiveRecord::Schema[8.0].define(version: 2024_09_06_180000) do
     t.integer "manager_id"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.integer "email_id"
-    t.index ["email_id"], name: "index_users_on_email_id", unique: true
+    t.integer "finance_email_id"
+    t.index ["finance_email_id"], name: "index_users_on_finance_email_id", unique: true
     t.index ["login"], name: "index_users_on_login", unique: true
     t.index ["manager_id"], name: "index_users_on_manager_id"
   end
@@ -130,6 +130,6 @@ ActiveRecord::Schema[8.0].define(version: 2024_09_06_180000) do
   add_foreign_key "movies_users", "movies", on_delete: :cascade
   add_foreign_key "movies_users", "users", on_delete: :cascade
   add_foreign_key "phone_numbers", "users", on_delete: :cascade
-  add_foreign_key "users", "emails", on_delete: :nullify
+  add_foreign_key "users", "emails", column: "finance_email_id", on_delete: :nullify
   add_foreign_key "users", "users", column: "manager_id", on_delete: :nullify
 end

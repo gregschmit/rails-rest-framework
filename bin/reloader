@@ -18,12 +18,12 @@ LISTEN_DIRS = %w[
   test/test
 ].map { |dir| File.join(PROJECT_ROOT, dir) }
 
-def reload
+def reload(skip_seed: false)
   # Reload Puma.
   system("kill -USR1 $(cat #{PUMA_PID_PATH})")
 
   # Run the test suite (generates coverage report).
-  system("bin/rails test")
+  system("#{"SKIP_SEED=1" if skip_seed} bin/rails test".strip)
 
   # Generate brakeman report.
   system("bin/brakeman")
@@ -34,7 +34,7 @@ reload
 
 listener = Listen.to(*LISTEN_DIRS) do |modified, added, removed|
   puts(modified: modified, added: added, removed: removed)
-  reload
+  reload(skip_seed: true)
 end
 
 listener.start

@@ -8,9 +8,9 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
 
   if defined?(Ransack)
     def test_ransack_simple
-      get(:index, as: :json, params: {q: {price_gt: 9}})
+      get(:index, as: :json, params: {q: {price_gt: 9}, page_size: 0})
       assert_response(:success)
-      assert_equal(2, @response.parsed_body["results"].length)
+      assert_equal(Movie.where("price > 9").count, @response.parsed_body.length)
     end
   end
 
