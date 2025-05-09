@@ -34,8 +34,7 @@ example.update!(manager: admin)
   login = Faker::Internet.username(specifier: legal_name) + rand(1..100).to_s
 
   # Generate either 0, 1, or 2 emails:
-  erand = rand
-  emails = (erand < 0.1 ? 0 : erand > 0.9 ? 2 : 1).times.map do |i|
+  emails = [ 0, *([ 1 ] * 8), 2 ].sample.times.map do |i|
     Email.create!(email: Faker::Internet.email(name: legal_name), is_primary: i == 0)
   end
 
