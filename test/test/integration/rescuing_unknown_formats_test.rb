@@ -21,6 +21,6 @@ class RescuingUnknownFormatsTest < ActionDispatch::IntegrationTest
     assert_response(:success)
     resp2 = @response.body
 
-    assert_equal(resp1, resp2)
+    assert_equal(resp1, resp2.gsub(".jsom", ".json"))
   end
 end

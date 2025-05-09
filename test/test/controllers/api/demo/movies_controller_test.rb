@@ -8,9 +8,15 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
 
   if defined?(Ransack)
     def test_ransack_simple
-      get(:index, as: :json, params: { q: { price_gt: 9 } })
+      get(:index, as: :json, params: { q: { price_gt: 9 }, page_size: 0 })
       assert_response(:success)
-      assert_equal(2, @response.parsed_body["results"].length)
+      assert_equal(Movie.where("price > 9").count, @response.parsed_body.length)
+    end
+
+    def test_ransack_distinct
+      get(:index, as: :json, params: { q: { price_gt: 9 }, distinct: true, page_size: 0 })
+      assert_response(:success)
+      assert_equal(Movie.where("price > 9").count, @response.parsed_body.length)
     end
   end
 
@@ -101,5 +107,78 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
     assert_nil(parsed_body[0]["errors"])
     assert(parsed_body[1]["errors"])
     assert_equal(1, movies.count)
+  end
+
+  def test_filtering_predicates
+    # This feature is only available in Rails 7 and above.
+    return if Rails::VERSION::MAJOR < 7
+
+    get(:index, as: :json, params: { price_gt: 10, page_size: 0 })
+    assert_response(:success)
+    assert_equal(Movie.where("price > 10").count, @response.parsed_body.length)
+
+    get(:index, as: :json, params: { price_gte: 11, page_size: 0 })
+    assert_response(:success)
+    assert_equal(Movie.where("price >= 11").count, @response.parsed_body.length)
+
+    get(:index, as: :json, params: { price_lt: 10, page_size: 0 })
+    assert_response(:success)
+    assert_equal(Movie.where("price < 10").count, @response.parsed_body.length)
+
+    get(:index, as: :json, params: { price_lte: 11, page_size: 0 })
+    assert_response(:success)
+    assert_equal(Movie.where("price <= 11").count, @response.parsed_body.length)
+
+    get(:index, as: :json, params: { name_not: Movie.first.name, page_size: 0 })
+    assert_response(:success)
+    assert_equal(Movie.count - 1, @response.parsed_body.length)
+
+    get(:index, as: :json, params: { name_cont: "for", page_size: 0 })
+    assert_response(:success)
+    assert_equal(Movie.where("name LIKE ?", "%for%").count, @response.parsed_body.length)
+
+    get(:index, as: :json, params: { id_in: Movie.first(5).pluck(:id).join(","), page_size: 0 })
+    assert_response(:success)
+    assert_equal(5, @response.parsed_body.length)
+
+    get(:index, as: :json, params: { id_in: Movie.first(5).pluck(:id), page_size: 0 })
+    assert_response(:success)
+    assert_equal(5, @response.parsed_body.length)
+  end
+
+  def test_subfield_predicate
+    # This feature is only available in Rails 7 and above.
+    return if Rails::VERSION::MAJOR < 7
+
+    get(:index, as: :json, params: { "main_genre.name_in" => "History,Fantasy", page_size: 0 })
+    assert_response(:success)
+    assert_equal(
+      Genre.where(name: [ "History", "Fantasy" ]).collect(&:main_movies).flatten.count,
+      @response.parsed_body.length,
+    )
+  end
+
+  def test_search
+    get(:index, as: :json, params: { search: "for", page_size: 0 })
+    assert_response(:success)
+    assert_operator(@response.parsed_body.length, :<, Movie.count)
+  end
+
+  def test_ordering
+    get(:index, as: :json, params: { ordering: "name", page_size: 0 })
+    assert_response(:success)
+    assert_equal(Movie.order("name").pluck(:id), @response.parsed_body.map { |r| r["id"] })
+  end
+
+  def test_page_2
+    get(:index, as: :json, params: { page: 2, page_size: 2 })
+    assert_response(:success)
+    assert_equal(2, @response.parsed_body["results"].length)
+  end
+
+  def test_page_0
+    get(:index, as: :json, params: { page: 0, page_size: 2 })
+    assert_response(:success)
+    assert_equal(2, @response.parsed_body["results"].length)
   end
 end

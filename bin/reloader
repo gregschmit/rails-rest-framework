@@ -1,0 +1,46 @@
+#!/usr/bin/env ruby
+
+# Watch the project directory and reload Puma and generate reports when files change. We need to do
+# this manually because the test project uses the library in a parent directory, and Rails does not
+# appear to support reloading the parent directory, even when adding it to the `autoload_paths`.
+
+require "fileutils"
+require "listen"
+
+PROJECT_ROOT = File.expand_path("..", __dir__)
+PUMA_PID_PATH = File.join(PROJECT_ROOT, "test", "tmp", "pids", "server.pid")
+LISTEN_DIRS = %w[
+  app
+  lib
+  vendor
+
+  test/app
+  test/test
+].map { |dir| File.join(PROJECT_ROOT, dir) }
+
+def reload(skip_seed: false)
+  # Reload Puma.
+  system("kill -USR1 $(cat #{PUMA_PID_PATH})")
+
+  # Run the test suite (generates coverage report).
+  system("#{"SKIP_SEED=1" if skip_seed} SIMPLECOV_INLINE_ASSETS=1 bin/rails test".strip)
+
+  # Generate lib brakeman report.
+  system("bin/brakeman")
+
+  # Generage app brakeman report.
+  Dir.chdir(File.join(PROJECT_ROOT, "test")) do
+    system("bin/brakeman")
+  end
+end
+
+# Load to generate initial reports.
+reload
+
+listener = Listen.to(*LISTEN_DIRS) do |modified, added, removed|
+  puts(modified: modified, added: added, removed: removed)
+  reload(skip_seed: true)
+end
+
+listener.start
+sleep

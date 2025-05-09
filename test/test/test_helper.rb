@@ -25,5 +25,6 @@ require_relative "../config/environment"
 require "rails/test_help"
 
 class ActiveSupport::TestCase
-  fixtures :all
 end
+
+Rails.application.load_seed unless ENV["SKIP_SEED"]

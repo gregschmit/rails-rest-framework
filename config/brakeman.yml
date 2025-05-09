@@ -1,0 +1,4 @@
+---
+:output_files:
+  - test/public/reports/brakeman-lib.html
+:combine_locations: false

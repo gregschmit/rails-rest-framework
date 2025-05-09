@@ -9,12 +9,7 @@ class User < ApplicationRecord
 
   # This association is purposefully named differently than the column to test how this affects the
   # framework.
-  belongs_to(
-    :billing_email,
-    optional: true,
-    class_name: "Email",
-    foreign_key: "email_id",
-  )
+  belongs_to(:billing_email, optional: true, class_name: "Email", foreign_key: "finance_email_id")
 
   belongs_to :manager, class_name: "User", optional: true
   has_and_belongs_to_many :movies

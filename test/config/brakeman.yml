@@ -1,0 +1,4 @@
+---
+:output_files:
+  - public/reports/brakeman-app.html
+:combine_locations: false

@@ -152,5 +152,9 @@ After you clone the repository, cd'ing into the directory should create a new ge
 using RVM. Then run `bin/setup` to install the appropriate gems and set things up.
 
 The top-level `bin/rails` proxies all Rails commands to the test project, so you can operate it via
-the usual commands (e.g., `rails test`, `rails server` and `rails console`). For development, use
-`foreman start` to run the web server and the job queue.
+the usual commands (e.g., `rails test`, `rails console`). For development, use `bin/dev` to run the
+web server and the job queue, which serves the test app and coverage/brakeman reports:
+
+- Test App: [http://127.0.0.1:3000](http://127.0.0.1:3000)
+- API: [http://127.0.0.1:3000/api](http://127.0.0.1:3000/api)
+- Reports: [http://127.0.0.1:3000/reports](http://127.0.0.1:3000/reports)

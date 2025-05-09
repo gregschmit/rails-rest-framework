@@ -1,6 +1,17 @@
-# Seed data is used for the Demo API.
+# Seed data is used for the Demo API as well as initial test data in lieu of fixtures.
+
+# Always clear the database before seeding.
+puts "Clearing database..."
+Email.delete_all
+Genre.delete_all
+Movie.delete_all
+PhoneNumber.delete_all
+User.delete_all
 
 Faker::Config.random = Random.new(42)
+srand(42)
+
+puts "Seed data loading..."
 
 example = User.create!(
   login: "example",
@@ -18,25 +29,37 @@ admin = User.create!(
 example.update!(manager: admin)
 
 1000.times do |_|
-  # Create with faker data:
   legal_name = Faker::Name.name_with_middle
-  short_name = legal_name.split(" ").first
-  begin
-    User.create!(
-      login: Faker::Internet.username,
-      legal_name: legal_name,
-      short_name: short_name,
-      age: rand(18..65),
-      is_admin: rand < 0.2,
-      balance: rand(0.0..10000.0),
-      state: [ 0, 0, 0, 0, User.states.keys.sample ].sample,
-      status: User::STATUS_OPTS.keys.sample,
-      day_start: [ "7:30", "8:00", "8:30", "9:00", "9:30" ].sample,
-      last_reviewed_on: Time.zone.today - rand(0..365).days,
-      manager: [ nil, example, admin, User.first(10).sample ].sample,
-    )
-  rescue ActiveRecord::RecordInvalid
+  short_name = legal_name.gsub(/^[a-zA-Z]*\./, "").split(" ").first
+  login = Faker::Internet.username(specifier: legal_name) + rand(1..100).to_s
+
+  # Generate either 0, 1, or 2 emails:
+  erand = rand
+  emails = (erand < 0.1 ? 0 : erand > 0.9 ? 2 : 1).times.map do |i|
+    Email.create!(email: Faker::Internet.email(name: legal_name), is_primary: i == 0)
   end
+
+  u = User.create!(
+    login: login,
+    legal_name: legal_name,
+    short_name: short_name,
+    age: rand(18..65),
+    is_admin: rand < 0.2,
+    balance: rand(0.0..10000.0),
+    state: [ 0, 0, 0, 0, User.states.keys.sample ].sample,
+    status: User::STATUS_OPTS.keys.sample,
+    day_start: [ "7:30", "8:00", "8:30", "9:00", "9:30" ].sample,
+    last_reviewed_on: Time.zone.today - rand(0..365).days,
+    manager: [ nil, nil, nil, example, admin, User.first(10).sample ].sample,
+    billing_email: rand < 0.5 ? emails.first : nil,
+    emails: emails,
+  )
+
+  # Triggers stack error on users controller somehow.
+  if rand < 0.7
+    PhoneNumber.create!(number: Faker::PhoneNumber.cell_phone, user: u)
+  end
+rescue ActiveRecord::RecordInvalid
 end
 
 # Created by copilot:
@@ -76,3 +99,5 @@ end
 
 example.movies += Movie.all.sample(5)
 admin.movies += Movie.all.sample(20)
+
+puts "Seed data loaded."
