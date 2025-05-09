@@ -12,7 +12,7 @@ task :maintain_assets do
   assets_dir = File.expand_path("vendor/assets", __dir__)
 
   # First, delete js/css directories.
-  ["javascripts", "stylesheets"].each do |path_type|
+  [ "javascripts", "stylesheets" ].each do |path_type|
     FileUtils.rm_rf(File.expand_path("#{path_type}/rest_framework", assets_dir))
     Dir.mkdir(File.expand_path("#{path_type}/rest_framework", assets_dir))
   end

@@ -2,7 +2,7 @@ require "test_helper"
 
 # Common tests for all models.
 module BaseModelTests
-  TITLE_FIELDS = [:name, :login]
+  TITLE_FIELDS = [ :name, :login ]
 
   def self.included(base)
     base.setup do

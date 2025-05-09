@@ -5,7 +5,7 @@ class Api::TestControllerTest < ActionController::TestCase
     get(:root)
     assert_response(:success)
 
-    [:json, :xml].each do |fmt|
+    [ :json, :xml ].each do |fmt|
       get(:root, format: fmt)
       assert_response(:success)
     end

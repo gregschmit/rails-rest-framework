@@ -5,13 +5,13 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     return value unless BASE64_REGEX.match?(value)
 
     _, content_type, payload = value.match(BASE64_REGEX).to_a
-    return {
+    {
       io: StringIO.new(Base64.decode64(payload)),
       content_type: content_type,
       filename: "file_#{field}#{Rack::Mime::MIME_TYPES.invert[content_type]}",
     }
   }
-  ACTIVESTORAGE_KEYS = [:io, :content_type, :filename, :identify, :key]
+  ACTIVESTORAGE_KEYS = [ :io, :content_type, :filename, :identify, :key ]
 
   include RESTFramework::BaseControllerMixin
 
@@ -74,7 +74,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
   }
 
   module ClassMethods
-    IGNORE_VALIDATORS_WITH_KEYS = [:if, :unless].freeze
+    IGNORE_VALIDATORS_WITH_KEYS = [ :if, :unless ].freeze
 
     def get_model
       return @model if @model
@@ -91,7 +91,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
     # Override to include ActiveRecord i18n-translated column names.
     def label_for(s)
-      return self.get_model.human_attribute_name(s, default: super)
+      self.get_model.human_attribute_name(s, default: super)
     end
 
     # Get the available fields. Fallback to this controller's model columns, or an empty array. This
@@ -121,7 +121,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         input_fields = input_fields.map(&:to_s)
       end
 
-      return input_fields
+      input_fields
     end
 
     # Get a full field configuration, including defaults and inferred values.
@@ -141,7 +141,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         .select { |n| n.to_s.start_with?("rich_text_") }
       attachment_reflections = model.attachment_reflections
 
-      return @field_configuration = self.get_fields.map { |f|
+      @field_configuration = self.get_fields.map { |f|
         cfg = field_config[f]&.dup || {}
         cfg[:label] ||= self.label_for(f)
 
@@ -218,7 +218,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
               v[:kind] = "method"
             end
 
-            next [sf, v]
+            next [ sf, v ]
           }.to_h.compact.presence
 
           # Determine if we render id/ids fields. Unfortunately, `has_one` does not provide this
@@ -231,7 +231,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           if self.permit_nested_attributes_assignment && (
             nested_opts = model.nested_attributes_options[f.to_sym].presence
           )
-            cfg[:nested_attributes_options] = {field: "#{f}_attributes", **nested_opts}
+            cfg[:nested_attributes_options] = { field: "#{f}_attributes", **nested_opts }
           end
 
           begin
@@ -283,7 +283,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           cfg[:validators][kind] << options
         end
 
-        next [f, cfg]
+        next [ f, cfg ]
       }.to_h.with_indifferent_access
     end
 
@@ -295,7 +295,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         required: field_configuration.select { |_, cfg| cfg[:required] }.keys,
         type: "object",
         properties: field_configuration.map { |f, cfg|
-          v = {title: cfg[:label]}
+          v = { title: cfg[:label] }
 
           if cfg[:kind] == "association"
             v[:type] = cfg[:reflection].collection? ? "array" : "object"
@@ -339,15 +339,15 @@ module RESTFramework::Mixins::BaseModelControllerMixin
             v[:"x-rrf-nested_attributes_options"] = cfg[:nested_attributes_options]
           end
 
-          next [f, v]
+          next [ f, v ]
         }.to_h,
       }
 
-      return @openapi_schema
+      @openapi_schema
     end
 
     def openapi_schema_name
-      return @openapi_schema_name ||= self.name.chomp("Controller").gsub("::", ".")
+      @openapi_schema_name ||= self.name.chomp("Controller").gsub("::", ".")
     end
 
     def openapi_paths(_routes, tag)
@@ -365,7 +365,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
           if !extra_action && method != "options"  # rubocop:disable Style/Next
             # Add schema to request body content types.
             action.dig(:requestBody, :content)&.each do |_t, v|
-              v[:schema] = {"$ref" => "#/components/schemas/#{schema_name}"}
+              v[:schema] = { "$ref" => "#/components/schemas/#{schema_name}" }
             end
 
             # Add schema to successful response body content types.
@@ -375,7 +375,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
               response[:content]&.each do |t, v|
                 next if t == "text/html"
 
-                v[:schema] = {"$ref" => "#/components/schemas/#{schema_name}"}
+                v[:schema] = { "$ref" => "#/components/schemas/#{schema_name}" }
               end
             end
 
@@ -392,7 +392,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         end
       end
 
-      return paths
+      paths
     end
 
     def openapi_document(request, route_group_name, _routes)
@@ -403,7 +403,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       document[:components][:schemas] ||= {}
       document[:components][:schemas][self.openapi_schema_name] = self.openapi_schema
 
-      return document.merge(
+      document.merge(
         {
           "x-rrf-primary_key" => self.get_model.primary_key,
           "x-rrf-callbacks" => self._process_action_callbacks.as_json,
@@ -478,7 +478,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
   end
 
   def get_fields
-    return self.class.get_fields(input_fields: self.class.fields)
+    self.class.get_fields(input_fields: self.class.fields)
   end
 
   # Get a hash of strong parameters for the current action.
@@ -527,7 +527,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         # TODO: Consider adjusting this based on `nested_attributes_options`.
         if self.class.permit_nested_attributes_assignment
           hash_variations["#{f}_attributes"] = (
-            config[:sub_fields] + ["_destroy"]
+            config[:sub_fields] + [ "_destroy" ]
           )
         end
 
@@ -541,11 +541,11 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     @_get_allowed_parameters += variations
     @_get_allowed_parameters << hash_variations
 
-    return @_get_allowed_parameters
+    @_get_allowed_parameters
   end
 
   def get_serializer_class
-    return super || RESTFramework::NativeSerializer
+    super || RESTFramework::NativeSerializer
   end
 
   # Use strong parameters to filter the request body.
@@ -617,8 +617,8 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     body_params = if allowed_params == true
       ActionController::Parameters.new(data).permit!
     elsif bulk_mode
-      pk = bulk_mode == :update ? [pk] : []
-      ActionController::Parameters.new(data).permit({_json: allowed_params + pk})
+      pk = bulk_mode == :update ? [ pk ] : []
+      ActionController::Parameters.new(data).permit({ _json: allowed_params + pk })
     else
       ActionController::Parameters.new(data).permit(*allowed_params)
     end
@@ -640,7 +640,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     # Filter fields in `exclude_body_fields`.
     (self.class.exclude_body_fields || []).each { |f| body_params.delete(f) }
 
-    return body_params
+    body_params
   end
   alias_method :get_create_params, :get_body_params
   alias_method :get_update_params, :get_body_params
@@ -654,14 +654,14 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       return model.all
     end
 
-    return nil
+    nil
   end
 
   # Filter the recordset and return records this request has access to.
   def get_records
     data = self.get_recordset
 
-    return @records ||= self.class.filter_backends&.reduce(data) { |d, filter|
+    @records ||= self.class.filter_backends&.reduce(data) { |d, filter|
       filter.new(controller: self).filter_data(d)
     } || data
   end
@@ -694,9 +694,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
 
     # Return the record. Route key is always `:id` by Rails' convention.
     if is_pk
-      return @record = collection.find(request.path_parameters[:id])
+      @record = collection.find(request.path_parameters[:id])
     else
-      return @record = collection.find_by!(find_by_key => request.path_parameters[:id])
+      @record = collection.find_by!(find_by_key => request.path_parameters[:id])
     end
   end
 
@@ -720,8 +720,8 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     # the serializer directly. This would fail for active model serializers, but maybe we don't
     # care?
     s = RESTFramework::Utils.wrap_ams(self.get_serializer_class)
-    return records.map do |record|
-      s.new(record, controller: self).serialize.merge!({errors: record.errors.presence}.compact)
+    records.map do |record|
+      s.new(record, controller: self).serialize.merge!({ errors: record.errors.presence }.compact)
     end
   end
 end
@@ -750,7 +750,7 @@ module RESTFramework::Mixins::ListModelMixin
       end
     end
 
-    return records
+    records
   end
 end
 
@@ -769,7 +769,7 @@ module RESTFramework::Mixins::CreateModelMixin
 
   # Perform the `create!` call and return the created record.
   def create!
-    return self.get_create_from.create!(self.get_create_params)
+    self.get_create_from.create!(self.get_create_params)
   end
 end
 
@@ -783,7 +783,7 @@ module RESTFramework::Mixins::UpdateModelMixin
   def update!
     record = self.get_record
     record.update!(self.get_update_params)
-    return record
+    record
   end
 end
 
@@ -796,7 +796,7 @@ module RESTFramework::Mixins::DestroyModelMixin
 
   # Perform the `destroy!` call and return the destroyed (and frozen) record.
   def destroy!
-    return self.get_record.destroy!
+    self.get_record.destroy!
   end
 end
 

@@ -15,11 +15,11 @@ class Movie < ApplicationRecord
   attribute :default_discount, :decimal, default: 5.0
 
   def self.ransackable_attributes(*args)
-    return %w(name price created_at updated_at)
+    %w[name price created_at updated_at]
   end
 
   def self.ransackable_associations(*args)
-    return []
+    []
   end
 
   before_destroy do

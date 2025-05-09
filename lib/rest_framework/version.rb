@@ -19,7 +19,7 @@ module RESTFramework
       end
 
       # No VERSION file, so version is unknown.
-      return UNKNOWN
+      UNKNOWN
     end
 
     def self.stamp_version

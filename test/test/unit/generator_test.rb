@@ -12,14 +12,14 @@ class GeneratorTest < Minitest::Test
 
   def test_controller_help
     _suppress_stdout do
-      Rails::Generators.invoke("rest_framework:controller", ["--help"])
+      Rails::Generators.invoke("rest_framework:controller", [ "--help" ])
     end
   end
 
   def test_controller_failure
     _suppress_stdout do
       assert_raises(StandardError) do
-        Rails::Generators.invoke("rest_framework:controller", ["TEST"])
+        Rails::Generators.invoke("rest_framework:controller", [ "TEST" ])
       end
     end
   end
@@ -28,7 +28,7 @@ class GeneratorTest < Minitest::Test
     path = "api/test/testa"
     filename = "app/controllers/#{path}_controller.rb"
     _suppress_stdout do
-      Rails::Generators.invoke("rest_framework:controller", [path])
+      Rails::Generators.invoke("rest_framework:controller", [ path ])
     end
     file = File.read(filename)
     expected = <<~END
@@ -45,7 +45,7 @@ class GeneratorTest < Minitest::Test
     path = "api/test/testb"
     filename = "app/controllers/#{path}_controller.rb"
     _suppress_stdout do
-      Rails::Generators.invoke("rest_framework:controller", [path, "--include-base"])
+      Rails::Generators.invoke("rest_framework:controller", [ path, "--include-base" ])
     end
     file = File.read(filename)
     expected = <<~END
@@ -64,7 +64,7 @@ class GeneratorTest < Minitest::Test
     _suppress_stdout do
       Rails::Generators.invoke(
         "rest_framework:controller",
-        [path, "--parent-class=Api::TestController"],
+        [ path, "--parent-class=Api::TestController" ],
       )
     end
     file = File.read(filename)

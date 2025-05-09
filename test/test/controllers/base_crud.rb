@@ -2,7 +2,7 @@ require "test_helper"
 
 module BaseCRUD
   def _get_model
-    return @_get_model ||= self.class.name.match(
+    @_get_model ||= self.class.name.match(
       /([a-zA-Z]+)ControllerTest$/,
     )[1].singularize.constantize
   end
@@ -11,7 +11,7 @@ module BaseCRUD
     get(:index)
     assert_response(:success)
 
-    [:json, :xml].each do |fmt|
+    [ :json, :xml ].each do |fmt|
       get(:index, as: fmt)
       assert_response(:success)
     end
@@ -26,22 +26,22 @@ module BaseCRUD
 
   def test_show
     id = self._get_model.first.id
-    get(:show, params: {id: id})
+    get(:show, params: { id: id })
     assert_response(:success)
 
-    [:json, :xml].each do |fmt|
-      get(:show, as: fmt, params: {id: id})
+    [ :json, :xml ].each do |fmt|
+      get(:show, as: fmt, params: { id: id })
       assert_response(:success)
     end
   end
 
   def test_show_not_found
     id = self._get_model.all.pluck(:id).max + 1
-    get(:show, params: {id: id})
+    get(:show, params: { id: id })
     assert_response(404)
 
-    [:json, :xml].each do |fmt|
-      get(:show, as: fmt, params: {id: id})
+    [ :json, :xml ].each do |fmt|
+      get(:show, as: fmt, params: { id: id })
       assert_response(404)
     end
   end
@@ -54,7 +54,7 @@ module BaseCRUD
 
   def test_cannot_create_with_specific_id
     try_id = self._get_model.first.id
-    post(:create, as: :json, params: {id: try_id, **self.class.create_params})
+    post(:create, as: :json, params: { id: try_id, **self.class.create_params })
     assert_response(:success)
     assert(@response.parsed_body["id"] != try_id)
     assert(self._get_model.find_by(id: @response.parsed_body["id"]))
@@ -62,7 +62,7 @@ module BaseCRUD
 
   def test_cannot_create_with_specific_created_at
     try_created_at = Time.new(2000, 1, 1)
-    post(:create, as: :json, params: {created_at: try_created_at, **self.class.create_params})
+    post(:create, as: :json, params: { created_at: try_created_at, **self.class.create_params })
 
     assert_response(:success)
 
@@ -79,7 +79,7 @@ module BaseCRUD
     # Check old properties aren't the same as the new ones we're assigning in update.
     assert(self.class.update_params.map { |k, v| record.send(k) != v }.all?)
 
-    patch(:update, as: :json, params: {id: record.id}, body: self.class.update_params.to_json)
+    patch(:update, as: :json, params: { id: record.id }, body: self.class.update_params.to_json)
     assert_response(:success)
 
     # Ensure properties are updated.
@@ -89,7 +89,7 @@ module BaseCRUD
 
   def test_destroy
     id = self._get_model.first.id
-    delete(:destroy, params: {id: id})
+    delete(:destroy, params: { id: id })
     assert_response(:success)
     assert_nil(self._get_model.find_by(id: id))
   end

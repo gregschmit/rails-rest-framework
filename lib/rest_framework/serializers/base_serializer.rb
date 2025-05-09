@@ -4,7 +4,7 @@ class RESTFramework::Serializers::BaseSerializer
   attr_accessor :object
 
   # Accept/ignore `*args` to be compatible with the `ActiveModel::Serializer#initialize` signature.
-  def initialize(object=nil, *args, controller: nil, **kwargs)
+  def initialize(object = nil, *args, controller: nil, **kwargs)
     @object = object
     @controller = controller
   end
@@ -18,22 +18,22 @@ class RESTFramework::Serializers::BaseSerializer
   # Synonym for `serialize` for compatibility with `active_model_serializers`.
   # :nocov:
   def serializable_hash(*args)
-    return self.serialize(*args)
+    self.serialize(*args)
   end
 
   # For compatibility with `active_model_serializers`.
   def self.cache_enabled?
-    return false
+    false
   end
 
   # For compatibility with `active_model_serializers`.
   def self.fragment_cache_enabled?
-    return false
+    false
   end
 
   # For compatibility with `active_model_serializers`.
   def associations(*args, **kwargs)
-    return []
+    []
   end
   # :nocov:
 end

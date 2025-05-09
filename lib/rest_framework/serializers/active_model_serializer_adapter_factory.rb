@@ -3,13 +3,13 @@
 # :nocov:
 class RESTFramework::Serializers::ActiveModelSerializerAdapterFactory
   def self.for(active_model_serializer)
-    return Class.new(active_model_serializer) do
+    Class.new(active_model_serializer) do
       def serialize
         if self.object.respond_to?(:to_ary)
           return self.object.map { |r| self.class.superclass.new(r).serializable_hash }
         end
 
-        return self.serializable_hash
+        self.serializable_hash
       end
     end
   end

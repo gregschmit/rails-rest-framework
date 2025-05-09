@@ -7,7 +7,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
   class_attribute :action_config
 
   # Accept/ignore `*args` to be compatible with the `ActiveModel::Serializer#initialize` signature.
-  def initialize(object=nil, *args, many: nil, model: nil, **kwargs)
+  def initialize(object = nil, *args, many: nil, model: nil, **kwargs)
     super(object, *args, **kwargs)
 
     if many.nil?
@@ -28,7 +28,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
 
   # Get controller action, if possible.
   def get_action
-    return @controller&.action_name&.to_sym
+    @controller&.action_name&.to_sym
   end
 
   # Get a locally defined native serializer configuration, if one is defined.
@@ -47,7 +47,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     return self.singular_config if @many == false && self.singular_config
 
     # Lastly, try returning the default config, or singular/plural config in that order.
-    return self.config || self.singular_config || self.plural_config
+    self.config || self.singular_config || self.plural_config
   end
 
   # Get a native serializer configuration from the controller.
@@ -60,7 +60,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       controller_serializer = @controller.class.native_serializer_singular_config
     end
 
-    return controller_serializer || @controller.class.native_serializer_config
+    controller_serializer || @controller.class.native_serializer_config
   end
 
   # Filter a single subconfig for specific keys. By default, keys from `fields` are removed from the
@@ -99,7 +99,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       subcfg = subcfg.to_sym
 
       if add
-        subcfg = subcfg.in?(fields) ? fields : [subcfg, *fields]
+        subcfg = subcfg.in?(fields) ? fields : [ subcfg, *fields ]
       elsif only
         subcfg = subcfg.in?(fields) ? subcfg : []
       else
@@ -107,7 +107,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       end
     end
 
-    return subcfg
+    subcfg
   end
 
   # Filter out configuration properties based on the :except/:only query parameters.
@@ -153,7 +153,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       end
     end
 
-    return cfg
+    cfg
   end
 
   # Get the associations limit from the controller.
@@ -174,7 +174,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       end
     end
 
-    return @_get_associations_limit = limit
+    @_get_associations_limit = limit
   end
 
   # Get a serializer configuration from the controller. `@controller` and `@model` must be set.
@@ -210,7 +210,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
             sub_methods << sf
           end
         end
-        sub_config = {only: sub_columns, methods: sub_methods}
+        sub_config = { only: sub_columns, methods: sub_methods }
 
         # Apply certain rules regarding collection associations.
         if ref.collection?
@@ -257,7 +257,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
         # ActiveStorage Integration: Define attachment serializer method.
         if ref.macro == :has_one_attached
           serializer_methods[f] = f
-          includes_map[f] = {"#{f}_attachment": :blob}
+          includes_map[f] = { "#{f}_attachment": :blob }
           self.define_singleton_method(f) do |record|
             attached = record.send(f)
             next attached.attachment ? {
@@ -268,7 +268,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
           end
         elsif ref.macro == :has_many_attached
           serializer_methods[f] = f
-          includes_map[f] = {"#{f}_attachments": :blob}
+          includes_map[f] = { "#{f}_attachments": :blob }
           self.define_singleton_method(f) do |record|
             # Iterating the collection yields attachment objects.
             next record.send(f).map { |a|
@@ -288,7 +288,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       end
     end
 
-    return {
+    {
       only: columns,
       include: includes,
       methods: methods,
@@ -317,24 +317,24 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     end
 
     # By default, pass an empty configuration, using the default Rails serializer.
-    return {}
+    {}
   end
 
   # Get a configuration passable to `serializable_hash` for the object, filtered if required.
   def get_serializer_config
-    return self.filter_from_request(self.get_raw_serializer_config)
+    self.filter_from_request(self.get_raw_serializer_config)
   end
 
   # Serialize a single record and merge results of `serializer_methods`.
   def _serialize(record, config, serializer_methods)
     # Ensure serializer_methods is either falsy, or a hash.
     if serializer_methods && !serializer_methods.is_a?(Hash)
-      serializer_methods = [serializer_methods].flatten.map { |m| [m, m] }.to_h
+      serializer_methods = [ serializer_methods ].flatten.map { |m| [ m, m ] }.to_h
     end
 
     # Merge serialized record with any serializer method results.
-    return record.serializable_hash(config).merge(
-      serializer_methods&.map { |m, k| [k.to_sym, self.send(m, record)] }.to_h,
+    record.serializable_hash(config).merge(
+      serializer_methods&.map { |m, k| [ k.to_sym, self.send(m, record) ] }.to_h,
     )
   end
 
@@ -352,29 +352,29 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       return @object.map { |r| self._serialize(r, config, serializer_methods) }
     end
 
-    return self._serialize(@object, config, serializer_methods)
+    self._serialize(@object, config, serializer_methods)
   end
 
   # Allow a serializer instance to be used as a hash directly in a nested serializer config.
   def [](key)
     @_nested_config ||= self.get_serializer_config
-    return @_nested_config[key]
+    @_nested_config[key]
   end
 
   def []=(key, value)
     @_nested_config ||= self.get_serializer_config
-    return @_nested_config[key] = value
+    @_nested_config[key] = value
   end
 
   # Allow a serializer class to be used as a hash directly in a nested serializer config.
   def self.[](key)
     @_nested_config ||= self.new.get_serializer_config
-    return @_nested_config[key]
+    @_nested_config[key]
   end
 
   def self.[]=(key, value)
     @_nested_config ||= self.new.get_serializer_config
-    return @_nested_config[key] = value
+    @_nested_config[key] = value
   end
 end
 

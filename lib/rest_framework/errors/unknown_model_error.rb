@@ -5,7 +5,7 @@ class RESTFramework::Errors::UnknownModelError < RESTFramework::Errors::BaseErro
   end
 
   def message
-    return <<~MSG.split("\n").join(" ")
+    <<~MSG.split("\n").join(" ")
       The model class for `#{@controller_class}` could not be determined. Any controller that
       includes `RESTFramework::BaseModelControllerMixin` (directly or indirectly) must either set
       the `model` attribute on the controller, or the model must be deducible from the controller

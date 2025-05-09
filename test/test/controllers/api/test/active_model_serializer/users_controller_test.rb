@@ -5,7 +5,7 @@ if defined?(ActiveModel::Serializer)
     def test_list
       manager = User.first
       User.create!(login: "test_ams", manager: manager)
-      get(:index, as: :json, params: {ordering: "-id"})
+      get(:index, as: :json, params: { ordering: "-id" })
       assert_response(:success)
       assert(@response.parsed_body[0]["login"])
       assert(@response.parsed_body[0]["manager"])
@@ -16,7 +16,7 @@ if defined?(ActiveModel::Serializer)
     def test_show
       manager = User.first
       user = User.create!(login: "test_ams", manager: manager)
-      get(:show, as: :json, params: {id: user.id})
+      get(:show, as: :json, params: { id: user.id })
       assert_response(:success)
       assert(@response.parsed_body["manager"])
     end

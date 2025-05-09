@@ -1,31 +1,11 @@
-# Use Shopify's Rubocop config as a baseline.
 inherit_gem:
-  rubocop-shopify: rubocop.yml
+  rubocop-rails-omakase: rubocop.yml
 
 AllCops:
   Exclude:
-    - test/db/schema.rb
-    - test/db/queue_schema.rb
+    - test/db/*schema.rb
     - vendor
   SuggestExtensions: false
-  NewCops: disable
-  TargetRubyVersion: 3.2
-
-# Layout
-
-Layout/ArgumentAlignment:
-  Enabled: true
-  EnforcedStyle: with_fixed_indentation
-
-Layout/ArrayAlignment:
-  Enabled: true
-  EnforcedStyle: with_fixed_indentation
-
-Layout/FirstMethodArgumentLineBreak:
-  Enabled: true
-
-Layout/FirstMethodParameterLineBreak:
-  Enabled: true
 
 Layout/LineLength:
   Enabled: true
@@ -33,148 +13,6 @@ Layout/LineLength:
   AllowedPatterns:
     # Allow long comments.
     - "^#.*"
-
-Layout/EndAlignment:
-  Enabled: true
-  EnforcedStyleAlignWith: start_of_line
-
-Layout/ExtraSpacing:
-  Enabled: true
-  AllowForAlignment: false
-  AllowBeforeTrailingComments: true
-
-Layout/MultilineAssignmentLayout:
-  Enabled: true
-  EnforcedStyle: same_line
-
-Layout/MultilineHashBraceLayout:
-  Enabled: true
-  EnforcedStyle: new_line
-
-Layout/MultilineHashKeyLineBreaks:
-  Enabled: true
-
-Layout/MultilineMethodArgumentLineBreaks:
-  Enabled: true
-
-Layout/MultilineMethodCallBraceLayout:
-  Enabled: true
-  EnforcedStyle: new_line
-
-Layout/SpaceAroundEqualsInParameterDefault:
-  Enabled: true
-  EnforcedStyle: no_space
-
-Layout/SpaceInLambdaLiteral:
-  Enabled: true
-  EnforcedStyle: require_no_space
-
-Layout/SpaceInsideArrayLiteralBrackets:
-  Enabled: true
-  EnforcedStyle: no_space
-
-Layout/SpaceInsideArrayPercentLiteral:
-  Enabled: true
-
-Layout/SpaceInsideBlockBraces:
-  Enabled: true
-  EnforcedStyle: space
-  EnforcedStyleForEmptyBraces: no_space
-  SpaceBeforeBlockParameters: true
-
-Layout/SpaceInsideHashLiteralBraces:
-  Enabled: true
-  EnforcedStyle: no_space
-
-Layout/SpaceInsideParens:
-  Enabled: true
-  EnforcedStyle: no_space
-
-Layout/SpaceInsidePercentLiteralDelimiters:
-  Enabled: true
-
-Layout/SpaceInsideRangeLiteral:
-  Enabled: true
-
-Layout/SpaceInsideReferenceBrackets:
-  Enabled: true
-  EnforcedStyle: no_space
-
-Layout/SpaceInsideStringInterpolation:
-  Enabled: true
-  EnforcedStyle: no_space
-
-# Linting
-
-Lint/AssignmentInCondition:
-  Enabled: false
-
-Lint/SuppressedException:
-  Enabled: false
-
-# Metrics
-
-Metrics/BlockNesting:
-  Enabled: false
-
-# Naming
-
-Naming/AccessorMethodName:
-  Enabled: false
-
-Naming/InclusiveLanguage:
-  Enabled: false
-
-Naming/PredicateName:
-  Enabled: false
-
-# Style
-
-Style/BlockDelimiters:
-  Enabled: false
-
-Style/ClassAndModuleChildren:
-  Enabled: false
-
-Style/ClassMethodsDefinitions:
-  Enabled: false
-
-Style/CommandLiteral:
-  Enabled: false
-
-Style/ConditionalAssignment:
-  Enabled: false
-
-Style/DateTime:
-  Enabled: false
-
-Style/FrozenStringLiteralComment:
-  Enabled: false
-
-Style/IfInsideElse:
-  Enabled: false
-
-Style/MultilineTernaryOperator:
-  Enabled: false
-
-Style/NestedTernaryOperator:
-  Enabled: false
-
-Style/RedundantReturn:
-  Enabled: false
-
-Style/RedundantSelf:
-  Enabled: false
-
-Style/RegexpLiteral:
-  Enabled: false
-
-Style/ReturnNil:
-  Enabled: false
-
-Style/TrailingCommaInArguments:
-  Enabled: true
-  EnforcedStyleForMultiline: comma
 
 Style/TrailingCommaInArrayLiteral:
   Enabled: true
@@ -184,5 +22,6 @@ Style/TrailingCommaInHashLiteral:
   Enabled: true
   EnforcedStyleForMultiline: comma
 
-Style/WordArray:
-  Enabled: false
+Style/TrailingCommaInArguments:
+  Enabled: true
+  EnforcedStyleForMultiline: comma

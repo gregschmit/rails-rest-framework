@@ -1,9 +1,9 @@
 module RESTFramework::Utils
-  HTTP_VERB_ORDERING = %w(GET POST PUT PATCH DELETE OPTIONS HEAD)
+  HTTP_VERB_ORDERING = %w[GET POST PUT PATCH DELETE OPTIONS HEAD]
 
   # Convert `extra_actions` hash to a consistent format: `{path:, methods:, metadata:, kwargs:}`.
   def self.parse_extra_actions(extra_actions)
-    return (extra_actions || {}).map { |k, v|
+    (extra_actions || {}).map { |k, v|
       path = k
       kwargs = {}
 
@@ -13,7 +13,7 @@ module RESTFramework::Utils
         v = v.symbolize_keys
 
         # Cast method/methods to an array.
-        methods = [v.delete(:methods), v.delete(:method)].flatten.compact
+        methods = [ v.delete(:methods), v.delete(:method) ].flatten.compact
 
         # Override path if it's provided.
         if v.key?(:path)
@@ -26,7 +26,7 @@ module RESTFramework::Utils
         # Pass any further kwargs to the underlying Rails interface.
         kwargs = v
       else
-        methods = [v].flatten
+        methods = [ v ].flatten
       end
 
       next [
@@ -43,7 +43,7 @@ module RESTFramework::Utils
 
   # Get actions which should be skipped for a given controller.
   def self.get_skipped_builtin_actions(controller_class)
-    return (
+    (
       RESTFramework::BUILTIN_ACTIONS.keys + RESTFramework::BUILTIN_MEMBER_ACTIONS.keys
     ).reject do |action|
       controller_class.method_defined?(action)
@@ -58,7 +58,7 @@ module RESTFramework::Utils
   # Normalize a path pattern by replacing URL params with generic placeholder, and removing the
   # `(.:format)` at the end.
   def self.comparable_path(path)
-    return path.gsub("(.:format)", "").gsub(/:[0-9A-Za-z_-]+/, ":x")
+    path.gsub("(.:format)", "").gsub(/:[0-9A-Za-z_-]+/, ":x")
   end
 
   # Show routes under a controller action; used for the browsable API.
@@ -74,7 +74,7 @@ module RESTFramework::Utils
 
     # Return routes that match our current route subdomain/pattern, grouped by controller. We
     # precompute certain properties of the route for performance.
-    return application_routes.routes.select { |r|
+    application_routes.routes.select { |r|
       # We `select` first to avoid unnecessarily calculating metadata for routes we don't even want
       # to show.
       (r.defaults[:subdomain].blank? || r.defaults[:subdomain] == request.subdomain) &&
@@ -100,7 +100,7 @@ module RESTFramework::Utils
         verb: r.verb,
         path: path,
         path_with_params: r.format(
-          r.required_parts.each_with_index.map { |p, i| [p, path_params[i]] }.to_h,
+          r.required_parts.each_with_index.map { |p, i| [ p, path_params[i] ] }.to_h,
         ),
         relative_path: relative_path,
         concat_path: concat_path,
@@ -125,17 +125,17 @@ module RESTFramework::Utils
       # Sort the controller groups by current controller first, then alphanumerically.
       # Note: Use `controller_path` instead of `params[:controller]` to avoid re-raising a
       # `ActionDispatch::Http::Parameters::ParseError` exception.
-      [request.controller_class.controller_path == c ? 0 : 1, c]
+      [ request.controller_class.controller_path == c ? 0 : 1, c ]
     }.to_h
   end
 
   # Custom inflector for RESTful controllers.
-  def self.inflect(s, acronyms=nil)
+  def self.inflect(s, acronyms = nil)
     acronyms&.each do |acronym|
       s = s.gsub(/\b#{acronym}\b/i, acronym)
     end
 
-    return s
+    s
   end
 
   # Parse fields hashes.
@@ -153,12 +153,12 @@ module RESTFramework::Utils
     parsed_fields -= h[:except].map(&:to_s) if h[:except]
 
     # Warn for any unknown keys.
-    (h.keys - [:only, :except, :include, :exclude]).each do |k|
+    (h.keys - [ :only, :except, :include, :exclude ]).each do |k|
       Rails.logger.warn("RRF: Unknown key in fields hash: #{k}")
     end
 
     # We should always return strings, not symbols.
-    return parsed_fields.map(&:to_s)
+    parsed_fields.map(&:to_s)
   end
 
   # Get the fields for a given model, including not just columns (which includes
@@ -181,7 +181,7 @@ module RESTFramework::Utils
     # Associations:
     associations = model.reflections.map { |association, ref|
       # Ignore associations for which we have custom integrations.
-      if ref.class_name.in?(%w(ActionText::RichText ActiveStorage::Attachment ActiveStorage::Blob))
+      if ref.class_name.in?(%w[ActionText::RichText ActiveStorage::Attachment ActiveStorage::Blob])
         next nil
       end
 
@@ -194,29 +194,29 @@ module RESTFramework::Utils
       next association
     }.compact
 
-    return base_fields + associations + atf + asf
+    base_fields + associations + atf + asf
   end
 
   # Get the sub-fields that may be serialized and filtered/ordered for a reflection.
   def self.sub_fields_for(ref)
     if !ref.polymorphic? && model = ref.klass
-      sub_fields = [model.primary_key].flatten.compact
+      sub_fields = [ model.primary_key ].flatten.compact
       label_fields = RESTFramework.config.label_fields
 
       # Preferrably find a database column to use as label.
       if match = label_fields.find { |f| f.in?(model.column_names) }
-        return sub_fields + [match]
+        return sub_fields + [ match ]
       end
 
       # Otherwise, find a method.
       if match = label_fields.find { |f| model.method_defined?(f) }
-        return sub_fields + [match]
+        return sub_fields + [ match ]
       end
 
       return sub_fields
     end
 
-    return ["id", "name"]
+    [ "id", "name" ]
   end
 
   # Get a field's id/ids variation.
@@ -229,7 +229,7 @@ module RESTFramework::Utils
       return reflection.foreign_key
     end
 
-    return nil
+    nil
   end
 
   # Wrap a serializer with an adapter if it is an ActiveModel::Serializer.
@@ -238,6 +238,6 @@ module RESTFramework::Utils
       return RESTFramework::ActiveModelSerializerAdapterFactory.for(s)
     end
 
-    return s
+    s
   end
 end

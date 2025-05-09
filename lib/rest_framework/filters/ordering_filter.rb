@@ -2,7 +2,7 @@
 class RESTFramework::Filters::OrderingFilter < RESTFramework::Filters::BaseFilter
   # Get a list of ordering fields for the current action.
   def _get_fields
-    return @controller.class.ordering_fields&.map(&:to_s) || @controller.get_fields
+    @controller.class.ordering_fields&.map(&:to_s) || @controller.get_fields
   end
 
   # Convert ordering string to an ordering configuration.
@@ -34,7 +34,7 @@ class RESTFramework::Filters::OrderingFilter < RESTFramework::Filters::BaseFilte
       return ordering
     end
 
-    return nil
+    nil
   end
 
   # Order data according to the request query parameters.
@@ -46,7 +46,7 @@ class RESTFramework::Filters::OrderingFilter < RESTFramework::Filters::BaseFilte
       return data.send(reorder ? :reorder : :order, ordering)
     end
 
-    return data
+    data
   end
 end
 

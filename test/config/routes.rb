@@ -45,7 +45,7 @@ Rails.application.routes.draw do
       rest_resources :users
 
       rest_resources :added_select
-      rest_resources :bare_create, force_plural: true, only: [:create]
+      rest_resources :bare_create, force_plural: true, only: [ :create ]
       rest_resources :fields_hash_exclude
       rest_resources :fields_hash_only_except
       rest_resources :no_rescue_unknown_format

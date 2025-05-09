@@ -5,7 +5,7 @@ require "rails/generators"
 # :nocov:
 class RESTFrameworkCustomGeneratorControllerNamespace < String
   def camelize
-    return "RESTFramework"
+    "RESTFramework"
   end
 end
 # :nocov:
@@ -41,7 +41,7 @@ class RESTFramework::Generators::ControllerGenerator < Rails::Generators::Base
   # Some projects may not have the inflection "REST" as an acronym, which changes this generator to
   # be namespaced in `r_e_s_t_framework`, which is weird.
   def self.namespace
-    return RESTFrameworkCustomGeneratorControllerNamespace.new("rest_framework:controller")
+    RESTFrameworkCustomGeneratorControllerNamespace.new("rest_framework:controller")
   end
 
   def create_rest_controller_file

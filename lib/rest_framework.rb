@@ -9,14 +9,14 @@ module RESTFramework
   BUILTIN_MEMBER_ACTIONS = {
     show: :get,
     edit: :get,
-    update: [:put, :patch].freeze,
+    update: [ :put, :patch ].freeze,
     destroy: :delete,
   }.freeze
   RRF_BUILTIN_ACTIONS = {
     options: :options,
   }.freeze
   RRF_BUILTIN_BULK_ACTIONS = {
-    update_all: [:put, :patch].freeze,
+    update_all: [ :put, :patch ].freeze,
     destroy_all: :delete,
   }.freeze
 
@@ -65,12 +65,12 @@ module RESTFramework
     "highlight-a11y-dark.min.css" => {
       url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.0/styles/a11y-dark.min.css",
       sri: "sha512-Vj6gPCk8EZlqnoveEyuGyYaWZ1+jyjMPg8g4shwyyNlRQl6d3L9At02ZHQr5K6s5duZl/+YKMnM3/8pDhoUphg==",
-      extra_tag_attrs: {class: "rrf-dark-mode"},
+      extra_tag_attrs: { class: "rrf-dark-mode" },
     },
     "highlight-a11y-light.min.css" => {
       url: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.0/styles/a11y-light.min.css",
       sri: "sha512-WDk6RzwygsN9KecRHAfm9HTN87LQjqdygDmkHSJxVkVI7ErCZ8ZWxP6T8RvBujY1n2/E4Ac+bn2ChXnp5rnnHA==",
-      extra_tag_attrs: {class: "rrf-light-mode"},
+      extra_tag_attrs: { class: "rrf-light-mode" },
     },
 
     # NeatJSON
@@ -117,7 +117,7 @@ module RESTFramework
       raise "Unknown asset extension: #{ext}."
     end
 
-    [name, cfg]
+    [ name, cfg ]
   }.to_h.freeze
   # rubocop:enable Layout/LineLength
 
@@ -126,8 +126,8 @@ module RESTFramework
   # Global configuration should be kept minimal, as controller-level configurations allows multiple
   # APIs to be defined to behave differently.
   class Config
-    DEFAULT_LABEL_FIELDS = %w(name label login title email username url).freeze
-    DEFAULT_SEARCH_COLUMNS = DEFAULT_LABEL_FIELDS + %w(description note).freeze
+    DEFAULT_LABEL_FIELDS = %w[name label login title email username url].freeze
+    DEFAULT_SEARCH_COLUMNS = DEFAULT_LABEL_FIELDS + %w[description note].freeze
     DEFAULT_EXCLUDE_BODY_FIELDS = %w[
       created_at
       created_by
@@ -192,7 +192,7 @@ module RESTFramework
   end
 
   def self.config
-    return @config ||= Config.new
+    @config ||= Config.new
   end
 
   def self.configure
@@ -200,7 +200,7 @@ module RESTFramework
   end
 
   def self.features
-    return @features ||= {}
+    @features ||= {}
   end
 end
 

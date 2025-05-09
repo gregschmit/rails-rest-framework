@@ -18,9 +18,9 @@ class User < ApplicationRecord
   has_one :phone_number
 
   if Rails.gem_version < Gem::Version.new("7.2")
-    enum state: {default: 0, pending: 1, banned: 2, archived: 3}
+    enum state: { default: 0, pending: 1, banned: 2, archived: 3 }
   else
-    enum :state, {default: 0, pending: 1, banned: 2, archived: 3}
+    enum :state, { default: 0, pending: 1, banned: 2, archived: 3 }
   end
   translate_enum :state
 
@@ -36,20 +36,20 @@ class User < ApplicationRecord
 
   # Adding this class method to test serializing inclusion symbol in `OPTIONS` endpoint.
   def self.status_keys
-    return STATUS_OPTS.keys
+    STATUS_OPTS.keys
   end
 
   def status_keys
-    return self.class.status_keys
+    self.class.status_keys
   end
 
   # An example of a "calculated" property method.
   def calculated_property
-    return 5.45
+    5.45
   end
 
   # An example of a delegated method.
   def delegated
-    return {login: self.login, is_admin: self.is_admin}
+    { login: self.login, is_admin: self.is_admin }
   end
 end

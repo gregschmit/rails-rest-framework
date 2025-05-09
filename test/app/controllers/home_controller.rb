@@ -26,7 +26,7 @@ class HomeController < ApplicationController
   protected
 
   def sanitize_path(path)
-    return path&.gsub(/[^a-zA-Z0-9-_\/]+/, "")&.gsub(/^\/+/, "")&.gsub(/\/+$/, "")
+    path&.gsub(/[^a-zA-Z0-9-_\/]+/, "")&.gsub(/^\/+/, "")&.gsub(/\/+$/, "")
   end
 
   def render_content(path)
@@ -57,11 +57,11 @@ class HomeController < ApplicationController
   end
 
   def get_sections
-    return Dir.glob(Rails.root.join("../guide/*")).map { |path|
+    Dir.glob(Rails.root.join("../guide/*")).map { |path|
       next nil unless match = path.match(/[0-9]_([a-z_]+)$/)
 
       title = File.read(File.join(path, "index.md")).match(/^# (.*)$/)[1]
-      next [match[1], {path: path, title: title}]
+      next [ match[1], { path: path, title: title } ]
     }.compact.to_h
   end
   helper_method :get_sections

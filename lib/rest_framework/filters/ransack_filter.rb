@@ -20,7 +20,7 @@ class RESTFramework::Filters::RansackFilter < RESTFramework::Filters::BaseFilter
       return data.ransack(q, @controller.class.ransack_options || {}).result(distinct: distinct)
     end
 
-    return data
+    data
   end
 end
 

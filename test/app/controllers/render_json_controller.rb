@@ -2,8 +2,8 @@ if defined?(ActiveModel::Serializer)
   class RenderJsonController < ApplicationController
     include RESTFramework::BaseModelControllerMixin
 
-    self.extra_actions = {list_rest_serializer: :get, list_am_serializer: :get}
-    self.extra_member_actions = {show_rest_serializer: :get, show_am_serializer: :get}
+    self.extra_actions = { list_rest_serializer: :get, list_am_serializer: :get }
+    self.extra_member_actions = { show_rest_serializer: :get, show_am_serializer: :get }
     self.model = User
 
     def list_rest_serializer
