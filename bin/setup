@@ -18,5 +18,5 @@ FileUtils.chdir(File.expand_path("..", __dir__)) do
   puts "\n== Removing old logs and tempfiles =="
   system!("bin/rails log:clear tmp:clear")
 
-  puts "\n\n🚀 Ready! Run the test application with: `rails s`. 🚀\n"
+  puts "\n\n🚀 Ready! Run the test application with: `bin/dev`. 🚀\n"
 end
