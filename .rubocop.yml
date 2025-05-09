@@ -2,9 +2,9 @@ inherit_gem:
   rubocop-rails-omakase: rubocop.yml
 
 AllCops:
-  # Exclude:
-  # - test/db/*schema.rb
-  # - vendor
+  Exclude:
+    - test/db/*schema.rb
+    - vendor
   SuggestExtensions: false
 
 Layout/LineLength:

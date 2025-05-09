@@ -26,7 +26,7 @@ class HomeController < ApplicationController
   protected
 
   def sanitize_path(path)
-    return path&.gsub(/[^a-zA-Z0-9-_\/]+/, "")&.gsub(/^\/+/, "")&.gsub(/\/+$/, "")
+    path&.gsub(/[^a-zA-Z0-9-_\/]+/, "")&.gsub(/^\/+/, "")&.gsub(/\/+$/, "")
   end
 
   def render_content(path)
