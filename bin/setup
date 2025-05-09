@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Configure the development or production environment; must be idempotent.
+# Configure the development environment; must be idempotent.
 
 require "fileutils"
 
