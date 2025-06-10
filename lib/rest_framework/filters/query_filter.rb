@@ -15,6 +15,7 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
     null: nil,
     lt: ->(f, v) { { f => ...v } },
     # `gt` must negate `lte` because Rails doesn't support `>` with endless ranges.
+    # Ref: https://github.com/rails/rails/pull/47345
     gt: ->(f, v) { Not.new({ f => ..v }) },
     lte: ->(f, v) { { f => ..v } },
     gte: ->(f, v) { { f => v.. } },
