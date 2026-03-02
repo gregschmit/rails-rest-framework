@@ -1,6 +1,14 @@
 # This serializer uses `.serializable_hash` to convert objects to Ruby primitives (with the
 # top-level being either an array or a hash).
 class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers::BaseSerializer
+  EXTRACT_FROM_QUERY = extract_from_query = ->(p, controller) {
+    return Set[] if p.blank?
+    (
+      controller.request&.query_parameters&.[](p).presence&.split(",")&.map { |x|
+        x.strip.presence
+      }&.compact || []
+    ).to_set
+  }
   class_attribute :config
   class_attribute :singular_config
   class_attribute :plural_config
@@ -26,28 +34,66 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     @model ||= @controller.class.get_model if @controller
   end
 
-  # Get controller action, if possible.
-  def get_action
-    @controller&.action_name&.to_sym
+  def action
+    @action ||= @controller&.action_name&.to_sym
   end
 
-  # Get a locally defined native serializer configuration, if one is defined.
+  def fields
+    return @fields if defined?(@fields)
+    return nil unless base_fields = @controller&.get_fields
+
+    only_param = @controller.class.native_serializer_only_query_param
+    except_param = @controller.class.native_serializer_except_query_param
+    include_param = @controller.class.native_serializer_include_query_param
+    exclude_param = @controller.class.native_serializer_exclude_query_param
+
+    only = EXTRACT_FROM_QUERY.call(only_param, @controller)
+    except = EXTRACT_FROM_QUERY.call(except_param, @controller)
+    include = EXTRACT_FROM_QUERY.call(include_param, @controller)
+    exclude = EXTRACT_FROM_QUERY.call(exclude_param, @controller)
+
+    field_configuration = @controller.class.field_configuration
+    @fields = base_fields.select do |f|
+      cfg = field_configuration[f]
+
+      # We never serialize write-only fields.
+      next false if cfg[:write_only]
+
+      # We never serialize `hidden_from_index` fields for collections as this is a performance
+      # option.
+      next false if cfg[:hidden_from_index] && @many
+
+      # Explicitly excluded fields should never be serialized.
+      next false if f.in?(except) || f.in?(exclude)
+
+      # Hidden fields must be in `only` or `include` to be serialized; for non-hidden fields, either
+      # `only` must be empty, or the field must be in `only` or `include`.
+      if cfg[:hidden]
+        next true if f.in?(only) || f.in?(include)
+      elsif only.empty? || f.in?(only) || f.in?(include)
+        next true
+      end
+
+      next false
+    end
+
+    @fields
+  end
+
   def get_local_native_serializer_config
-    action = self.get_action
-
-    if action && self.action_config
+    if (action = self.action) && (cfg = action_config)
       # Index action should use :list serializer config if :index is not provided.
-      action = :list if action == :index && !self.action_config.key?(:index)
+      action = :list if action == :index && !cfg.key?(:index)
 
-      return self.action_config[action] if self.action_config[action]
+      return cfg[action] if cfg[action]
     end
 
     # No action_config, so try singular/plural config if explicitly instructed to via @many.
     return self.plural_config if @many == true && self.plural_config
     return self.singular_config if @many == false && self.singular_config
 
-    # Lastly, try returning the default config, or singular/plural config in that order.
-    self.config || self.singular_config || self.plural_config
+    # Lastly, try returning the default config.
+    self.config
   end
 
   # Get a native serializer configuration from the controller.
@@ -63,102 +109,9 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     controller_serializer || @controller.class.native_serializer_config
   end
 
-  # Filter a single subconfig for specific keys. By default, keys from `fields` are removed from the
-  # provided `subcfg`. There are two (mutually exclusive) options to adjust the behavior:
-  #
-  #  `add`: Add any `fields` to the `subcfg` which aren't already in the `subcfg`.
-  #  `only`: Remove any values found in the `subcfg` not in `fields`.
-  def self.filter_subcfg(subcfg, fields:, add: false, only: false)
-    raise "`add` and `only` conflict with one another" if add && only
-
-    # Don't process nil `subcfg`s.
-    return subcfg unless subcfg
-
-    if subcfg.is_a?(Array)
-      subcfg = subcfg.map(&:to_sym)
-
-      if add
-        # Only add fields which are not already included.
-        subcfg += fields - subcfg
-      elsif only
-        subcfg.select! { |c| c.in?(fields) }
-      else
-        subcfg -= fields
-      end
-    elsif subcfg.is_a?(Hash)
-      subcfg = subcfg.symbolize_keys
-
-      if add
-        # Add doesn't make sense in a hash context since we wouldn't know the values.
-      elsif only
-        subcfg.select! { |k, _v| k.in?(fields) }
-      else
-        subcfg.reject! { |k, _v| k.in?(fields) }
-      end
-    else  # Subcfg is a single element (assume string/symbol).
-      subcfg = subcfg.to_sym
-
-      if add
-        subcfg = subcfg.in?(fields) ? fields : [ subcfg, *fields ]
-      elsif only
-        subcfg = subcfg.in?(fields) ? subcfg : []
-      else
-        subcfg = subcfg.in?(fields) ? [] : subcfg
-      end
-    end
-
-    subcfg
-  end
-
-  # Filter out configuration properties based on the :except/:only query parameters.
-  def filter_from_request(cfg)
-    return cfg unless @controller
-
-    except_param = @controller.class.native_serializer_except_query_param
-    only_param = @controller.class.native_serializer_only_query_param
-    if except_param && except = @controller.request&.query_parameters&.[](except_param).presence
-      if except = except.split(",").map(&:strip).map(&:to_sym).presence
-        # Filter `only`, `except` (additive), `include`, `methods`, and `serializer_methods`.
-        if cfg[:only]
-          cfg[:only] = self.class.filter_subcfg(cfg[:only], fields: except)
-        elsif cfg[:except]
-          cfg[:except] = self.class.filter_subcfg(cfg[:except], fields: except, add: true)
-        else
-          cfg[:except] = except
-        end
-
-        cfg[:include] = self.class.filter_subcfg(cfg[:include], fields: except)
-        cfg[:methods] = self.class.filter_subcfg(cfg[:methods], fields: except)
-        cfg[:serializer_methods] = self.class.filter_subcfg(
-          cfg[:serializer_methods], fields: except
-        )
-        cfg[:includes_map] = self.class.filter_subcfg(cfg[:includes_map], fields: except)
-      end
-    elsif only_param && only = @controller.request&.query_parameters&.[](only_param).presence
-      if only = only.split(",").map(&:strip).map(&:to_sym).presence
-        # Filter `only`, `include`, and `methods`. Adding anything to `except` is not needed,
-        # because any configuration there takes precedence over `only`.
-        if cfg[:only]
-          cfg[:only] = self.class.filter_subcfg(cfg[:only], fields: only, only: true)
-        else
-          cfg[:only] = only
-        end
-
-        cfg[:include] = self.class.filter_subcfg(cfg[:include], fields: only, only: true)
-        cfg[:methods] = self.class.filter_subcfg(cfg[:methods], fields: only, only: true)
-        cfg[:serializer_methods] = self.class.filter_subcfg(
-          cfg[:serializer_methods], fields: only, only: true
-        )
-        cfg[:includes_map] = self.class.filter_subcfg(cfg[:includes_map], fields: only, only: true)
-      end
-    end
-
-    cfg
-  end
-
   # Get the associations limit from the controller.
-  def _get_associations_limit
-    return @_get_associations_limit if defined?(@_get_associations_limit)
+  def _associations_limit
+    return @_associations_limit if defined?(@_associations_limit)
 
     limit = @controller&.class&.native_serializer_associations_limit
 
@@ -174,11 +127,11 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       end
     end
 
-    @_get_associations_limit = limit
+    @_associations_limit = limit
   end
 
   # Get a serializer configuration from the controller. `@controller` and `@model` must be set.
-  def _get_controller_serializer_config(fields)
+  def _get_controller_serializer_config
     columns = []
     includes = {}
     methods = []
@@ -194,7 +147,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     reflections = @model.reflections
     attachment_reflections = @model.attachment_reflections
 
-    fields.each do |f|
+    self.fields.each do |f|
       field_config = @controller.class.field_configuration[f]
       next if field_config[:write_only]
 
@@ -216,7 +169,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
         if ref.collection?
           # If we need to limit the number of serialized association records, then dynamically add a
           # serializer method to do so.
-          if limit = self._get_associations_limit
+          if limit = self._associations_limit
             serializer_methods[f] = f
             self.define_singleton_method(f) do |record|
               next record.send(f).limit(limit).as_json(**sub_config)
@@ -312,17 +265,17 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     end
 
     # If the config wasn't determined, build a serializer config from controller fields.
-    if @model && fields = @controller&.get_fields
-      return self._get_controller_serializer_config(fields.deep_dup)
+    if @model && self.fields
+      return self._get_controller_serializer_config
     end
 
     # By default, pass an empty configuration, using the default Rails serializer.
     {}
   end
 
-  # Get a configuration passable to `serializable_hash` for the object, filtered if required.
+  # Get a configuration passable to `serializable_hash` for the object.
   def get_serializer_config
-    self.filter_from_request(self.get_raw_serializer_config)
+    self.get_raw_serializer_config
   end
 
   # Serialize a single record and merge results of `serializer_methods`.

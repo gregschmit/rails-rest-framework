@@ -52,4 +52,12 @@ class User < ApplicationRecord
   def delegated
     { login: self.login, is_admin: self.is_admin }
   end
+
+  def random1
+    rand(100)
+  end
+
+  def random2
+    rand(100)
+  end
 end

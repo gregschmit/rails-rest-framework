@@ -181,4 +181,26 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
     assert_response(:success)
     assert_equal(2, @response.parsed_body["results"].length)
   end
+
+  def test_only
+    get(:index, as: :json, params: { only: "name" })
+    assert_response(:success)
+    first = @response.parsed_body["results"][0]
+    assert(first.key?("name"))
+    assert(first.keys.length == 1, "Expected only one key, got: #{first.keys}")
+  end
+
+  def test_except
+    get(:index, as: :json, params: { except: "name" })
+    assert_response(:success)
+    first = @response.parsed_body["results"][0]
+    assert_not(first.key?("name"))
+  end
+
+  def test_exclude
+    get(:index, as: :json, params: { exclude: "name" })
+    assert_response(:success)
+    first = @response.parsed_body["results"][0]
+    assert_not(first.key?("name"))
+  end
 end

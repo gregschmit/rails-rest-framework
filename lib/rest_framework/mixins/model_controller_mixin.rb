@@ -23,27 +23,30 @@ module RESTFramework::Mixins::BaseModelControllerMixin
     # Attributes for configuring record fields.
     fields: nil,
     field_config: nil,
+    read_only_fields: RESTFramework.config.read_only_fields,
+    write_only_fields: RESTFramework.config.write_only_fields,
+    hidden_fields: nil,
 
     # Attributes for finding records.
     find_by_fields: nil,
-    find_by_query_param: "find_by",
+    find_by_query_param: "find_by".freeze,
 
     # Options for what should be included/excluded from default fields.
     exclude_associations: false,
 
     # Options for handling request body parameters.
     allowed_parameters: nil,
-    filter_pk_from_request_body: true,
-    exclude_body_fields: RESTFramework.config.exclude_body_fields,
 
     # Attributes for the default native serializer.
     native_serializer_config: nil,
     native_serializer_singular_config: nil,
     native_serializer_plural_config: nil,
-    native_serializer_only_query_param: "only",
-    native_serializer_except_query_param: "except",
+    native_serializer_only_query_param: "only".freeze,
+    native_serializer_except_query_param: "except".freeze,
+    native_serializer_include_query_param: "include".freeze,
+    native_serializer_exclude_query_param: "exclude".freeze,
     native_serializer_associations_limit: nil,
-    native_serializer_associations_limit_query_param: "associations_limit",
+    native_serializer_associations_limit_query_param: "associations_limit".freeze,
     native_serializer_include_associations_count: false,
 
     # Attributes for filtering, ordering, and searching.
@@ -51,19 +54,19 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       RESTFramework::QueryFilter,
       RESTFramework::OrderingFilter,
       RESTFramework::SearchFilter,
-    ],
+    ].freeze,
     filter_recordset_before_find: true,
     filter_fields: nil,
     ordering_fields: nil,
-    ordering_query_param: "ordering",
+    ordering_query_param: "ordering".freeze,
     ordering_no_reorder: false,
     search_fields: nil,
-    search_query_param: "search",
+    search_query_param: "search".freeze,
     search_ilike: false,
     ransack_options: nil,
-    ransack_query_param: "q",
+    ransack_query_param: "q".freeze,
     ransack_distinct: true,
-    ransack_distinct_query_param: "distinct",
+    ransack_distinct_query_param: "distinct".freeze,
 
     # Options for association assignment.
     permit_id_assignment: true,
@@ -135,7 +138,9 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       reflections = model.reflections
       attributes = model._default_attributes
       readonly_attributes = model.readonly_attributes
-      exclude_body_fields = self.exclude_body_fields&.map(&:to_s)
+      read_only_fields = self.read_only_fields&.map(&:to_s)&.to_set || Set[]
+      write_only_fields = self.write_only_fields&.map(&:to_s)&.to_set || Set[]
+      hidden_fields = self.hidden_fields&.map(&:to_s)&.to_set || Set[]
       rich_text_association_names = model.reflect_on_all_associations(:has_one)
         .collect(&:name)
         .select { |n| n.to_s.start_with?("rich_text_") }
@@ -149,14 +154,29 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         if model.primary_key == f
           cfg[:primary_key] = true
 
-          unless cfg.key?(:readonly)
-            cfg[:readonly] = true
+          unless cfg.key?(:read_only)
+            cfg[:read_only] = true
           end
         end
 
-        # Annotate readonly attributes.
-        if f.in?(readonly_attributes) || f.in?(exclude_body_fields)
-          cfg[:readonly] = true
+        # Annotate field mutability and display properties.
+        cfg[:read_only] = true if f.in?(readonly_attributes) || f.in?(read_only_fields)
+        cfg[:write_only] = true if f.in?(write_only_fields)
+        cfg[:hidden] = true if f.in?(hidden_fields)
+
+        # Raise warnings on some bad combinations of properties.
+        if cfg[:write_only]
+          if cfg[:read_only]
+            Rails.logger.warn("RRF: `#{f}` write_only conflicts with read_only.")
+          end
+
+          if cfg[:hidden]
+            Rails.logger.warn("RRF: `#{f}` write_only implies hidden.")
+          end
+
+          if cfg[:hidden_from_index]
+            Rails.logger.warn("RRF: `#{f}` write_only implies hidden_from_index.")
+          end
         end
 
         # Annotate column data.
@@ -172,7 +192,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         end
 
         # Add metadata from the model's attributes hash.
-        if attribute = attributes[f]
+        if attributes.key?(f) && attribute = attributes[f]
           if cfg[:default].nil? && default = attribute.value_before_type_cast
             cfg[:default] = default
           end
@@ -256,6 +276,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         # Determine if this is just a method.
         if !cfg[:kind] && model.method_defined?(f)
           cfg[:kind] = "method"
+          cfg[:read_only] = true if cfg[:read_only].nil?
         end
 
         # Collect validator options into a hash on their type, while also updating `required` based
@@ -284,7 +305,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         end
 
         next [ f, cfg ]
-      }.to_h.with_indifferent_access
+      }.to_h.compact.with_indifferent_access
     end
 
     def openapi_schema
@@ -309,7 +330,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
             v[:type] = cfg[:type]
           end
 
-          v[:readOnly] = true if cfg[:readonly]
+          v[:readOnly] = true if cfg[:read_only]
           v[:default] = cfg[:default] if cfg.key?(:default)
 
           if enum_variants = cfg[:enum_variants]
@@ -632,13 +653,11 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       body_params[k].unshift(*v)
     end
 
-    # Filter primary key, if configured.
-    if self.class.filter_pk_from_request_body && bulk_mode != :update
-      body_params.delete(pk)
+    # Filter read-only fields.
+    body_params.delete_if do |f, _|
+      cfg = self.class.field_configuration[f]
+      cfg && cfg[:read_only]
     end
-
-    # Filter fields in `exclude_body_fields`.
-    (self.class.exclude_body_fields || []).each { |f| body_params.delete(f) }
 
     body_params
   end
@@ -701,7 +720,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
   end
 
   # Determine what collection to call `create` on.
-  def get_create_from
+  def create_from
     if self.class.create_from_recordset
       # Create with any properties inherited from the recordset. We exclude any `select` clauses
       # in case model callbacks need to call `count` on this collection, which typically raises a
@@ -769,7 +788,7 @@ module RESTFramework::Mixins::CreateModelMixin
 
   # Perform the `create!` call and return the created record.
   def create!
-    self.get_create_from.create!(self.get_create_params)
+    self.create_from.create!(self.get_create_params)
   end
 end
 

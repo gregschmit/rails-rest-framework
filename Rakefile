@@ -37,7 +37,10 @@ task :maintain_assets do
     # `undefined method 'size' for nil:NilClass` exception in: `sass-3.7.4/lib/sass/util.rb:157`.
     #
     # We fix by simply removing those `url` references. They only appear in Bootstrap, and we don't
-    # actually use them.
+    # actually use them. This does cause some issues, like if a library user wants to use a feature
+    # of Bootstrap that relies on these `url` refs. An example I found is that when using a model
+    # with a close button, the close `X` icon is not available. This is a downside, but we want to
+    # support applications that still use the Ruby `sass` gem for now.
     if cfg[:place] == "stylesheets"
       vars = []
       content.gsub!(/(--[a-z-]+):\s*url\(".+?"\);?/) {
@@ -54,12 +57,12 @@ task :maintain_assets do
       base_url = File.dirname(cfg[:url])
 
       # Replace font URLs with inline and base64-encoded fonts.
-      content.gsub!(/url\("([^"]+)"\) format\("([^"]+)"\)/) {
+      content.gsub!(/url\("([^"]+)"\) format\("([^"]+)"\)/) do
         c = Base64.strict_encode64(HTTParty.get("#{base_url}/#{Regexp.last_match(1)}").body)
         "url(\"data:application/font-#{
           Regexp.last_match(2)
         };charset=utf-8;base64,#{c}\") format(\"#{Regexp.last_match(2)}\")"
-      }
+      end
     end
 
     # Normalize content leading/trailing whitespace.

@@ -35,12 +35,12 @@ module RESTFramework
   EXTERNAL_ASSETS = {
     # Bootstrap
     "bootstrap.min.css" => {
-      url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
-      sri: "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH",
+      url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css",
+      sri: "sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr",
     },
     "bootstrap.min.js" => {
-      url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js",
-      sri: "sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz",
+      url: "https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js",
+      sri: "sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q",
     },
 
     # Bootstrap Icons
@@ -128,7 +128,7 @@ module RESTFramework
   class Config
     DEFAULT_LABEL_FIELDS = %w[name label login title email username url].freeze
     DEFAULT_SEARCH_COLUMNS = DEFAULT_LABEL_FIELDS + %w[description note].freeze
-    DEFAULT_EXCLUDE_BODY_FIELDS = %w[
+    DEFAULT_READ_ONLY_FIELDS = %w[
       created_at
       created_by
       created_by_id
@@ -138,6 +138,10 @@ module RESTFramework
       _method
       utf8
       authenticity_token
+    ].freeze
+    DEFAULT_WRITE_ONLY_FIELDS = %w[
+      password
+      password_confirmation
     ].freeze
 
     # Permits use of `render(api: obj)` syntax over `render_api(obj)`; `true` by default.
@@ -172,8 +176,9 @@ module RESTFramework
     # The default search columns to use when generating search filters.
     attr_accessor :search_columns
 
-    # The default list of fields to exclude from the body of the request.
-    attr_accessor :exclude_body_fields
+    # Helper to set global read/write only fields.
+    attr_accessor :read_only_fields
+    attr_accessor :write_only_fields
 
     # Option to use vendored assets (requires sprockets or propshaft) rather than linking to
     # external assets (the default).
@@ -187,7 +192,8 @@ module RESTFramework
 
       self.label_fields = DEFAULT_LABEL_FIELDS
       self.search_columns = DEFAULT_SEARCH_COLUMNS
-      self.exclude_body_fields = DEFAULT_EXCLUDE_BODY_FIELDS
+      self.read_only_fields = DEFAULT_READ_ONLY_FIELDS
+      self.write_only_fields = DEFAULT_WRITE_ONLY_FIELDS
     end
   end
 

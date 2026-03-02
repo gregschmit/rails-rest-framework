@@ -25,7 +25,7 @@ module RESTFramework::Mixins::BulkCreateModelMixin
     create_data = self.get_create_params(bulk_mode: true)[:_json]
 
     # Perform bulk create in a transaction.
-    ActiveRecord::Base.transaction { self.get_create_from.create(create_data) }
+    ActiveRecord::Base.transaction { self.create_from.create(create_data) }
   end
 end
 

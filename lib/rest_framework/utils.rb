@@ -154,7 +154,7 @@ module RESTFramework::Utils
 
     # Warn for any unknown keys.
     (h.keys - [ :only, :except, :include, :exclude ]).each do |k|
-      Rails.logger.warn("RRF: Unknown key in fields hash: #{k}")
+      Rails.logger.warn("RRF: Unknown key in fields hash: #{k}.")
     end
 
     # We should always return strings, not symbols.

@@ -20,9 +20,9 @@
   }.compact) do |form| %>
     <% controller.get_fields.map(&:to_s).each do |f| %>
       <%
-        # Don't provide form fields for associations or primary keys.
+        # Don't provide form fields for associations or read-only fields.
         cfg = controller.class.field_configuration[f]
-        next if !cfg || cfg[:kind] == "association" || cfg[:readonly]
+        next if !cfg || cfg[:kind] == "association" || cfg[:read_only]
       %>
       <div class="mb-2">
         <% if cfg[:kind] == "rich_text" %>
