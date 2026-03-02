@@ -46,7 +46,7 @@ module ActionDispatch::Routing
       controller
     end
 
-    # Interal interface for routing extra actions.
+    # Internal interface for routing extra actions.
     def _route_extra_actions(actions, &block)
       parsed_actions = RESTFramework::Utils.parse_extra_actions(actions)
 

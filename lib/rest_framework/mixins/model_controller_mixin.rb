@@ -187,8 +187,8 @@ module RESTFramework::Mixins::BaseModelControllerMixin
         end
 
         # Add default values from the model's schema.
-        if column_default = column_defaults[f] && !cfg[:default].nil?
-          cfg[:default] ||= column_default
+        if cfg[:default].nil? && (column_default = column_defaults[f])
+          cfg[:default] = column_default
         end
 
         # Add metadata from the model's attributes hash.
@@ -518,7 +518,7 @@ module RESTFramework::Mixins::BaseModelControllerMixin
       config = self.class.field_configuration[f]
 
       # ActionText Integration:
-      if self.class.enable_action_text && reflections.key?("rich_test_#{f}")
+      if self.class.enable_action_text && reflections.key?("rich_text_#{f}")
         next f
       end
 

@@ -23,9 +23,9 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
     cont: ->(f, v) { [ "#{f} LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(v)}%" ] },
     in: ->(f, v) {
       if v.is_a?(Array)
-        { f => v.map { |v| v == "null" ? nil : v } }
+        { f => v.map { |el| el == "null" ? nil : el } }
       elsif v.is_a?(String)
-        { f => v.split(",").map { |v| v == "null" ? nil : v } }
+        { f => v.split(",").map { |el| el == "null" ? nil : el } }
       end
     },
   }.freeze

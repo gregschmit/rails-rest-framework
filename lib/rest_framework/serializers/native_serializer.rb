@@ -1,7 +1,7 @@
 # This serializer uses `.serializable_hash` to convert objects to Ruby primitives (with the
 # top-level being either an array or a hash).
 class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers::BaseSerializer
-  EXTRACT_FROM_QUERY = extract_from_query = ->(p, controller) {
+  EXTRACT_FROM_QUERY = ->(p, controller) {
     return Set[] if p.blank?
     (
       controller.request&.query_parameters&.[](p).presence&.split(",")&.map { |x|

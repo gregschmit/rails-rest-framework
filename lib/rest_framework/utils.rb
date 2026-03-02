@@ -203,7 +203,7 @@ module RESTFramework::Utils
       sub_fields = [ model.primary_key ].flatten.compact
       label_fields = RESTFramework.config.label_fields
 
-      # Preferrably find a database column to use as label.
+      # Preferably find a database column to use as label.
       if match = label_fields.find { |f| f.in?(model.column_names) }
         return sub_fields + [ match ]
       end
