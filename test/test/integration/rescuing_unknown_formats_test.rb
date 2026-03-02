@@ -3,11 +3,12 @@ require "test_helper"
 # The goal of this test is to ensure unknown formats are rescued, when configured.
 class RescuingUnknownFormatsTest < ActionDispatch::IntegrationTest
   # Test that an invalid format raises an uncaught exception.
-  # Only Rails >=8 due to changes in integration test behavior.
-  if Rails::VERSION::MAJOR >= 8
+  # Only Rails >=8.1 due to changes in integration test behavior.
+  if Rails::VERSION::MAJOR >= 8 && Rails::VERSION::MINOR >= 1
     def test_raise_unknown_format
-      get("/api/test/no_rescue_unknown_format.jsom")
-      assert_response(:not_acceptable)
+      assert_raises(ActionController::UnknownFormat) do
+        get("/api/test/no_rescue_unknown_format.jsom")
+      end
     end
   end
 

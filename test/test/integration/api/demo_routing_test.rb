@@ -16,13 +16,15 @@ class Api::DemoRoutingTest < ActionDispatch::IntegrationTest
     assert_response(:success)
   end
 
-  # Only Rails>=8 due to changes in integration test behavior.
-  if Rails::VERSION::MAJOR >= 8
+  # Only Rails>=8.1 due to changes in integration test behavior.
+  if Rails::VERSION::MAJOR >= 8 && Rails::VERSION::MINOR >= 1
     def test_can_not_get_network_resourceful_routes
-      get("/api/demo/network.json")
-      assert_response(:not_found)
-      get("/api/demo/network")
-      assert_response(:not_found)
+      assert_raises(ActionController::RoutingError) do
+        get("/api/demo/network.json")
+      end
+      assert_raises(ActionController::RoutingError) do
+        get("/api/demo/network")
+      end
     end
   end
 end

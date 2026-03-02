@@ -90,7 +90,7 @@ group :development do
 end
 
 group :test do
-  gem "minitest"
+  gem "minitest", RAILS_VERSION >= Gem::Version.new("8.1") ? ">= 6" : "~> 5"
   gem "simplecov", require: false
   gem "simplecov-lcov", "0.8.0", require: false
 end
