@@ -84,13 +84,7 @@ module ActionDispatch::Routing
       unscoped = kwargs.delete(:unscoped)
 
       # Determine plural/singular resource.
-      force_singular = kwargs.delete(:force_singular)
-      force_plural = kwargs.delete(:force_plural)
-      if force_singular
-        singular = true
-      elsif force_plural
-        singular = false
-      elsif !controller_class.singleton_controller.nil?
+      if !controller_class.singleton_controller.nil?
         singular = controller_class.singleton_controller
       else
         singular = default_singular
@@ -98,7 +92,7 @@ module ActionDispatch::Routing
       resource_method = singular ? :resource : :resources
 
       # Call either `resource` or `resources`, passing appropriate modifiers.
-      skip = RESTFramework::Utils.get_skipped_builtin_actions(controller_class)
+      skip = RESTFramework::Utils.get_skipped_builtin_actions(controller_class, singular)
       public_send(resource_method, name, except: skip, **kwargs) do
         if controller_class.respond_to?(:extra_member_actions)
           member do

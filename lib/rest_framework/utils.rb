@@ -41,10 +41,11 @@ module RESTFramework::Utils
     }.to_h
   end
 
-  # Get actions which should be skipped for a given controller.
-  def self.get_skipped_builtin_actions(controller_class)
+  def self.get_skipped_builtin_actions(controller_class, singular)
     (
-      RESTFramework::BUILTIN_ACTIONS.keys + RESTFramework::BUILTIN_MEMBER_ACTIONS.keys
+      (
+        RESTFramework::BUILTIN_ACTIONS.keys - (singular ? [ :index ] : [])
+      ) + RESTFramework::BUILTIN_MEMBER_ACTIONS.keys
     ).reject do |action|
       controller_class.method_defined?(action)
     end

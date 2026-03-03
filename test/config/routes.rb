@@ -42,10 +42,11 @@ Rails.application.routes.draw do
 
     rest_root :test
     namespace :test do
+      rest_resource :user
       rest_resources :users
 
       rest_resources :added_select
-      rest_resources :bare_create, force_plural: true, only: [ :create ]
+      rest_resources :bare_create, only: [ :create ]
       rest_resources :fields_hash_except
       rest_resources :fields_hash_exclude
       rest_resources :fields_hash_only

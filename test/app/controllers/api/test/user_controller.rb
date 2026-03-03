@@ -1,5 +1,6 @@
 class Api::Test::UserController < Api::TestController
   include RESTFramework::ModelControllerMixin
+  undef_method :index
 
   class UsersSerializer < RESTFramework::NativeSerializer
     self.config = { only: [ :id, :login, :is_admin, :age ] }

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module RESTFramework
+  BUILTIN_FORM_ACTIONS = %i[new edit].freeze
   BUILTIN_ACTIONS = {
     index: :get,
     new: :get,
