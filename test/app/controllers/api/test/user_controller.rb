@@ -1,5 +1,8 @@
 class Api::Test::UserController < Api::TestController
   include RESTFramework::ModelControllerMixin
+
+  # This will reproduce a failure condition in the router when it attemts to resolve which builtin
+  # actions it should skip.
   undef_method :index
 
   class UsersSerializer < RESTFramework::NativeSerializer

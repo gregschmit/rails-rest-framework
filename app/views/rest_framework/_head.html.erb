@@ -291,14 +291,9 @@
 
   // Replace the document when doing form submission (mainly to support PUT/PATCH/DELETE).
   function rrfReplaceDocument(content) {
-    // Replace the document with provided content.
     document.open()
     document.write(content)
-    document.close()
-
-    // It seems that `DOMContentLoaded` is already triggered on `document.close()`.
-    // // Trigger `DOMContentLoaded` manually so our custom JavaScript works.
-    // // document.dispatchEvent(new Event("DOMContentLoaded", {bubbles: true, cancelable: true}))
+    document.close()  // This also triggers `DOMContentLoaded`.
   }
 
   // Refresh the window as a `GET` request.
