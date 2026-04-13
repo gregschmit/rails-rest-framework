@@ -9,7 +9,7 @@ servers:
   worker:
     cmd: bin/jobs
     hosts:
-      - app1.schmit.net
+      - app0.schmit.net
 
 proxy:
   host: rails-rest-framework.com
