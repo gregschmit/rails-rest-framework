@@ -18,7 +18,7 @@ class RESTFramework::Filters::SearchFilter < RESTFramework::Filters::BaseFilter
     if search.present?
       if fields = self._get_fields.presence
         # MySQL doesn't support casting to VARCHAR, so we need to use CHAR instead.
-        data_type = if data.connection.adapter_name =~ /mysql/i
+        data_type = if data.connection.adapter_name =~ /mysql|trilogy/i
           "CHAR"
         else
           # Sufficient for both PostgreSQL and SQLite.
