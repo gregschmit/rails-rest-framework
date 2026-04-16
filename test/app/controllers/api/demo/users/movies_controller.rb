@@ -1,5 +1,6 @@
 class Api::Demo::Users::MoviesController < Api::DemoController
-  include RESTFramework::BulkModelControllerMixin
+  self.model = Movie
+  self.bulk = true
 
   def get_recordset
     User.find(params[:user_id]).movies

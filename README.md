@@ -38,10 +38,22 @@ bundle install
 
 ## Quick Usage Tutorial
 
-This section provides some simple examples to quickly get you started using the framework.
+To add REST framework features to a controller, include the `Controller` module:
 
-For the purpose of this example, you'll want to add an `api_controller.rb` to your controllers, as
-well as a directory for the resources:
+```ruby
+class ApiController < ApplicationController
+  include RESTFramework::Controller
+
+  # Here is where you can set configuration class attributes that will propagate to child
+  # controllers.
+
+  # Setting up a paginator class here makes more sense than defining it on every child controller.
+  self.paginator_class = RESTFramework::PageNumberPaginator
+  self.page_size = 30
+end
+```
+
+Here is what the directory structure might look like for resource controllers:
 
 ```text
 controllers/
@@ -52,29 +64,18 @@ controllers/
    └─ users_controller.rb
 ```
 
-### Controller Mixins
+### Root Controller
 
-The root `ApiController` can include any common behavior you want to share across all your API
-controllers:
-
-```ruby
-class ApiController < ApplicationController
-  include RESTFramework::BaseControllerMixin
-
-  # Setting up a paginator class here makes more sense than defining it on every child controller.
-  self.paginator_class = RESTFramework::PageNumberPaginator
-  self.page_size = 30
-end
-```
-
-A root controller can provide actions that exist on the root of your API. It's best to define a
-dedicated root controller, rather than using the `ApiController` for this purpose, so that actions
-don't propagate to child controllers:
+It is typically a good pattern for the root of your API to have a dedicated `Api::RootController`
+outside the inheritance chain of your other API controllers, so that you can define actions on the
+root without them propagating to child controllers, and so you can set global configuration on the
+`ApiController`.
 
 ```ruby
 class Api::RootController < ApiController
   self.extra_actions = {test: :get}
 
+  # The root action is routed by `rest_root`.
   def root
     render(
       api: {
@@ -94,17 +95,19 @@ class Api::RootController < ApiController
 end
 ```
 
-And here is an example of a resource controller:
+### Resource Controllers
+
+Other API controllers can be associated to a resource/model by setting the `model` class attribute.
 
 ```ruby
 class Api::MoviesController < ApiController
-  include RESTFramework::ModelControllerMixin
-
+  self.model = Movie  # Automatically routes the standard CRUD actions for this controller.
+  self.bulk = true  # Enables bulk create/update/destroy actions for this controller.
   self.fields = [:id, :name, :release_date, :enabled]
   self.extra_member_actions = {first: :get}
 
   def first
-    # Always use the bang method, since the framework will rescue `RecordNotFound` and return a
+    # Always use bang methods, since the framework will rescue `RecordNotFound` and return a
     # sensible error response.
     render(api: self.get_records.first!)
   end
@@ -120,9 +123,11 @@ to include or exclude fields rather than defining them manually:
 
 ```ruby
 class Api::UsersController < ApiController
-  include RESTFramework::ModelControllerMixin
-
   self.fields = {include: [:calculated_popularity], exclude: [:impersonation_token]}
+
+  # You can even disable some of the builtin actions. For example, this effectively makes the
+  # resource read-only:
+  self.excluded_actions = [:create, :update, :destroy, :update_all, :destroy_all]
 end
 ```
 

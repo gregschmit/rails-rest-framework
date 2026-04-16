@@ -1,5 +1,5 @@
 class Api::DemoController < ApiController
-  include RESTFramework::BaseControllerMixin
+  include RESTFramework::Controller
 
   DESCRIPTION = <<~TEXT.lines.map(&:strip).join(" ")
     The demo API is a more complex API that demonstrates the framework's more advanced features,
@@ -11,20 +11,14 @@ class Api::DemoController < ApiController
 
   self.page_size = 30
 
-  class_attribute(:native_serializer_associations_limit, default: 6, instance_accessor: false)
-  class_attribute(
-    :native_serializer_include_associations_count, default: true, instance_accessor: false
-  )
-  class_attribute(
-    :filter_backends,
-    default: [
-      RESTFramework::QueryFilter,
-      RESTFramework::OrderingFilter,
-      RESTFramework::SearchFilter,
-      RESTFramework::RansackFilter,
-    ],
-    instance_accessor: false,
-  )
+  self.native_serializer_associations_limit = 6
+  self.native_serializer_include_associations_count = true
+  self.filter_backends = [
+    RESTFramework::QueryFilter,
+    RESTFramework::OrderingFilter,
+    RESTFramework::SearchFilter,
+    RESTFramework::RansackFilter,
+  ]
 
   self.paginator_class = RESTFramework::PageNumberPaginator
 

@@ -1,5 +1,6 @@
 class Api::Test::UsersController < Api::TestController
-  include RESTFramework::BulkModelControllerMixin
+  self.model = User
+  self.bulk = true
 
   class UsersSerializer < RESTFramework::NativeSerializer
     self.action_config = { list: { only: [ :id, :login ] } }

@@ -1,5 +1,6 @@
 class Api::Demo::MoviesController < Api::DemoController
-  include RESTFramework::BulkModelControllerMixin
+  self.model = Movie
+  self.bulk = true
 
   self.extra_actions = {
     random: {

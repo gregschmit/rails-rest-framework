@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module RESTFramework
-  BUILTIN_FORM_ACTIONS = %i[new edit].freeze
+  BUILTIN_FORM_ACTIONS = [ :new, :edit ].freeze
   BUILTIN_ACTIONS = {
     index: :get,
     new: :get,
@@ -144,6 +144,7 @@ module RESTFramework
       password
       password_confirmation
     ].freeze
+    DEFAULT_INFLECT_ACRONYMS = [ "ID", "IDs", "REST", "API", "APIs" ].freeze
 
     # Permits use of `render(api: obj)` syntax over `render_api(obj)`; `true` by default.
     attr_accessor :register_api_renderer
@@ -181,6 +182,9 @@ module RESTFramework
     attr_accessor :read_only_fields
     attr_accessor :write_only_fields
 
+    # List of acronyms to be inflected in controller titles and field labels.
+    attr_accessor :inflect_acronyms
+
     # Option to use vendored assets (requires sprockets or propshaft) rather than linking to
     # external assets (the default).
     attr_accessor :use_vendored_assets
@@ -195,6 +199,7 @@ module RESTFramework
       self.search_columns = DEFAULT_SEARCH_COLUMNS
       self.read_only_fields = DEFAULT_READ_ONLY_FIELDS
       self.write_only_fields = DEFAULT_WRITE_ONLY_FIELDS
+      self.inflect_acronyms = DEFAULT_INFLECT_ACRONYMS
     end
   end
 
@@ -209,6 +214,10 @@ module RESTFramework
   def self.features
     @features ||= {}
   end
+
+  def self.deprecator
+    @deprecator ||= ActiveSupport::Deprecation.new("2.0", "REST Framework")
+  end
 end
 
 require_relative "rest_framework/engine"
@@ -221,3 +230,5 @@ require_relative "rest_framework/routers"
 require_relative "rest_framework/serializers"
 require_relative "rest_framework/utils"
 require_relative "rest_framework/version"
+
+require_relative "rest_framework/controller"

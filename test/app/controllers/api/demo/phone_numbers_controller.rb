@@ -1,3 +1,4 @@
 class Api::Demo::PhoneNumbersController < Api::DemoController
-  include RESTFramework::BulkModelControllerMixin
+  self.model = PhoneNumber
+  self.bulk = true
 end

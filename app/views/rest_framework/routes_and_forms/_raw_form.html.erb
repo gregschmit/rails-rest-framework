@@ -29,7 +29,7 @@
     </label>
   </div>
 
-  <% if @is_model_controller && model = controller.class.get_model %>
+  <% if model = controller.class.model %>
     <% if attachment_reflections = model.attachment_reflections.presence %>
       <div class="mb-2" style="display: none" id="rawFilesFormWrapper">
         <%= form_with(**{

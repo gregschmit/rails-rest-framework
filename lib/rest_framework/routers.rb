@@ -113,12 +113,17 @@ module ActionDispatch::Routing
             end
           end
 
-          # Route bulk actions, if configured.
-          RESTFramework::RRF_BUILTIN_BULK_ACTIONS.each do |action, methods|
-            next unless controller_class.method_defined?(action)
+          # Route bulk actions, if configured. These require a model and are gated by the `bulk`
+          # attribute, and may be individually excluded via `excluded_actions`.
+          if controller_class.model && controller_class.bulk
+            bulk_exclude = controller_class.excluded_actions&.to_set || Set.new
+            RESTFramework::RRF_BUILTIN_BULK_ACTIONS.each do |action, methods|
+              next unless controller_class.method_defined?(action)
+              next if bulk_exclude.include?(action)
 
-            [ methods ].flatten.each do |m|
-              public_send(m, "", action: action) if self.respond_to?(m)
+              [ methods ].flatten.each do |m|
+                public_send(m, "", action: action) if self.respond_to?(m)
+              end
             end
           end
         end

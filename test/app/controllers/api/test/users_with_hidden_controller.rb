@@ -1,7 +1,6 @@
 class Api::Test::UsersWithHiddenController < Api::TestController
-  include RESTFramework::BulkModelControllerMixin
-
   self.model = User
+  self.bulk = true
   self.fields = { include: [ :random1, :random2 ] }
   self.field_config = {
     random1: { hidden: true },

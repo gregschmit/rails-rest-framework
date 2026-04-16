@@ -42,12 +42,15 @@ module RESTFramework::Utils
   end
 
   def self.get_skipped_builtin_actions(controller_class, singular)
-    (
-      (
-        RESTFramework::BUILTIN_ACTIONS.keys - (singular ? [ :index ] : [])
-      ) + RESTFramework::BUILTIN_MEMBER_ACTIONS.keys
-    ).reject do |action|
-      controller_class.method_defined?(action)
+    candidates = (
+      RESTFramework::BUILTIN_ACTIONS.keys - (singular ? [ :index ] : [])
+    ) + RESTFramework::BUILTIN_MEMBER_ACTIONS.keys
+
+    return candidates unless controller_class.model
+
+    exclude = controller_class.excluded_actions&.to_set || Set.new
+    candidates.reject do |action|
+      controller_class.method_defined?(action) && !exclude.include?(action)
     end
   end
 
@@ -240,5 +243,13 @@ module RESTFramework::Utils
     end
 
     s
+  end
+
+  # Used for deprecated mixins that rely on model being determined from the controller name.
+  def self.get_model(controller_class)
+    begin
+      controller_class.name.demodulize.chomp("Controller").singularize.constantize
+    rescue NameError
+    end
   end
 end

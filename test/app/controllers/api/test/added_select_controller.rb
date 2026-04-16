@@ -1,6 +1,4 @@
 class Api::Test::AddedSelectController < Api::TestController
-  include RESTFramework::ModelControllerMixin
-
   self.model = Movie
   self.fields = { include: [ :selected_value ] }
 

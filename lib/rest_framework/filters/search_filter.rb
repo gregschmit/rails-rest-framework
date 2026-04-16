@@ -5,7 +5,7 @@ class RESTFramework::Filters::SearchFilter < RESTFramework::Filters::BaseFilter
       return search_fields&.map(&:to_s)
     end
 
-    columns = @controller.class.get_model.column_names
+    columns = @controller.class.model.column_names
     @controller.get_fields.select { |f|
       f.in?(RESTFramework.config.search_columns) && f.in?(columns)
     }

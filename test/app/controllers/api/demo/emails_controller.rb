@@ -1,3 +1,4 @@
 class Api::Demo::EmailsController < Api::DemoController
-  include RESTFramework::BulkModelControllerMixin
+  self.model = Email
+  self.bulk = true
 end

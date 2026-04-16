@@ -1,4 +1,5 @@
 class Api::PlainController < ApiController
+  # TODO: We use the old mixin here to test for regressions; remove in 2.0.
   include RESTFramework::BaseControllerMixin
 
   DESCRIPTION = <<~TEXT.lines.map(&:strip).join(" ")

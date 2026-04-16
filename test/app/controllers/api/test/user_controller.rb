@@ -1,5 +1,5 @@
 class Api::Test::UserController < Api::TestController
-  include RESTFramework::ModelControllerMixin
+  self.model = User
 
   # This will reproduce a failure condition in the router when it attemts to resolve which builtin
   # actions it should skip.

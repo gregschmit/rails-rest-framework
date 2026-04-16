@@ -1,5 +1,6 @@
 class Api::Demo::UsersController < Api::DemoController
-  include RESTFramework::BulkModelControllerMixin
+  self.model = User
+  self.bulk = true
 
   self.field_config = {
     status: { options: User::STATUS_OPTS },

@@ -1,5 +1,4 @@
 class Api::Test::ActiveModelSerializer::UsersController < Api::TestController
-  include RESTFramework::ModelControllerMixin
-
+  self.model = User
   self.serializer_class = UserSerializer
 end

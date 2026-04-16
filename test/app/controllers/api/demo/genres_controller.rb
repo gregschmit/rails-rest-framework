@@ -1,3 +1,4 @@
 class Api::Demo::GenresController < Api::DemoController
-  include RESTFramework::BulkModelControllerMixin
+  self.model = Genre
+  self.bulk = true
 end

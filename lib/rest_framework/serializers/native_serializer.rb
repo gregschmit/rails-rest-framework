@@ -31,7 +31,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     @model ||= @object[0].class if
       @many && @object.is_a?(Enumerable) && @object.is_a?(ActiveRecord::Base)
 
-    @model ||= @controller.class.get_model if @controller
+    @model ||= @controller.class.model if @controller
   end
 
   def action

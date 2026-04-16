@@ -53,7 +53,6 @@ Rails.application.routes.draw do
       rest_resources :fields_hash_only_except
       rest_resources :no_rescue_unknown_format
       rest_resources :read_only
-      rest_resources :unknown_model
       rest_resources :users_with_hidden
       rest_resources :users_with_sub_fields
 

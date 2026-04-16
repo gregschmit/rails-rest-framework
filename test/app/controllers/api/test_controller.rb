@@ -1,5 +1,5 @@
 class Api::TestController < ApiController
-  include RESTFramework::BaseControllerMixin
+  include RESTFramework::Controller
 
   DESCRIPTION = <<~TEXT.lines.map(&:strip).join(" ")
     The test API contains a lot of really weird controllers for testing specific features.
