@@ -59,8 +59,6 @@ class Application < Rails::Application
     config.solid_queue.connects_to = { database: { writing: :queue } }
   end
 
-  RESTFramework.config.freeze_config = true
-
   # Use vendored assets if testing `sprockets` or `propshaft`.
   if ENV["ASSET_PIPELINE"] == "sprockets" || ENV["ASSET_PIPELINE"] == "propshaft"
     RESTFramework.config.use_vendored_assets = true

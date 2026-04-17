@@ -192,6 +192,7 @@ module RESTFramework
     def initialize
       self.register_api_renderer = true
       self.auto_finalize = true
+      self.freeze_config = true
 
       self.show_backtrace = Rails.env.development?
 

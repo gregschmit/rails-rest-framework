@@ -561,8 +561,11 @@ module RESTFramework::Controller
     end
   end
 
-  # Compatibility alias for deprecated `api_response`.
-  alias_method :api_response, :render_api
+  # Deprecated alias for `render_api`.
+  def api_response(*args, **kwargs)
+    RESTFramework.deprecator.warn("`api_response` is deprecated; use `render_api` instead.")
+    render_api(*args, **kwargs)
+  end
 
   def options
     render(api: self.openapi_document)

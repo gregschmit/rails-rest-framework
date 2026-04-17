@@ -95,7 +95,7 @@
               table += "</ul>"
             })
         }
-        table += `<li><a href="#${header.id}">${header.childNodes[0].nodeValue.trim()}</a></li>`
+        table += `<li><a href="#${header.id}">${header.textContent.trim()}</a></li>`
         hprevlevel = hlevel
       })
       if (hlevel > hprevlevel) {

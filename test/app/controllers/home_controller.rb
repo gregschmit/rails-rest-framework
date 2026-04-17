@@ -58,7 +58,7 @@ class HomeController < ApplicationController
 
   def get_sections
     Dir.glob(Rails.root.join("../guide/*")).map { |path|
-      next nil unless match = path.match(/[0-9]_([a-z_]+)$/)
+      next nil unless match = path.match(/[0-9]+_([a-z_]+)$/)
 
       title = File.read(File.join(path, "index.md")).match(/^# (.*)$/)[1]
       next [ match[1], { path: path, title: title } ]
