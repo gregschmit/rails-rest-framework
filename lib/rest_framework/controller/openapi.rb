@@ -194,13 +194,14 @@ module RESTFramework::Controller
           v[:"x-rrf-kind"] = cfg[:kind] if cfg[:kind]
 
           if cfg[:reflection]
+            ref = cfg[:reflection]
             v[:"x-rrf-reflection"] = {
-              class_name: cfg[:reflection].class_name,
-              foreign_key: cfg[:reflection].foreign_key,
-              association_foreign_key: cfg[:reflection].association_foreign_key,
-              association_primary_key: cfg[:reflection].association_primary_key,
-              inverse_of: cfg[:reflection].inverse_of&.name,
-              join_table: cfg[:reflection].join_table,
+              class_name: ref.respond_to?(:class_name) ? ref.class_name : nil,
+              foreign_key: ref.respond_to?(:foreign_key) ? ref.foreign_key : nil,
+              association_foreign_key: ref.respond_to?(:association_foreign_key) ? ref.association_foreign_key : nil,
+              association_primary_key: ref.respond_to?(:association_primary_key) ? ref.association_primary_key : nil,
+              inverse_of: ref.respond_to?(:inverse_of) ? ref.inverse_of&.name : nil,
+              join_table: ref.respond_to?(:join_table) ? ref.join_table : nil,
             }.compact
             v[:"x-rrf-association_pk"] = cfg[:association_pk]
             v[:"x-rrf-sub_fields"] = cfg[:sub_fields]

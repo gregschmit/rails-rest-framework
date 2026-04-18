@@ -68,6 +68,9 @@ class Application < Rails::Application
 
   if Rails::VERSION::MAJOR >= 8
     deprecators.debug = true
+    config.after_initialize do
+      Rails.application.deprecators[:rest_framework].behavior = :silence
+    end
   end
 
   if Rails::VERSION::MAJOR == 8 && Rails::VERSION::MINOR < 1

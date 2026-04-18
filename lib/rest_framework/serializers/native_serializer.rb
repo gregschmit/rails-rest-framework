@@ -28,8 +28,10 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     # Determine model either explicitly, or by inspecting @object or @controller.
     @model = model
     @model ||= @object.class if @object.is_a?(ActiveRecord::Base)
-    @model ||= @object[0].class if
-      @many && @object.is_a?(Enumerable) && @object.is_a?(ActiveRecord::Base)
+    @model ||= @object.klass if @many && @object.is_a?(ActiveRecord::Relation)
+    @model ||= @object.first.class if @many &&
+      @object.is_a?(Enumerable) &&
+      @object.first.is_a?(ActiveRecord::Base)
 
     @model ||= @controller.class.model if @controller
   end

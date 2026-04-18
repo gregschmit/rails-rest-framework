@@ -1,6 +1,5 @@
 module RESTFramework::Controller
-  # Serialize the records, but also include any errors that might exist. This is used for bulk
-  # actions, however we include it here so the helper is available everywhere.
+  # Serialize the records, but also include any errors that might exist.
   def bulk_serialize(records)
     # This is kinda slow, so perhaps we should eventually integrate `errors` serialization into
     # the serializer directly. This would fail for active model serializers, but maybe we don't
@@ -11,52 +10,65 @@ module RESTFramework::Controller
     end
   end
 
-  # Perform the `create` call, and return the collection of (possibly) created records.
   def create_all!
-    create_data = self.get_create_params(bulk_mode: true)[:_json]
+    pk = self.class.model.primary_key
+    data = self.get_create_params(bulk_mode: true)[:_json]
 
-    # Perform bulk create in a transaction.
-    ActiveRecord::Base.transaction { self.create_from.create(create_data) }
+    unless data&.is_a?(Array) && data.all? { |r| r.is_a?(ActionController::Parameters) }
+      raise RESTFramework::InvalidBulkParametersError.new("Expected an array of objects.")
+    end
+
+    unless first_keys = data.first&.keys&.sort
+      raise RESTFramework::InvalidBulkParametersError.new("Expected objects with attrs.")
+    end
+    unless data.all? { |r| r.keys.sort == first_keys }
+      raise RESTFramework::InvalidBulkParametersError.new("All objects must have the same attrs.")
+    end
+
+    self.create_from.insert_all(data, unique_by: pk)
   end
 
   def update_all
-    records = self.update_all!
-    serialized_records = self.bulk_serialize(records)
-    render(api: serialized_records)
+    result = self.update_all!
+    render(api: { result: result })
   end
 
-  # Perform the `update` call and return the collection of (possibly) updated records.
   def update_all!
     pk = self.class.model.primary_key
-    data = if params[:_json].is_a?(Array)
-      self.get_create_params(bulk_mode: :update)[:_json].index_by { |r| r[pk] }
-    else
-      create_params = self.get_create_params
-      { create_params[pk] => create_params }
+    data = self.get_update_params(bulk_mode: :update)[:_json]
+
+    unless data&.is_a?(Array) && data.all? { |r| r.is_a?(ActionController::Parameters) }
+      raise RESTFramework::InvalidBulkParametersError.new("Expected an array of objects.")
     end
 
-    # Perform bulk update in a transaction.
-    ActiveRecord::Base.transaction { self.get_recordset.update(data.keys, data.values) }
+    data_ids = data.map { |r| r[pk] }.uniq
+    if self.get_recordset.where(pk => data_ids).count != data_ids.length
+      raise RESTFramework::InvalidBulkParametersError.new("Some objects not found.")
+    end
+
+    unless first_keys = data.first&.keys&.sort
+      raise RESTFramework::InvalidBulkParametersError.new("Expected objects with attrs.")
+    end
+    unless data.all? { |r| r.keys.sort == first_keys }
+      raise RESTFramework::InvalidBulkParametersError.new("All objects must have the same attrs.")
+    end
+
+    self.get_recordset.upsert_all(data, unique_by: pk)
   end
 
   def destroy_all
-    if params[:_json].is_a?(Array)
-      records = self.destroy_all!
-      serialized_records = self.bulk_serialize(records)
-      return render(api: serialized_records)
-    end
-
-    render(
-      api: { message: "Bulk destroy requires an array of primary keys as input." }, status: 400,
-    )
+    deleted = self.destroy_all!
+    render(api: { result: deleted })
   end
 
-  # Perform the `destroy!` call and return the destroyed (and frozen) record.
   def destroy_all!
     pk = self.class.model.primary_key
-    destroy_data = self.request.request_parameters[:_json]
+    data = self.get_destroy_params(bulk_mode: :destroy)[:_json]
 
-    # Perform bulk destroy in a transaction.
-    ActiveRecord::Base.transaction { self.get_recordset.where(pk => destroy_data).destroy_all }
+    unless data&.is_a?(Array) && data.all? { |r| r.is_a?(String) || r.is_a?(Numeric) }
+      raise RESTFramework::InvalidBulkParametersError.new("Expected an array of primary keys.")
+    end
+
+    self.get_recordset.where(pk => data).delete_all
   end
 end

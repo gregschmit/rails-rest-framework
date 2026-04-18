@@ -13,22 +13,21 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
   end
 
   def _page_size
-    page_size = 1
+    page_size = nil
 
-    # Get from context, if allowed.
+    # Get from query param, if allowed.
     if param = @controller.class.page_size_query_param
-      if page_size = @controller.params[param].presence
-        page_size = page_size.to_i
+      if raw = @controller.params[param].presence
+        parsed = raw.to_i
+        page_size = parsed if parsed > 0
       end
     end
 
-    # Otherwise, get from config.
-    if !page_size && @controller.class.page_size
-      page_size = @controller.class.page_size.to_i
-    end
+    # Fall back to the configured page size.
+    page_size ||= @controller.class.page_size&.to_i || 1
 
     # Ensure we don't exceed the max page size.
-    max_page_size = @controller.class.max_page_size&.to_i
+    max_page_size = @controller.class.max_page_size
     if max_page_size && page_size > max_page_size
       page_size = max_page_size
     end
@@ -46,7 +45,7 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
         page_number = 1
       else
         page_number = page_number.to_i
-        if page_number.zero?
+        if page_number < 1
           page_number = 1
         end
       end
@@ -61,7 +60,7 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
   # Wrap the serialized page with appropriate metadata.
   def get_paginated_response(serialized_page)
     page_query_param = @controller.class.page_query_param
-    base_params = @controller.params.to_unsafe_h
+    base_params = @controller.request.query_parameters.symbolize_keys
     next_url = if @page_number < @total_pages
       @controller.url_for({ **base_params, page_query_param => @page_number + 1 })
     end

@@ -31,7 +31,7 @@ module ActionDispatch::Routing
 
           begin
             controller = mod.const_get(name_reverse)
-          rescue
+          rescue NameError
             reraise = true
           end
 

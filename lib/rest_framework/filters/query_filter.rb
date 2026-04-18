@@ -20,7 +20,13 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
     lte: ->(f, v) { { f => ..v } },
     gte: ->(f, v) { { f => v.. } },
     not: ->(f, v) { Not.new({ f => v }) },
-    cont: ->(f, v) { [ "#{f} LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(v)}%" ] },
+    cont: ->(f, v) {
+      [
+        "#{ActiveRecord::Base.connection.quote_column_name(f)} LIKE ?", "%#{
+          ActiveRecord::Base.sanitize_sql_like(v)
+        }%"
+      ]
+    },
     in: ->(f, v) {
       if v.is_a?(Array)
         { f => v.map { |el| el == "null" ? nil : el } }

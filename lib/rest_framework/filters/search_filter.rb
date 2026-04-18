@@ -25,12 +25,13 @@ class RESTFramework::Filters::SearchFilter < RESTFramework::Filters::BaseFilter
           "VARCHAR"
         end
 
-        # Ensure we pass user input as arguments to prevent SQL injection.
+        conn = data.connection
+        like_op = @controller.class.search_ilike ? "ILIKE" : "LIKE"
         return data.where(
           fields.map { |f|
-            "CAST(#{f} AS #{data_type}) #{@controller.class.search_ilike ? "ILIKE" : "LIKE"} ?"
+            "CAST(#{conn.quote_column_name(f)} AS #{data_type}) #{like_op} ?"
           }.join(" OR "),
-          *([ "%#{search}%" ] * fields.length),
+          *([ "%#{ActiveRecord::Base.sanitize_sql_like(search)}%" ] * fields.length),
         )
       end
     end

@@ -169,7 +169,7 @@ module RESTFramework
     # Whether the backtrace should be shown in rescued errors.
     attr_accessor :show_backtrace
 
-    # Disable `rescue_from` on the controller mixins.
+    # Disable `rescue_from` on the controller.
     attr_accessor :disable_rescue_from
 
     # The default label fields to use when generating labels for `has_many` associations.
@@ -224,7 +224,6 @@ end
 require_relative "rest_framework/engine"
 require_relative "rest_framework/errors"
 require_relative "rest_framework/filters"
-require_relative "rest_framework/generators"
 require_relative "rest_framework/mixins"
 require_relative "rest_framework/paginators"
 require_relative "rest_framework/routers"

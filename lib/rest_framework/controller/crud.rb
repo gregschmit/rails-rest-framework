@@ -2,8 +2,8 @@ module RESTFramework::Controller
   def create
     # Bulk create: if `bulk` is enabled and the request body is an array, delegate to `create_all!`.
     if self.class.bulk && params[:_json].is_a?(Array)
-      records = self.create_all!
-      return render(api: self.bulk_serialize(records))
+      result = self.create_all!
+      return render(api: { result: result })
     end
 
     render(api: self.create!, status: :created)
