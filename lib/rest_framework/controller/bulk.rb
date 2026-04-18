@@ -12,7 +12,7 @@ module RESTFramework::Controller
 
   def create_all!
     pk = self.class.model.primary_key
-    data = self.get_create_params(bulk_mode: true)[:_json]
+    data = self.get_create_params(bulk_action: :create)[:_json]
 
     unless data&.is_a?(Array) && data.all? { |r| r.is_a?(ActionController::Parameters) }
       raise RESTFramework::InvalidBulkParametersError.new("Expected an array of objects.")
@@ -35,7 +35,7 @@ module RESTFramework::Controller
 
   def update_all!
     pk = self.class.model.primary_key
-    data = self.get_update_params(bulk_mode: :update)[:_json]
+    data = self.get_update_params(bulk_action: :update)[:_json]
 
     unless data&.is_a?(Array) && data.all? { |r| r.is_a?(ActionController::Parameters) }
       raise RESTFramework::InvalidBulkParametersError.new("Expected an array of objects.")
@@ -63,7 +63,7 @@ module RESTFramework::Controller
 
   def destroy_all!
     pk = self.class.model.primary_key
-    data = self.get_destroy_params(bulk_mode: :destroy)[:_json]
+    data = self.get_destroy_params(bulk_action: :destroy)[:_json]
 
     unless data&.is_a?(Array) && data.all? { |r| r.is_a?(String) || r.is_a?(Numeric) }
       raise RESTFramework::InvalidBulkParametersError.new("Expected an array of primary keys.")
