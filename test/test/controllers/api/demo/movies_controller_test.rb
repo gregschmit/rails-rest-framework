@@ -20,22 +20,64 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
     end
   end
 
+  # --- Bulk record mode (default) ---
+
   def test_bulk_create
     post(
       :create,
       as: :json,
       params: { _json: [ { name: "test_bulk_1" }, { name: "test_bulk_2" } ] },
     )
-    assert_response(:success)
+    assert_response(:created)
+    assert_equal(2, @response.parsed_body["records"].length)
+    assert(Movie.find_by(name: "test_bulk_1"))
+    assert(Movie.find_by(name: "test_bulk_2"))
   end
 
-  def test_bulk_create_with_error
+  def test_bulk_create_with_validation_error
+    # Missing name triggers presence validation on all records before save.
     post(
       :create,
       as: :json,
-      params: { _json: [ { name: "test_bulk_1" }, { name: "test_bulk_1" } ] },
+      params: { _json: [ { name: "test_bulk_ok" }, { name: "" } ] },
+    )
+    # Transactional mode: validation errors return 422 and no records are created.
+    assert_response(422)
+    errors = @response.parsed_body["errors"]
+    assert(errors)
+    assert_equal(1, errors.length)
+    assert_equal(1, errors[0]["index"])
+    assert(errors[0]["errors"]["name"])
+    assert_nil(Movie.find_by(name: "test_bulk_ok"))
+  end
+
+  def test_bulk_create_with_constraint_error
+    # Duplicate names in same batch: uniqueness constraint caught at DB level.
+    post(
+      :create,
+      as: :json,
+      params: { _json: [ { name: "test_bulk_dup" }, { name: "test_bulk_dup" } ] },
     )
     assert_response(400)
+  end
+
+  def test_bulk_create_partial
+    @request.env["QUERY_STRING"] = "bulk_partial=true"
+    post(
+      :create,
+      as: :json,
+      params: { _json: [ { name: "test_partial_1" }, { name: "test_partial_1" } ] },
+    )
+    assert_response(:created)
+    results = @response.parsed_body["records"]
+    assert_equal(2, results.length)
+    # First record succeeds.
+    assert_nil(results[0]["errors"])
+    assert(results[0]["id"])
+    assert(Movie.find_by(name: "test_partial_1"))
+    # Second record fails with a name uniqueness error.
+    assert(results[1]["errors"])
+    assert(results[1]["errors"]["name"])
   end
 
   def test_bulk_update
@@ -57,7 +99,7 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
     assert_equal(old_count, Movie.count)
   end
 
-  def test_bulk_update_with_error
+  def test_bulk_update_with_validation_error
     movie1 = Movie.create!(name: "test_bulk_1", price: 4)
     movie2 = Movie.create!(name: "test_bulk_2", price: 23)
     old_count = Movie.count
@@ -65,15 +107,40 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
     patch(
       :update_all,
       as: :json,
-      params: { _json: [ { id: movie1.id, price: 5 }, { id: movie2.id, price: 24, name: nil } ] },
+      params: { _json: [ { id: movie1.id, price: 5 }, { id: movie2.id, name: "" } ] },
     )
-    assert_response(400)
+    # Transactional mode: rolls back all changes.
+    assert_response(422)
+    assert(@response.parsed_body["errors"])
 
     movie1.reload
     movie2.reload
     assert_equal(4, movie1.price)
-    assert_equal(23, movie2.price)
+    assert_equal("test_bulk_2", movie2.name)
     assert_equal(old_count, Movie.count)
+  end
+
+  def test_bulk_update_partial
+    movie1 = Movie.create!(name: "test_bulk_1", price: 4)
+    movie2 = Movie.create!(name: "test_bulk_2", price: 23)
+
+    @request.env["QUERY_STRING"] = "bulk_partial=true"
+    patch(
+      :update_all,
+      as: :json,
+      params: { _json: [ { id: movie1.id, price: 5 }, { id: movie2.id, name: "" } ] },
+    )
+    assert_response(:success)
+    results = @response.parsed_body["records"]
+
+    # First record succeeds, second has errors.
+    assert_nil(results[0]["errors"])
+    assert(results[1]["errors"])
+
+    movie1.reload
+    movie2.reload
+    assert_equal(5, movie1.price)
+    assert_equal("test_bulk_2", movie2.name)
   end
 
   def test_bulk_destroy
@@ -84,6 +151,41 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
     delete(:destroy_all, as: :json, params: { _json: movies.pluck(:id) })
     assert_response(:success)
     assert_equal(0, movies.count)
+  end
+
+  def test_bulk_destroy_with_callback_error
+    Movie.create!(name: "Undestroyable")
+    movie2 = Movie.create!(name: "test_destroyable")
+    undestroyable = Movie.find_by!(name: "Undestroyable")
+
+    delete(
+      :destroy_all,
+      as: :json,
+      params: { _json: [ undestroyable.id, movie2.id ] },
+    )
+    # Transactional mode: rolls back all, both records still exist.
+    assert_response(400)
+    assert(Movie.find_by(name: "Undestroyable"))
+    assert(Movie.find_by(id: movie2.id))
+  end
+
+  def test_bulk_destroy_partial
+    Movie.create!(name: "Undestroyable")
+    movie2 = Movie.create!(name: "test_destroyable_partial")
+    undestroyable = Movie.find_by!(name: "Undestroyable")
+
+    @request.env["QUERY_STRING"] = "bulk_partial=true"
+    delete(
+      :destroy_all,
+      as: :json,
+      params: { _json: [ undestroyable.id, movie2.id ] },
+    )
+    assert_response(:success)
+    results = @response.parsed_body["records"]
+    # Undestroyable should have errors, the other should be destroyed.
+    assert(results[0]["errors"])
+    assert(Movie.find_by(name: "Undestroyable"))
+    assert_nil(Movie.find_by(id: movie2.id))
   end
 
   def test_filtering_predicates

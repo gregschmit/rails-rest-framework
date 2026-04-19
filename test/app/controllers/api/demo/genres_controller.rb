@@ -1,4 +1,4 @@
 class Api::Demo::GenresController < Api::DemoController
   self.model = Genre
-  self.bulk = true
+  self.bulk = :raw
 end

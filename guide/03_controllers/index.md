@@ -838,22 +838,11 @@ end
 
 ## Error Handling
 
-Unless `RESTFramework.config.disable_rescue_from` is set, the framework `rescue_from`s the
-following exceptions and renders an appropriate JSON error response:
+The framework uses `rescue_from` to catch common Rails exceptions and renders an appropriate error
+response. The full list can be found in `RESTFramework::Controller::RRF_RESCUED_RAILS_EXCEPTIONS`,
+and includes things like `ActiveRecord::RecordNotFound` and `ActiveRecord::RecordInvalid`.
 
-- `ActionController::ParameterMissing`
-- `ActionController::UnpermittedParameters`
-- `ActionDispatch::Http::Parameters::ParseError`
-- `ActiveRecord::AssociationTypeMismatch`
-- `ActiveRecord::NotNullViolation`
-- `ActiveRecord::RecordNotFound` (→ `404`)
-- `ActiveRecord::RecordInvalid`
-- `ActiveRecord::RecordNotSaved`
-- `ActiveRecord::RecordNotDestroyed`
-- `ActiveRecord::RecordNotUnique`
-- `ActiveModel::UnknownAttributeError`
-
-Error responses have the shape:
+Error responses have the form:
 
 ```json
 {
@@ -862,8 +851,8 @@ Error responses have the shape:
 }
 ```
 
-Because of this, your code can (and should) use bang methods like `find`, `update!`, and
-`destroy!` — the framework will turn the raised exceptions into clean API responses.
+Because of this, your code can (and should) use exception-raising methods like `find`, `update!`,
+and `destroy!` — the framework will turn the raised exceptions into clean API responses.
 
 ## Controller Finalization
 

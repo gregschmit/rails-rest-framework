@@ -1,9 +1,8 @@
 module RESTFramework::Controller
   def create
-    # Bulk create: if `bulk` is enabled and the request body is an array, delegate to `create_all!`.
+    # Bulk create: if `bulk` is enabled and the request body is an array, delegate to `create_all`.
     if self.class.bulk && params[:_json].is_a?(Array)
-      result = self.create_all!
-      return render(api: { result: result })
+      return self.create_all
     end
 
     render(api: self.create!, status: :created)
@@ -15,11 +14,11 @@ module RESTFramework::Controller
   end
 
   def index
-    render(api: self.get_index_records)
+    render(api: self.index!)
   end
 
   # Get records with both filtering and pagination applied.
-  def get_index_records
+  def index!
     records = self.get_records
 
     # Handle pagination, if enabled.

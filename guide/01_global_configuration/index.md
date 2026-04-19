@@ -38,19 +38,6 @@ you want to override, do it explicitly:
 config.show_backtrace = Rails.env.development? || Rails.env.test?
 ```
 
-### `disable_rescue_from`
-
-- **Type:** Boolean
-- **Default:** `false` (the framework does install the rescues)
-
-When `true`, the framework *won't* install its default `rescue_from` handlers for
-`ActionController::ParameterMissing`, `ActiveRecord::RecordNotFound`, `ActiveRecord::RecordInvalid`,
-etc. The full list of rescued exceptions is in the Controllers section under
-[Error Handling](../03_controllers/#error-handling).
-
-Use this if you have a stricter global error-handling scheme and want to install all handlers
-yourself. Read at the time each controller's `include RESTFramework::Controller` runs.
-
 ### `label_fields`
 
 - **Type:** Array of strings

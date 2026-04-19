@@ -44,6 +44,9 @@ Rails.application.routes.draw do
     namespace :test do
       rest_resource :user
       rest_resources :users
+      resources :users, only: [] do
+        rest_resources :user_emails
+      end
 
       rest_resources :added_select
       rest_resources :bare_create, only: [ :create ]

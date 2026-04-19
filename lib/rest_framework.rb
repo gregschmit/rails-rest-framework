@@ -169,9 +169,6 @@ module RESTFramework
     # Whether the backtrace should be shown in rescued errors.
     attr_accessor :show_backtrace
 
-    # Disable `rescue_from` on the controller.
-    attr_accessor :disable_rescue_from
-
     # The default label fields to use when generating labels for `has_many` associations.
     attr_accessor :label_fields
 

@@ -14,30 +14,42 @@ module RESTFramework::Controller
     inflect_acronyms: RESTFramework.config.inflect_acronyms,
     openapi_include_children: false,
 
-    # Core attributes related to models.
+    # Options related to models.
     model: nil,
     recordset: nil,
     excluded_actions: nil,
-    bulk: false,
 
-    # Attributes for configuring record fields.
+    # Bulk configuration.
+    #
+    # When `bulk` is truthy, it enables the default bulk behavior (`:default`), which is per-record
+    # processing (e.g., `create` for each record). When `bulk` is set to `:raw`, it enables single
+    # SQL query behavior (e.g., `insert_all` for bulk create) which skips validations/callbacks.
+    bulk: false,
+    bulk_partial: false,
+    bulk_partial_query_param: "bulk_partial".freeze,
+    bulk_allow_mode_override: false,
+    bulk_mode_query_param: "bulk_mode".freeze,
+    bulk_max_size: nil,
+    bulk_max_raw_size: nil,
+
+    # Configuring record fields.
     fields: nil,
     field_config: nil,
     read_only_fields: RESTFramework.config.read_only_fields,
     write_only_fields: RESTFramework.config.write_only_fields,
     hidden_fields: nil,
 
-    # Attributes for finding records.
+    # Finding records.
     find_by_fields: nil,
     find_by_query_param: "find_by".freeze,
 
-    # Options for what should be included/excluded from default fields.
+    # What should be included/excluded from default fields.
     exclude_associations: false,
 
-    # Options for handling request body parameters.
+    # Handling request body parameters.
     allowed_parameters: nil,
 
-    # Attributes for the default native serializer.
+    # Options for the default native serializer.
     native_serializer_config: nil,
     native_serializer_singular_config: nil,
     native_serializer_plural_config: nil,
@@ -49,7 +61,7 @@ module RESTFramework::Controller
     native_serializer_associations_limit_query_param: "associations_limit".freeze,
     native_serializer_include_associations_count: false,
 
-    # Attributes for filtering, ordering, and searching.
+    # Options for filtering, ordering, and searching.
     filter_backends: [
       RESTFramework::QueryFilter,
       RESTFramework::OrderingFilter,
@@ -97,19 +109,38 @@ module RESTFramework::Controller
     enable_active_storage: false,
   }
 
-  # Anchored regex with non-greedy content_type match to prevent over-matching on malicious input.
-  BASE64_REGEX = /\Adata:([^;]*);base64,(.*)\z/m
-  BASE64_TRANSLATE = ->(field, value) {
-    return value unless BASE64_REGEX.match?(value)
+  # Exceptions to be rescued and handled by returning a reasonable error response.
+  RRF_RESCUED_EXCEPTIONS = [
+    RESTFramework::InvalidBulkParametersError,
+    RESTFramework::BulkRecordErrorsError,
+  ].freeze
+  RRF_RESCUED_RAILS_EXCEPTIONS = [
+    ActionController::ParameterMissing,
+    ActionController::UnpermittedParameters,
+    ActionDispatch::Http::Parameters::ParseError,
+    ActiveRecord::AssociationTypeMismatch,
+    ActiveRecord::NotNullViolation,
+    ActiveRecord::RecordNotFound,
+    ActiveRecord::RecordInvalid,
+    ActiveRecord::RecordNotSaved,
+    ActiveRecord::RecordNotDestroyed,
+    ActiveRecord::RecordNotUnique,
+    ActiveModel::UnknownAttributeError,
+  ].freeze
 
-    _, content_type, payload = value.match(BASE64_REGEX).to_a
+  # Anchored regex with non-greedy content_type match to prevent over-matching on malicious input.
+  RRF_BASE64_REGEX = /\Adata:([^;]*);base64,(.*)\z/m
+  RRF_BASE64_TRANSLATE = ->(field, value) {
+    return value unless RRF_BASE64_REGEX.match?(value)
+
+    _, content_type, payload = value.match(RRF_BASE64_REGEX).to_a
     {
       io: StringIO.new(Base64.decode64(payload)),
       content_type: content_type,
       filename: "file_#{field}#{Rack::Mime::MIME_TYPES.invert[content_type]}",
     }
   }
-  ACTIVESTORAGE_KEYS = [ :io, :content_type, :filename, :identify, :key ]
+  RRF_ACTIVESTORAGE_KEYS = [ :io, :content_type, :filename, :identify, :key ]
 
   # Default action for API root.
   def root
@@ -424,26 +455,9 @@ module RESTFramework::Controller
       nil
     end
 
-    # Handle some common exceptions.
-    unless RESTFramework.config.disable_rescue_from
-      base.rescue_from(
-        ActionController::ParameterMissing,
-        ActionController::UnpermittedParameters,
-        ActionDispatch::Http::Parameters::ParseError,
-        ActiveRecord::AssociationTypeMismatch,
-        ActiveRecord::NotNullViolation,
-        ActiveRecord::RecordNotFound,
-        ActiveRecord::RecordInvalid,
-        ActiveRecord::RecordNotSaved,
-        ActiveRecord::RecordNotDestroyed,
-        ActiveRecord::RecordNotUnique,
-        ActiveModel::UnknownAttributeError,
-        with: :rrf_error_handler,
-      )
-    end
-
-    # Always handle some framework-specific errors.
-    base.rescue_from(RESTFramework::InvalidBulkParametersError, with: :rrf_error_handler)
+    # Handle exceptions.
+    base.rescue_from(*RRF_RESCUED_EXCEPTIONS, with: :rrf_error_handler)
+    base.rescue_from(*RRF_RESCUED_RAILS_EXCEPTIONS, with: :rrf_error_handler)
 
     # Use `TracePoint` hook to automatically call `rrf_finalize`.
     if RESTFramework.config.auto_finalize
@@ -476,6 +490,8 @@ module RESTFramework::Controller
     status = case e
     when ActiveRecord::RecordNotFound
       404
+    when RESTFramework::BulkRecordErrorsError
+      422
     else
       400
     end
@@ -603,13 +619,13 @@ module RESTFramework::Controller
 
       # ActiveStorage Integration: `has_one_attached`
       if self.class.enable_active_storage && reflections.key?("#{f}_attachment")
-        hash_variations[f] = ACTIVESTORAGE_KEYS
+        hash_variations[f] = RRF_ACTIVESTORAGE_KEYS
         next f
       end
 
       # ActiveStorage Integration: `has_many_attached`
       if self.class.enable_active_storage && reflections.key?("#{f}_attachments")
-        hash_variations[f] = ACTIVESTORAGE_KEYS
+        hash_variations[f] = RRF_ACTIVESTORAGE_KEYS
         next nil
       end
 
@@ -685,7 +701,7 @@ module RESTFramework::Controller
         if data[k].is_a?(Array)
           data[k] = data[k].map { |v|
             if v.is_a?(String)
-              v = BASE64_TRANSLATE.call(k, v)
+              v = RRF_BASE64_TRANSLATE.call(k, v)
 
               # Remember scalars because Rails strong params will remove it.
               if v.is_a?(String)
@@ -705,7 +721,7 @@ module RESTFramework::Controller
             data[k][:io] = StringIO.new(Base64.decode64(data[k][:io]))
           end
         elsif data[k].is_a?(String)
-          data[k] = BASE64_TRANSLATE.call(k, data[k])
+          data[k] = RRF_BASE64_TRANSLATE.call(k, data[k])
         end
       end
     end
