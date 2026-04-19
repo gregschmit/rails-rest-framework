@@ -1,6 +1,5 @@
 # A filter backend which handles ordering of the recordset.
 class RESTFramework::Filters::OrderingFilter < RESTFramework::Filters::BaseFilter
-  # Get a list of ordering fields for the current action.
   def _get_fields
     @controller.class.ordering_fields&.map(&:to_s) || @controller.get_fields
   end

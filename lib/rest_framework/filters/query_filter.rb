@@ -37,7 +37,6 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
   }.freeze
   PREDICATES_REGEX = /^(.*)_(#{PREDICATES.keys.join("|")})$/
 
-  # Get a list of filter fields for the current action.
   def _get_fields
     # Always return a list of strings; `@controller.get_fields` already does this.
     @controller.class.filter_fields&.map(&:to_s) || @controller.get_fields

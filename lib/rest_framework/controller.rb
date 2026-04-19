@@ -779,10 +779,10 @@ module RESTFramework::Controller
 
     # Find by another column if it's permitted.
     if find_by_param = self.class.find_by_query_param.presence
-      if find_by = params[find_by_param].presence
-        find_by_fields = self.class.find_by_fields&.map(&:to_s)
+      if find_by = request.query_parameters[find_by_param].presence
+        find_by_fields = self.class.find_by_fields&.map(&:to_s) || self.get_fields
 
-        if !find_by_fields || find_by.in?(find_by_fields)
+        if find_by.in?(find_by_fields)
           is_pk = false unless find_by_key == find_by
           find_by_key = find_by
         end

@@ -1,5 +1,4 @@
 class RESTFramework::Filters::SearchFilter < RESTFramework::Filters::BaseFilter
-  # Get a list of search fields for the current action.
   def _get_fields
     if search_fields = @controller.class.search_fields
       return search_fields&.map(&:to_s)
