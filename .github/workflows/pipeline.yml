@@ -68,6 +68,7 @@ jobs:
         with:
           fetch-depth: 1
           fetch-tags: true
+      - run: until git describe --dirty 2>/dev/null; do git fetch --deepen=50; done
       - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
