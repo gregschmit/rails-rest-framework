@@ -57,6 +57,7 @@ Rails.application.routes.draw do
       rest_resources :no_rescue_unknown_format
       rest_resources :read_only
       rest_resources :users_with_hidden
+      rest_resources :find_by
       rest_resources :users_with_sub_fields
 
       rest_route :network
