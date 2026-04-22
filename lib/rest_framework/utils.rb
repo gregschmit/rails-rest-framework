@@ -46,11 +46,14 @@ module RESTFramework::Utils
       RESTFramework::BUILTIN_ACTIONS.keys - (singular ? [ :index ] : [])
     ) + RESTFramework::BUILTIN_MEMBER_ACTIONS.keys
 
+    # Skip all builtin actions for controllers without a model, since the builtin actions assume a
+    # model is present.
     return candidates unless controller_class.model
 
+    # Skip actions if there is no method defined or if the action is explicitly excluded.
     exclude = controller_class.excluded_actions&.to_set || Set.new
-    candidates.reject do |action|
-      controller_class.method_defined?(action) && !exclude.include?(action)
+    candidates.select do |action|
+      !controller_class.method_defined?(action) || exclude.include?(action)
     end
   end
 
