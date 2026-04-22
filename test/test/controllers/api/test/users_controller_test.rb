@@ -2,7 +2,6 @@ require "test_helper"
 
 class Api::Test::UsersControllerTest < ActionController::TestCase
   # Test bulk update with a nonexistent record ID.
-  # Covers controller/bulk.rb lines 190, 196-197.
   def test_bulk_update_missing_record
     user = User.create!(login: "bulk_update_test", state: "default", status: "")
     fake_id = User.maximum(:id) + 9999
@@ -17,7 +16,6 @@ class Api::Test::UsersControllerTest < ActionController::TestCase
   end
 
   # Test bulk destroy with a nonexistent record ID (transactional mode).
-  # Covers controller/bulk.rb lines 252-254.
   def test_bulk_destroy_missing_record
     user = User.create!(login: "bulk_destroy_test", state: "default", status: "")
     fake_id = User.maximum(:id) + 9999
@@ -27,5 +25,49 @@ class Api::Test::UsersControllerTest < ActionController::TestCase
     assert_match(/Missing/, @response.parsed_body["message"])
     # Transactional: user should still exist since destroy rolled back.
     assert(User.find_by(id: user.id))
+  end
+
+  # Test bulk update with no _json body (triggers "Expected an array of objects").
+  def test_bulk_update_no_json
+    patch(:update_all, as: :json, params: { login: "bad" })
+    assert_response(400)
+    assert_match(/Expected an array of objects/, @response.parsed_body["message"])
+  end
+
+  # Test bulk destroy with no _json body (triggers "Expected an array of primary keys").
+  def test_bulk_destroy_no_json
+    delete(:destroy_all, as: :json, params: { login: "bad" })
+    assert_response(400)
+    assert_match(/Expected an array of primary keys/, @response.parsed_body["message"])
+  end
+
+  # Test bulk update with objects missing the primary key.
+  def test_bulk_update_nil_pk
+    patch(
+      :update_all,
+      as: :json,
+      params: { _json: [ { login: "no_pk_1" }, { login: "no_pk_2" } ] },
+    )
+    assert_response(400)
+    assert_match(/primary key/, @response.parsed_body["message"])
+  end
+
+  # Test create with association data submitted by association name (not _id).
+  def test_create_with_association_by_name
+    manager = User.create!(login: "mgr_dispatch_test", state: "default", status: "")
+    post(:create, as: :json, params: { login: "assoc_dispatch_test", manager: manager.id })
+    assert_response(:success)
+  end
+
+  def test_create_with_nested_association
+    post(
+      :create,
+      as: :json,
+      params: {
+        login: "nested_dispatch_test",
+        manager: { login: "nested_mgr", state: "default", status: "" },
+      },
+    )
+    assert_response(:success)
   end
 end
