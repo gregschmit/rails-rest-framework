@@ -56,6 +56,13 @@ module RESTFramework::Utils
 
   # Get the first route pattern which matches the given request.
   def self.get_request_route(application_routes, request)
+    # Prefer the route already resolved by the router to avoid an expensive `recognize` call. This
+    # is also required for Rails 8.1+ where OPTIONS routes are non-anchored, causing `path_info` to
+    # be modified during dispatch, which makes `recognize` fail from inside the controller action.
+    if route = request.env["action_dispatch.route"]
+      return route
+    end
+
     application_routes.router.recognize(request) { |route, _| return route }
   end
 

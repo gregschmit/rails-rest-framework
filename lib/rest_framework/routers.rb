@@ -109,7 +109,9 @@ module ActionDispatch::Routing
             next unless controller_class.method_defined?(action)
 
             [ methods ].flatten.each do |m|
-              public_send(m, "", action: action) if self.respond_to?(m)
+              # Anchor the route since Rails 8.1 OPTIONS routes are non-anchored by default, which
+              # causes parent OPTIONS routes to greedily intercept sub-path requests.
+              public_send(m, "", action: action, anchor: true) if self.respond_to?(m)
             end
           end
 
@@ -122,7 +124,9 @@ module ActionDispatch::Routing
               next if bulk_exclude.include?(action)
 
               [ methods ].flatten.each do |m|
-                public_send(m, "", action: action) if self.respond_to?(m)
+                # Anchor the route since Rails 8.1 OPTIONS routes are non-anchored by default, which
+                # causes parent OPTIONS routes to greedily intercept sub-path requests.
+                public_send(m, "", action: action, anchor: true) if self.respond_to?(m)
               end
             end
           end
@@ -184,7 +188,9 @@ module ActionDispatch::Routing
             next unless controller_class.method_defined?(action)
 
             [ methods ].flatten.each do |m|
-              public_send(m, "", action: action) if self.respond_to?(m)
+              # Anchor the route since Rails 8.1 OPTIONS routes are non-anchored by default, which
+              # causes parent OPTIONS routes to greedily intercept sub-path requests.
+              public_send(m, "", action: action, anchor: true) if self.respond_to?(m)
             end
           end
         end
