@@ -3,7 +3,6 @@
 [![Gem Version](https://badge.fury.io/rb/rest_framework.svg)](https://badge.fury.io/rb/rest_framework)
 [![Pipeline](https://github.com/gregschmit/rails-rest-framework/actions/workflows/pipeline.yml/badge.svg)](https://github.com/gregschmit/rails-rest-framework/actions/workflows/pipeline.yml)
 [![Coverage](https://coveralls.io/repos/github/gregschmit/rails-rest-framework/badge.svg?branch=master)](https://coveralls.io/github/gregschmit/rails-rest-framework?branch=master)
-[![Maintainability](https://api.codeclimate.com/v1/badges/ba5df7706cb544d78555/maintainability)](https://codeclimate.com/github/gregschmit/rails-rest-framework/maintainability)
 
 A framework for DRY RESTful APIs in Ruby on Rails.
 
