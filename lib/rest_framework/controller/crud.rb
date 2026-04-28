@@ -5,7 +5,7 @@ module RESTFramework::Controller
       return self.create_all
     end
 
-    render(api: self.create!, status: :created)
+    render_api(self.create!, status: :created)
   end
 
   # Perform the `create!` call and return the created record.
@@ -14,7 +14,7 @@ module RESTFramework::Controller
   end
 
   def index
-    render(api: self.index!)
+    render_api(self.index!)
   end
 
   # Get records with both filtering and pagination applied.
@@ -39,11 +39,11 @@ module RESTFramework::Controller
   end
 
   def show
-    render(api: self.get_record)
+    render_api(self.get_record)
   end
 
   def update
-    render(api: self.update!)
+    render_api(self.update!)
   end
 
   # Perform the `update!` call and return the updated record.
@@ -55,7 +55,7 @@ module RESTFramework::Controller
 
   def destroy
     self.destroy!
-    render(api: "")
+    render_api("")
   end
 
   # Perform the `destroy!` call and return the destroyed (and frozen) record.

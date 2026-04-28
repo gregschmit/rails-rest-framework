@@ -145,7 +145,7 @@ module RESTFramework::Controller
 
   # Default action for API root.
   def root
-    render(api: { message: "This is the API root." })
+    render_api({ message: "This is the API root." })
   end
 
   module ClassMethods
@@ -401,9 +401,9 @@ module RESTFramework::Controller
 
         self.define_method(action) do
           if self.class.model.method(action).parameters.last&.first == :keyrest
-            render(api: self.class.model.send(action, **request.query_parameters.symbolize_keys))
+            render_api(self.class.model.send(action, **request.query_parameters.symbolize_keys))
           else
-            render(api: self.class.model.send(action))
+            render_api(self.class.model.send(action))
           end
         end
       end
@@ -417,9 +417,9 @@ module RESTFramework::Controller
           record = self.get_record
 
           if record.method(action).parameters.last&.first == :keyrest
-            render(api: record.send(action, **request.query_parameters.symbolize_keys))
+            render_api(record.send(action, **request.query_parameters.symbolize_keys))
           else
-            render(api: record.send(action))
+            render_api(record.send(action))
           end
         end
       end
@@ -497,8 +497,8 @@ module RESTFramework::Controller
       400
     end
 
-    render(
-      api: {
+    render_api(
+      {
         message: e.message,
         errors: e.try(:record).try(:errors),
         exception: RESTFramework.config.show_backtrace ? e.full_message : nil,
@@ -584,14 +584,8 @@ module RESTFramework::Controller
     end
   end
 
-  # Deprecated alias for `render_api`.
-  def api_response(*args, **kwargs)
-    RESTFramework.deprecator.warn("`api_response` is deprecated; use `render_api` instead.")
-    render_api(*args, **kwargs)
-  end
-
   def options
-    render(api: self.openapi_document)
+    render_api(self.openapi_document)
   end
 
   def get_fields

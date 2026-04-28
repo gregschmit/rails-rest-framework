@@ -95,12 +95,12 @@ module RESTFramework::Controller
   def create_all
     if self._bulk_mode == :raw
       result = self.create_all_raw!
-      return render(api: { message: "Bulk create successful.", result: result })
+      return render_api({ message: "Bulk create successful.", result: result })
     end
 
     records = self.create_all_default!
-    render(
-      api: { message: "Bulk create successful.", records: self._bulk_serialize(records) },
+    render_api(
+      { message: "Bulk create successful.", records: self._bulk_serialize(records) },
       status: :created,
     )
   end
@@ -146,11 +146,11 @@ module RESTFramework::Controller
   def update_all
     if self._bulk_mode == :raw
       result = self.update_all_raw!
-      return render(api: { message: "Bulk update successful.", result: result })
+      return render_api({ message: "Bulk update successful.", result: result })
     end
 
     records = self.update_all_default!
-    render(api: { message: "Bulk update successful.", records: self._bulk_serialize(records) })
+    render_api({ message: "Bulk update successful.", records: self._bulk_serialize(records) })
   end
 
   def update_all_raw!
@@ -229,11 +229,11 @@ module RESTFramework::Controller
   def destroy_all
     if self._bulk_mode == :raw
       deleted = self.destroy_all_raw!
-      return render(api: { message: "Bulk destroy successful.", result: deleted })
+      return render_api({ message: "Bulk destroy successful.", result: deleted })
     end
 
     records = self.destroy_all_default!
-    render(api: { message: "Bulk destroy successful.", records: self._bulk_serialize(records) })
+    render_api({ message: "Bulk destroy successful.", records: self._bulk_serialize(records) })
   end
 
   def destroy_all_raw!
