@@ -1,3 +1,3 @@
 class Api::Plain::PhoneNumbersController < Api::PlainController
-  include RESTFramework::ModelControllerMixin
+  self.model = PhoneNumber
 end

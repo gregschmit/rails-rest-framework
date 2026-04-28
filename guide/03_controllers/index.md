@@ -7,12 +7,6 @@ different REST Framework behavior. For these reasons, the framework ships a sing
 REST API controller. Behavior is then configured via class attributes — most notably `model`,
 `bulk`, `excluded_actions`, `fields`, and `field_config`.
 
-> **Note:** Previous versions of the framework used a tree of mixins (`BaseControllerMixin`,
-> `ModelControllerMixin`, `ReadOnlyModelControllerMixin`, `BulkModelControllerMixin`, and
-> `ListModelMixin`/`ShowModelMixin`/`CreateModelMixin`/`UpdateModelMixin`/`DestroyModelMixin`).
-> These still work but are deprecated and emit deprecation notices. The guide below only covers
-> the new, recommended approach.
-
 ## The `Controller` Module
 
 To transform any controller into a REST Framework controller, include the `Controller` module:
@@ -809,7 +803,7 @@ See the [Pagination](../06_pagination/) section for details.
 
 ## Read-Only Controller Recipe
 
-A common pattern — previously achieved by the `ReadOnlyModelControllerMixin`:
+A common pattern:
 
 ```ruby
 class Api::ReadOnlyMoviesController < ApiController

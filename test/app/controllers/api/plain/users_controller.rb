@@ -1,3 +1,3 @@
 class Api::Plain::UsersController < Api::PlainController
-  include RESTFramework::ModelControllerMixin
+  self.model = User
 end

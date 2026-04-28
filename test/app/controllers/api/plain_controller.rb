@@ -1,6 +1,5 @@
 class Api::PlainController < ApiController
-  # TODO: We use the old mixin here to test for regressions; remove in 2.0.
-  include RESTFramework::BaseControllerMixin
+  include RESTFramework::Controller
 
   DESCRIPTION = <<~TEXT.lines.map(&:strip).join(" ")
     The plain API is a simple API that demonstrates the basic functionality of the framework.

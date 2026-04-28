@@ -1,3 +1,3 @@
 class Api::Plain::MoviesController < Api::PlainController
-  include RESTFramework::ModelControllerMixin
+  self.model = Movie
 end

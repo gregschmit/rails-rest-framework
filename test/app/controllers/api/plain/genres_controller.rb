@@ -1,3 +1,3 @@
 class Api::Plain::GenresController < Api::PlainController
-  include RESTFramework::ModelControllerMixin
+  self.model = Genre
 end

@@ -254,12 +254,4 @@ module RESTFramework::Utils
 
     s
   end
-
-  # Used for deprecated mixins that rely on model being determined from the controller name.
-  def self.get_model(controller_class)
-    begin
-      controller_class.name.demodulize.chomp("Controller").singularize.constantize
-    rescue NameError
-    end
-  end
 end

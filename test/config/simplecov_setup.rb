@@ -27,9 +27,6 @@ SimpleCov.start do
   add_filter "docs/"
   add_filter "test/"
 
-  # Filter out deprecated mixins.
-  add_filter "lib/rest_framework/mixins/"
-
   # Setup formatter for submission to `coveralls.io` if configured, otherwise use an HTML formatter.
   if IS_COVERALLS
     require "simplecov-lcov"
