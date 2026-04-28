@@ -1,6 +1,5 @@
 class Api::Demo::MoviesController < Api::DemoController
   self.model = Movie
-  self.bulk = true
 
   self.extra_actions = {
     random: {

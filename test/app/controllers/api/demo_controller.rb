@@ -6,6 +6,9 @@ class Api::DemoController < ApiController
     primarily pagination, nested resources, and integration with Action Text and Active Storage.
   TEXT
 
+  self.bulk = true
+  self.bulk_allow_mode_override = true
+
   self.enable_action_text = true
   self.enable_active_storage = true
 
