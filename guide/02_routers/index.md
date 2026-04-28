@@ -67,14 +67,14 @@ Rails.application.routes.draw do
 end
 ```
 
-### Overriding Plurality with `singleton_controller`
+### Overriding Plurality with `singular`
 
 A controller can force singular or plural routing regardless of which helper routes it:
 
 ```ruby
 class Api::UserController < ApiController
   self.model = User
-  self.singleton_controller = true   # Always render singular routes.
+  self.singular = true   # Always render singular routes.
 end
 ```
 

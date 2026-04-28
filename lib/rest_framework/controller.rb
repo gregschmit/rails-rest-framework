@@ -5,7 +5,7 @@ module RESTFramework::Controller
   RRF_BASE_CONFIG = {
     extra_actions: nil,
     extra_member_actions: nil,
-    singleton_controller: nil,
+    singular: nil,
 
     # Options related to metadata and display.
     title: nil,

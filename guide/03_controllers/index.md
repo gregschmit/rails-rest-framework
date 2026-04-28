@@ -290,7 +290,7 @@ Valid values include the built-in REST actions (`:index`, `:show`, `:create`, `:
 `:destroy`) and, if `bulk` is enabled, the bulk actions (`:update_all`, `:destroy_all`). The
 resourceful routers will skip routing excluded actions.
 
-### `singleton_controller`
+### `singular`
 
 If set to `true`, the resourceful router will generate singular (`resource`) rather than plural
 (`resources`) routes for this controller — meaning no `id` in the URL and no `index` action. You
@@ -703,7 +703,7 @@ inheritance hierarchy (child controllers inherit from parents). Grouped by conce
 | `recordset`                  | `nil`   | Static recordset. Falls back to `model.all`.                                             |
 | `bulk`                       | `false` | Enables bulk `create`, `update_all`, and `destroy_all` actions.                          |
 | `excluded_actions`           | `nil`   | Array of built-in actions to skip routing.                                               |
-| `singleton_controller`       | `nil`   | Force singular/plural resourceful routing.                                               |
+| `singular`                   | `nil`   | Force singular/plural resourceful routing.                                               |
 | `extra_actions`              | `nil`   | Hash of extra collection actions.                                                        |
 | `extra_member_actions`       | `nil`   | Hash of extra member actions.                                                            |
 | `create_from_recordset`      | `true`  | Create new records through the recordset (inherit recordset conditions as defaults).     |

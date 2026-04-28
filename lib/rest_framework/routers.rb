@@ -84,8 +84,8 @@ module ActionDispatch::Routing
       unscoped = kwargs.delete(:unscoped)
 
       # Determine plural/singular resource.
-      if !controller_class.singleton_controller.nil?
-        singular = controller_class.singleton_controller
+      if !controller_class.singular.nil?
+        singular = controller_class.singular
       else
         singular = default_singular
       end

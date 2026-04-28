@@ -1,4 +1,6 @@
 class Api::RootController < ApiController
+  include RESTFramework::Controller
+
   self.extra_actions = {
     dev_test: :get,
     ip: :get,
