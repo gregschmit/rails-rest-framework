@@ -65,101 +65,14 @@ module ActionDispatch::Routing
       end
     end
 
-    # Internal core implementation of the `rest_resource(s)` router, both singular and plural.
-    # @param default_singular [Boolean] the default plurality of the resource if the plurality is
-    #   not otherwise defined by the controller
-    # @param name [Symbol] the resource name, from which path and controller are deduced by default
-    def _rest_resources(default_singular, name, **kwargs, &block)
-      controller = kwargs.delete(:controller) || name
-      if controller.is_a?(Class)
-        controller_class = controller
-      else
-        controller_class = self._get_controller_class(controller, pluralize: !default_singular)
-      end
-
-      # Set controller if it's not explicitly set.
-      kwargs[:controller] = name unless kwargs[:controller]
-
-      # Passing `unscoped: true` will prevent a nested resource from being scoped.
-      unscoped = kwargs.delete(:unscoped)
-
-      # Determine plural/singular resource.
-      if !controller_class.singular.nil?
-        singular = controller_class.singular
-      else
-        singular = default_singular
-      end
-      resource_method = singular ? :resource : :resources
-
-      # Call either `resource` or `resources`, passing appropriate modifiers.
-      skip = RESTFramework::Utils.get_skipped_builtin_actions(controller_class, singular)
-      public_send(resource_method, name, except: skip, **kwargs) do
-        if controller_class.respond_to?(:extra_member_actions)
-          member do
-            self._route_extra_actions(controller_class.extra_member_actions)
-          end
-        end
-
-        collection do
-          # Route extra controller-defined actions.
-          self._route_extra_actions(controller_class.extra_actions)
-
-          # Route extra RRF-defined actions.
-          RESTFramework::RRF_BUILTIN_ACTIONS.each do |action, methods|
-            next unless controller_class.method_defined?(action)
-
-            [ methods ].flatten.each do |m|
-              # Anchor the route since Rails 8.1 OPTIONS routes are non-anchored by default, which
-              # causes parent OPTIONS routes to greedily intercept sub-path requests.
-              public_send(m, "", action: action, anchor: true) if self.respond_to?(m)
-            end
-          end
-
-          # Route bulk actions, if configured. These require a model and are gated by the `bulk`
-          # attribute, and may be individually excluded via `excluded_actions`.
-          if controller_class.model && controller_class.bulk
-            bulk_exclude = controller_class.excluded_actions&.to_set || Set.new
-            RESTFramework::RRF_BUILTIN_BULK_ACTIONS.each do |action, methods|
-              next unless controller_class.method_defined?(action)
-              next if bulk_exclude.include?(action)
-
-              [ methods ].flatten.each do |m|
-                # Anchor the route since Rails 8.1 OPTIONS routes are non-anchored by default, which
-                # causes parent OPTIONS routes to greedily intercept sub-path requests.
-                public_send(m, "", action: action, anchor: true) if self.respond_to?(m)
-              end
-            end
-          end
-        end
-
-        if unscoped
-          yield if block_given?
-        else
-          scope(module: name, as: name) do
-            yield if block_given?
-          end
-        end
-      end
-    end
-
-    # Public interface for creating singular RESTful resource routes.
-    def rest_resource(*names, **kwargs, &block)
-      names.each do |n|
-        self._rest_resources(true, n, **kwargs, &block)
-      end
-    end
-
-    # Public interface for creating plural RESTful resource routes.
-    def rest_resources(*names, **kwargs, &block)
-      names.each do |n|
-        self._rest_resources(false, n, **kwargs, &block)
-      end
-    end
-
-    # Route a controller without the default resourceful paths.
+    # Unified REST route helper. Routes are determined by the controller's configuration:
+    # - If the controller has a model, CRUD actions are routed explicitly.
+    # - If the controller has no model, the `root` action is routed.
+    # - Extra actions and extra member actions are always routed.
+    # - Bulk actions (update_all, destroy_all) are routed if `bulk` is enabled.
+    # - Singular controllers route `show` at the root instead of `index`.
     def rest_route(name = nil, **kwargs, &block)
       controller = kwargs.delete(:controller) || name
-      route_root_to = kwargs.delete(:route_root_to)
       if controller.is_a?(Class)
         controller_class = controller
       else
@@ -169,46 +82,98 @@ module ActionDispatch::Routing
       # Set controller if it's not explicitly set.
       kwargs[:controller] = name unless kwargs[:controller]
 
-      # Passing `unscoped: true` will prevent a nested resource from being scoped.
-      unscoped = kwargs.delete(:unscoped)
+      has_model = !!controller_class.model
+      singular = controller_class.singular
+      excluded = controller_class.excluded_actions&.map(&:to_sym)&.to_set || Set.new
 
-      # Route actions using the resourceful router, but skip all builtin actions.
-      public_send(:resource, name, only: [], **kwargs) do
-        # Route a root for this resource.
-        if route_root_to
-          get("", action: route_root_to, as: "")
-        end
+      # Use `resources` (plural) for plural model controllers to get member `:id` scope; use
+      # `resource` (singular) for everything else.
+      resource_method = (has_model && !singular) ? :resources : :resource
 
-        collection do
-          # Route extra controller-defined actions.
-          self._route_extra_actions(controller_class.extra_actions)
+      public_send(resource_method, name, only: [], **kwargs) do
+        if has_model
+          if singular
+            # Singular model controller: all CRUD actions at root path.
+            get("", action: :show) unless excluded.include?(:show)
+            post("", action: :create) unless excluded.include?(:create)
+            unless excluded.include?(:update)
+              put("", action: :update)
+              patch("", action: :update)
+            end
+            delete("", action: :destroy) unless excluded.include?(:destroy)
 
-          # Route extra RRF-defined actions.
-          RESTFramework::RRF_BUILTIN_ACTIONS.each do |action, methods|
-            next unless controller_class.method_defined?(action)
+            # Extra member actions at root scope for singular resources.
+            if controller_class.respond_to?(:extra_member_actions)
+              self._route_extra_actions(controller_class.extra_member_actions)
+            end
 
-            [ methods ].flatten.each do |m|
-              # Anchor the route since Rails 8.1 OPTIONS routes are non-anchored by default, which
-              # causes parent OPTIONS routes to greedily intercept sub-path requests.
-              public_send(m, "", action: action, anchor: true) if self.respond_to?(m)
+            # Bulk actions.
+            if controller_class.bulk
+              unless excluded.include?(:update_all)
+                put("", action: :update_all, anchor: true)
+                patch("", action: :update_all, anchor: true)
+              end
+              unless excluded.include?(:destroy_all)
+                delete("", action: :destroy_all, anchor: true)
+              end
+            end
+
+            # Extra collection actions.
+            self._route_extra_actions(controller_class.extra_actions)
+
+            # Route OPTIONS action. Anchor to prevent greedy matching in Rails 8.1+.
+            options("", action: :options, anchor: true)
+          else
+            # Plural model controller: collection and member routes.
+            collection do
+              get("", action: :index) unless excluded.include?(:index)
+              post("", action: :create) unless excluded.include?(:create)
+
+              # Bulk actions.
+              if controller_class.bulk
+                unless excluded.include?(:update_all)
+                  put("", action: :update_all, anchor: true)
+                  patch("", action: :update_all, anchor: true)
+                end
+                unless excluded.include?(:destroy_all)
+                  delete("", action: :destroy_all, anchor: true)
+                end
+              end
+
+              # Extra collection actions.
+              self._route_extra_actions(controller_class.extra_actions)
+
+              # Route OPTIONS action. Anchor to prevent greedy matching in Rails 8.1+.
+              options("", action: :options, anchor: true)
+            end
+
+            member do
+              get("", action: :show) unless excluded.include?(:show)
+              unless excluded.include?(:update)
+                put("", action: :update)
+                patch("", action: :update)
+              end
+              delete("", action: :destroy) unless excluded.include?(:destroy)
+
+              # Extra member actions.
+              if controller_class.respond_to?(:extra_member_actions)
+                self._route_extra_actions(controller_class.extra_member_actions)
+              end
             end
           end
+        else
+          # Non-model controller: route `root` action and OPTIONS.
+          get("", action: :root, as: "")
+          self._route_extra_actions(controller_class.extra_actions)
+          options("", action: :options, anchor: true)
         end
 
-        if unscoped
-          yield if block_given?
-        else
-          scope(module: name, as: name) do
-            yield if block_given?
-          end
-        end
+        yield if block_given?
       end
     end
 
     # Route a controller's `#root` to '/' in the current scope/namespace, along with other actions.
     def rest_root(name = nil, **kwargs, &block)
-      # By default, use RootController#root.
-      root_action = kwargs.delete(:action) || :root
       controller = kwargs.delete(:controller) || name || :root
 
       # Remove path if name is nil (routing to the root of current namespace).
@@ -216,9 +181,7 @@ module ActionDispatch::Routing
         kwargs[:path] = ""
       end
 
-      rest_route(controller, route_root_to: root_action, **kwargs) do
-        yield if block_given?
-      end
+      rest_route(controller, **kwargs, &block)
     end
   end
 end

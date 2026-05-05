@@ -1,10 +1,6 @@
 class Api::Test::UserController < Api::TestController
   self.model = User
 
-  # This will reproduce a failure condition in the router when it attemts to resolve which builtin
-  # actions it should skip.
-  undef_method :index
-
   class UsersSerializer < RESTFramework::NativeSerializer
     self.config = { only: [ :id, :login, :is_admin, :age ] }
   end

@@ -41,22 +41,6 @@ module RESTFramework::Utils
     }.to_h
   end
 
-  def self.get_skipped_builtin_actions(controller_class, singular)
-    candidates = (
-      RESTFramework::BUILTIN_ACTIONS.keys - (singular ? [ :index ] : [])
-    ) + RESTFramework::BUILTIN_MEMBER_ACTIONS.keys
-
-    # Skip all builtin actions for controllers without a model, since the builtin actions assume a
-    # model is present.
-    return candidates unless controller_class.model
-
-    # Skip actions if there is no method defined or if the action is explicitly excluded.
-    exclude = controller_class.excluded_actions&.to_set || Set.new
-    candidates.select do |action|
-      !controller_class.method_defined?(action) || exclude.include?(action)
-    end
-  end
-
   # Get the first route pattern which matches the given request.
   def self.get_request_route(application_routes, request)
     # Prefer the route already resolved by the router to avoid an expensive `recognize` call. This

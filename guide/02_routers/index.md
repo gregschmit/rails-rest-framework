@@ -1,15 +1,12 @@
 # Routers
 
-You can route REST Framework controllers with the regular Rails routing helpers, but the
-framework provides three dedicated routers (`rest_root`, `rest_route`, `rest_resource`, and
-`rest_resources`) that introspect the controller and wire up extra actions, built-in actions, and
-bulk routes automatically.
+You can route REST Framework controllers with the regular Rails routing helpers, but the framework
+provides two dedicated routers (`rest_root` and `rest_route`) that introspect the controller and
+wire up extra actions, built-in actions, and bulk routes automatically.
 
 - `rest_root` — route a controller's `root` action to the current scope root.
-- `rest_route` — route a non-resourceful controller (only `extra_actions`, no CRUD).
-- `rest_resource` / `rest_resources` — route a resourceful controller (singular/plural), analogous
-  to Rails' `resource`/`resources`, plus `extra_actions`, `extra_member_actions`, and bulk actions
-  from the controller's configuration.
+- `rest_route` — route a controller; if the controller has a `model`, CRUD actions are routed
+  automatically, otherwise only the `root` action and `extra_actions` are routed.
 
 ## Routing the API Root
 
@@ -34,35 +31,34 @@ app/controllers/
 Rails.application.routes.draw do
   namespace :api do
     rest_root  # Finds Api::RootController and routes `#root` to '/'.
-    rest_resources :movies
-    rest_resources :users
+    rest_route :movies
+    rest_route :users
   end
 end
 ```
 
 `rest_root` accepts a controller name override (`rest_root :home` would route
-`Api::HomeController#root` to `/api/`) and an `action:` kwarg (`rest_root action: :welcome` would
-route `Api::RootController#welcome`).
+`Api::HomeController#root` to `/api/`).
 
 ## Resourceful Routing
 
-`rest_resource` (singular) and `rest_resources` (plural) are analogous to Rails' `resource` and
-`resources`, but they add three things:
+When a controller has a `model` set, `rest_route` automatically routes the standard CRUD actions:
 
-1. They skip built-in CRUD actions that are excluded via `excluded_actions` or for which the
-   controller isn't configured (e.g., a controller without `model` skips all CRUD actions).
-2. They route every `extra_actions` entry on the collection and every `extra_member_actions`
-   entry on the member.
-3. If the controller has `bulk = true`, they route `update_all` (`PATCH`/`PUT /resource`) and
-   `destroy_all` (`DELETE /resource`). Bulk `create` (array POSTs) uses the regular `create`
-   route. Bulk actions can be individually opted out through `excluded_actions`.
+1. For plural controllers: `index`, `create`, `show`, `update`, `destroy`.
+2. For singular controllers (`self.singular = true`): `create`, `show`, `update`, `destroy` (no
+   `index`, no `:id` in URLs).
+3. Actions are only routed if the controller defines the method and it is not listed in
+   `excluded_actions`.
+4. If `bulk = true`, `update_all` (`PATCH`/`PUT /resource`) and `destroy_all`
+   (`DELETE /resource`) are also routed. Bulk `create` (array POSTs) uses the regular `create`
+   route. Individual bulk actions can be opted out through `excluded_actions`.
 
 ```ruby
 Rails.application.routes.draw do
   namespace :api do
     rest_root
-    rest_resource :user       # Singular: no :id in URLs, no #index route.
-    rest_resources :movies    # Plural: includes the full CRUD set.
+    rest_route :user       # Singular: no :id in URLs, no #index route.
+    rest_route :movies     # Plural: includes the full CRUD set.
   end
 end
 ```
@@ -80,30 +76,17 @@ end
 
 ### Passing Options
 
-`rest_resource` / `rest_resources` accept the same options as Rails' `resource(s)`, including
-`only:`, `except:`, `path:`, `as:`, and `controller:`. Options are forwarded through.
+`rest_route` accepts options like `path:`, `as:`, and `controller:`, which are forwarded to the
+underlying Rails resource helper.
 
 ```ruby
-rest_resources :movies, path: "films", as: "films"
-```
-
-### Unscoped Nested Blocks
-
-Normally, a block passed to `rest_resources` is auto-scoped to the resource's module/path. Pass
-`unscoped: true` to disable the scope:
-
-```ruby
-rest_resources :movies, unscoped: true do
-  # Routes here won't be nested under /movies/:movie_id.
-end
+rest_route :movies, path: "films", as: "films"
 ```
 
 ## Non-resourceful Routing
 
-`rest_route` does **not** route the standard REST actions (`index`, `show`, `create`, `update`,
-`destroy`). Only `extra_actions` defined on the controller get routed (plus `options`, since the
-framework supports `OPTIONS`-based metadata). Use it for singleton API endpoints like a network
-status or health check:
+When a controller has no `model` set, `rest_route` routes the `root` action and any `extra_actions`
+defined on the controller. Use it for singleton API endpoints like a network status or health check:
 
 ```ruby
 class Api::NetworkController < ApiController
@@ -138,7 +121,8 @@ end
 - The `options` action is always routed when the controller responds to it, so clients can fetch
   OpenAPI metadata for an endpoint with a regular `OPTIONS` request.
 - Built-in CRUD routes are skipped when:
-  - The controller has no `model` set (no default CRUD action methods exist on the controller).
+  - The controller has no `model` set.
+  - The action method is not defined on the controller.
   - The action is listed in `excluded_actions`.
 - Bulk routes (`update_all`, `destroy_all`) are only added when both `model` and `bulk = true` are
   set on the controller. Individual bulk actions can be removed via `excluded_actions`.

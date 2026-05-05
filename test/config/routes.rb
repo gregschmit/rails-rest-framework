@@ -22,55 +22,55 @@ Rails.application.routes.draw do
 
     namespace :plain do
       rest_root
-      rest_resources :emails
-      rest_resources :genres
-      rest_resources :movies
-      rest_resources :phone_numbers
-      rest_resources :users
+      rest_route :emails
+      rest_route :genres
+      rest_route :movies
+      rest_route :phone_numbers
+      rest_route :users
     end
 
     namespace :demo do
       rest_root
-      rest_resources :emails
-      rest_resources :genres
-      rest_resources :movies
-      rest_resources :phone_numbers
-      rest_resources :users do
-        rest_resources :movies
+      rest_route :emails
+      rest_route :genres
+      rest_route :movies
+      rest_route :phone_numbers
+      rest_route :users do
+        rest_route :movies
       end
     end
 
     rest_root :test
     namespace :test do
-      rest_resource :user
-      rest_resources :users
+      rest_route :user
+      rest_route :users
       resources :users, only: [] do
-        rest_resources :user_emails
+        rest_route :user_emails
       end
 
-      rest_resources :added_select
-      rest_resources :bare_create, only: [ :create ]
-      rest_resources :fields_hash_except
-      rest_resources :fields_hash_exclude
-      rest_resources :fields_hash_only
-      rest_resources :fields_hash_only_except
-      rest_resources :no_rescue_unknown_format
-      rest_resources :read_only
-      rest_resources :users_with_hidden
-      rest_resources :find_by
-      rest_resources :users_with_sub_fields
+      rest_route :added_select
+      rest_route :bare_create
+      rest_route :fields_hash_except
+      rest_route :fields_hash_exclude
+      rest_route :fields_hash_only
+      rest_route :fields_hash_only_except
+      rest_route :no_rescue_unknown_format
+      rest_route :read_only
+      rest_route :users_with_hidden
+      rest_route :find_by
+      rest_route :users_with_sub_fields
 
       rest_route :network
 
       if defined?(ActiveModel::Serializer)
         namespace :active_model_serializer do
-          rest_resources :users
+          rest_route :users
         end
       end
     end
   end
 
   if defined?(ActiveModel::Serializer)
-    rest_resources :render_json
+    rest_route :render_json
   end
 end

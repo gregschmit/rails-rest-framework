@@ -1,26 +1,6 @@
 # frozen_string_literal: true
 
 module RESTFramework
-  BUILTIN_FORM_ACTIONS = [ :new, :edit ].freeze
-  BUILTIN_ACTIONS = {
-    index: :get,
-    new: :get,
-    create: :post,
-  }.freeze
-  BUILTIN_MEMBER_ACTIONS = {
-    show: :get,
-    edit: :get,
-    update: [ :put, :patch ].freeze,
-    destroy: :delete,
-  }.freeze
-  RRF_BUILTIN_ACTIONS = {
-    options: :options,
-  }.freeze
-  RRF_BUILTIN_BULK_ACTIONS = {
-    update_all: [ :put, :patch ].freeze,
-    destroy_all: :delete,
-  }.freeze
-
   # Storage for extra routes and associated metadata.
   EXTRA_ACTION_ROUTES = Set.new
   ROUTE_METADATA = {}
