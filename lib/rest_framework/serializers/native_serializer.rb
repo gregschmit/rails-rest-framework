@@ -116,16 +116,13 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     return @_associations_limit if defined?(@_associations_limit)
 
     limit = @controller&.class&.native_serializer_associations_limit
+    max = @controller&.class&.native_serializer_associations_limit_max
 
-    # Extract the limit from the query parameters if it's set.
-    if query_param = @controller&.class&.native_serializer_associations_limit_query_param
+    # If a max is configured, allow the query parameter to adjust the limit up to that max.
+    if max && (query_param = @controller&.class&.native_serializer_associations_limit_query_param)
       if @controller.request.query_parameters.key?(query_param)
         query_limit = @controller.request.query_parameters[query_param].to_i
-        if query_limit > 0
-          limit = query_limit
-        else
-          limit = nil
-        end
+        limit = [ query_limit, max ].min if query_limit > 0
       end
     end
 

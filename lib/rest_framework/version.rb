@@ -24,8 +24,9 @@ module RESTFramework
 
     def self.stamp_version
       # Only stamp the version if it's not unknown.
-      if RESTFramework::VERSION != UNKNOWN
-        File.write(VERSION_FILEPATH, RESTFramework::VERSION)
+      version = self.get_version
+      if version != UNKNOWN
+        File.write(VERSION_FILEPATH, version)
       end
     end
 
@@ -34,5 +35,5 @@ module RESTFramework
     end
   end
 
-  VERSION = Version.get_version
+  VERSION = Version.get_version(skip_git: true)
 end

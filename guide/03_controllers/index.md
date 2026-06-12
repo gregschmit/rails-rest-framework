@@ -783,8 +783,9 @@ See the [Serializers](../04_serializers/) section for full details.
 | `native_serializer_except_query_param`            | `"except"`         | Query param to omit serialized fields.                                     |
 | `native_serializer_include_query_param`           | `"include"`        | Query param to reveal `hidden` fields.                                     |
 | `native_serializer_exclude_query_param`           | `"exclude"`        | Query param to exclude specific fields.                                    |
-| `native_serializer_associations_limit`            | `nil`              | Global limit on the number of records included per collection association. |
-| `native_serializer_associations_limit_query_param`| `"associations_limit"` | Query param override for the association limit.                        |
+| `native_serializer_associations_limit`            | `5`                | Default limit on the number of records included per collection association. |
+| `native_serializer_associations_limit_max`        | `5`                | Maximum value the query param can raise the limit to (`nil` disables the query param). |
+| `native_serializer_associations_limit_query_param`| `"associations_limit"` | Query param to adjust the associations limit (up to `_max`).           |
 | `native_serializer_include_associations_count`    | `false`            | Add a `<assoc>.count` field for each collection association.               |
 
 ### Pagination

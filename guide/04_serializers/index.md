@@ -147,9 +147,9 @@ can't expand beyond what the controller declares.
 
 ### `native_serializer_associations_limit`
 
-By default, `has_many` / `has_and_belongs_to_many` associations are serialized in full, which can
-be a problem when a record has thousands of associated records. Set
-`native_serializer_associations_limit` on the controller to cap this:
+By default, `has_many` / `has_and_belongs_to_many` associations are capped at 5 records each via
+`native_serializer_associations_limit`. Adjust this on the controller to change the default cap
+(set to `nil` to serialize all associated records):
 
 ```ruby
 class ApiController < ApplicationController
@@ -162,8 +162,10 @@ When a limit is set, the framework stops using `includes` (which would eager-loa
 instead fires a per-record query with a `.limit(n)` applied. This is a tradeoff between N+1
 queries vs. loading unbounded data — use it only when associations can be large.
 
-Clients can adjust this per-request via the `associations_limit` query parameter, up to the
-server-side cap.
+Clients can adjust this per-request via the `associations_limit` query parameter, bounded by
+`native_serializer_associations_limit_max` (defaults to 5, same as the default limit). Set the max
+higher than the default if you want clients to be able to opt into larger pages, or set it to
+`nil` to disable the query parameter entirely.
 
 ### `native_serializer_include_associations_count`
 

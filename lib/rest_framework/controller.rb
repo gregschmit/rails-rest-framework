@@ -57,7 +57,8 @@ module RESTFramework::Controller
     native_serializer_except_query_param: "except".freeze,
     native_serializer_include_query_param: "include".freeze,
     native_serializer_exclude_query_param: "exclude".freeze,
-    native_serializer_associations_limit: nil,
+    native_serializer_associations_limit: 5,
+    native_serializer_associations_limit_max: 5,
     native_serializer_associations_limit_query_param: "associations_limit".freeze,
     native_serializer_include_associations_count: false,
 
