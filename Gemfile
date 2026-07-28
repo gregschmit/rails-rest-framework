@@ -9,10 +9,16 @@ ruby ENV["CUSTOM_RUBY_VERSION"] || File.read(
   File.expand_path(".ruby-version", __dir__),
 ).strip.split("-")[1]
 
-# Support testing against multiple Rails versions.
-RAILS_VERSION = Gem::Version.new(
-  ENV["RAILS_VERSION"] || File.read(File.expand_path(".rails-version", __dir__)).strip,
+# The "official" Rails version we target for deployment, from `.rails-version`.
+OFFICIAL_RAILS_VERSION = Gem::Version.new(
+  File.read(File.expand_path(".rails-version", __dir__)).strip,
 )
+
+# Support testing against multiple Rails versions.
+RAILS_VERSION = ENV["RAILS_VERSION"] ?
+  Gem::Version.new(ENV["RAILS_VERSION"]) :
+  OFFICIAL_RAILS_VERSION
+RUNNING_OFFICIAL_RAILS = RAILS_VERSION == OFFICIAL_RAILS_VERSION
 
 gem "puma"
 gem "rails", RAILS_VERSION
@@ -24,9 +30,15 @@ gem "rack-cors"
 
 # Only Rails >=7 gems.
 if RAILS_VERSION >= Gem::Version.new("7")
-  gem "kamal"
   gem "ransack", ">= 4.0"
   gem "solid_queue"
+end
+
+# Kamal is a deploy-only tool that's only ever exercised under the official Rails version, so only
+# load it there. (It also can't run under Rails <7.1 anyway: its code requires
+# `active_support/broadcast_logger`, which its gemspec understates as `activesupport >= 7.0`.)
+if RUNNING_OFFICIAL_RAILS
+  gem "kamal"
 end
 
 # Include `active_model_serializers` for custom integration (Rails >=6 only).
