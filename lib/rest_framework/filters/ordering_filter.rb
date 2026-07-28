@@ -12,6 +12,10 @@ class RESTFramework::Filters::OrderingFilter < RESTFramework::Filters::BaseFilte
     fields = self._get_fields
     order_string = @controller.params[param]
 
+    # Reject nested-hash inputs like `?ordering[evil]=x` (Rack parses these into
+    # a Hash, which can't be split into ordering tokens).
+    return nil unless self.class._safe_query_value?(order_string)
+
     if order_string.present?
       ordering = {}.with_indifferent_access
 

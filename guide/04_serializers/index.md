@@ -134,11 +134,11 @@ using these query parameters:
 | `except`             | `"except"`             | Omit these fields from the default set.              |
 | `include`            | `"include"`            | Opt into `hidden` fields.                            |
 | `exclude`            | `"exclude"`            | Alias for `except`.                                  |
-| `associations_limit` | `"associations_limit"` | Cap the number of records serialized per collection association. |
+| `associations_limit` | `"associations_limit"` | Adjust the per-request associations limit.           |
 
 Each of these names is configurable via
-`native_serializer_{only,except,include,exclude,associations_limit}_query_param` on the
-controller (set to `nil` to disable any of them).
+`native_serializer_{only,except,include,exclude,associations_limit}_query_param` on the controller
+(set to `nil` to disable any of them).
 
 The allowed field set is always bounded by the controller's `fields` — clients can narrow it but
 can't expand beyond what the controller declares.
@@ -162,10 +162,19 @@ When a limit is set, the framework stops using `includes` (which would eager-loa
 instead fires a per-record query with a `.limit(n)` applied. This is a tradeoff between N+1
 queries vs. loading unbounded data — use it only when associations can be large.
 
-Clients can adjust this per-request via the `associations_limit` query parameter, bounded by
-`native_serializer_associations_limit_max` (defaults to 5, same as the default limit). Set the max
-higher than the default if you want clients to be able to opt into larger pages, or set it to
-`nil` to disable the query parameter entirely.
+Clients can adjust the limit per-request via the `associations_limit` query parameter. The value
+they can request is bounded by `native_serializer_associations_limit_max` (defaults to `5`).
+Non-positive values are ignored, and values above the max are clamped to the max — clients can
+never disable the cap. Raise the max to let clients opt into more records, or set it to `nil` to
+disable the query parameter entirely:
+
+```ruby
+# Allow clients to request up to 50 associated records per collection.
+self.native_serializer_associations_limit_max = 50
+
+# Or forbid client overrides entirely.
+self.native_serializer_associations_limit_max = nil
+```
 
 ### `native_serializer_include_associations_count`
 

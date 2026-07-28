@@ -17,11 +17,11 @@ class ApiController < ApplicationController
 end
 ```
 
-Clients can raise or lower this per request via the `associations_limit` query parameter, up to
-the server-side cap. When a limit is set, the framework stops eager-loading via `includes` (as
+Clients can raise or lower this per request via the `associations_limit` query parameter, up to the
+server-side cap. When a limit is set, the framework stops eager-loading via `includes` (as
 `includes` would load every row regardless of limit) and instead issues a per-record query with
-`.limit(n)`. This trades the eager-load optimization for a guarantee of bounded response size —
-use it only for associations that really can be large.
+`.limit(n)`. This trades the eager-load optimization for a guarantee of bounded response size — use
+it only for associations that really can be large.
 
 If you need an accurate total as well as a bounded preview, enable:
 
@@ -29,20 +29,20 @@ If you need an accurate total as well as a bounded preview, enable:
 self.native_serializer_include_associations_count = true
 ```
 
-This adds a `<assoc>.count` field to each record. Note that this triggers a `COUNT(*)` per
-record per association — it's convenient but not free. For large collections, prefer a single
+This adds a `<assoc>.count` field to each record. Note that this triggers a `COUNT(*)` per record
+per association — it's convenient but not free. For large collections, prefer a single
 "totals" extra action over per-record counts.
 
 ## Watch N+1 Queries
 
-For associations rendered without a limit, the framework uses `includes(...)` to eager-load
-them. Combined with filter backends that may also add `includes`, most N+1s are avoided
+For associations rendered without a limit, the framework uses `includes(...)` to eager-load them.
+Combined with filter backends that may also add `includes`, most N+1s are avoided
 automatically. That said:
 
 - Methods in `fields` (not associations) that themselves load records *will* cause N+1s. The
   framework has no way to detect this.
-- Use the [Bullet](https://github.com/flyerhzm/bullet) gem during development to catch any
-  remaining N+1s.
+- Use the [Bullet](https://github.com/flyerhzm/bullet) gem during development to catch any remaining
+  N+1s.
 - For methods that load expensive data, consider serializing via a custom serializer method or
   marking them `hidden_from_index` so they only run on `show`.
 

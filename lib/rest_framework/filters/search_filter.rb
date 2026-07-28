@@ -14,6 +14,10 @@ class RESTFramework::Filters::SearchFilter < RESTFramework::Filters::BaseFilter
   def filter_data(data)
     search = @controller.request.query_parameters[@controller.class.search_query_param]
 
+    # Reject nested-hash inputs like `?search[evil]=x` (Rack parses these into a
+    # Hash, which `sanitize_sql_like` can't accept).
+    return data unless search.is_a?(String)
+
     if search.present?
       if fields = self._get_fields.presence
         # MySQL doesn't support casting to VARCHAR, so we need to use CHAR instead.

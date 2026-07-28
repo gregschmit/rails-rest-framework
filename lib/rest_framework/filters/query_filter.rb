@@ -66,6 +66,11 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
     pred_queries = []
 
     base_query = @controller.request.query_parameters.map { |field, v|
+      # Skip params whose values aren't bind-safe (e.g. a user submitted
+      # `?field[evil]=x`, which Rack parses into a Hash). AR can't quote
+      # those, and the predicate lambdas below would also blow up on them.
+      next nil unless self.class._safe_query_value?(v)
+
       # First, if field is a simple filterable field, return early.
       if field.in?(fields)
         next [ field, v ]
