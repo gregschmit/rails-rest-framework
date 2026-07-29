@@ -37,6 +37,11 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
   }.freeze
   PREDICATES_REGEX = /^(.*)_(#{PREDICATES.keys.join("|")})$/
 
+  # Predicates whose value may be an array (e.g. `?id_in[]=1&id_in[]=2`). Every other predicate
+  # operates on a single scalar and skips array input, which would otherwise raise: `cont` in
+  # `sanitize_sql_like`, the range predicates while casting the endpoint.
+  ARRAY_PREDICATES = %i[in not].freeze
+
   def _get_fields
     # Always return a list of strings; `@controller.get_fields` already does this.
     @controller.class.filter_fields&.map(&:to_s) || @controller.get_fields
@@ -108,6 +113,10 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
       # value into a query that can be used in the ActiveRecord `where` API.
       cfg = PREDICATES[predicate.to_sym]
       if cfg.is_a?(Proc)
+        # Skip a scalar predicate given an array value (Rack parses `?field_cont[]=a&field_cont[]=b`
+        # into an array); only `in`/`not` accept arrays, the rest would raise.
+        next nil if v.is_a?(Array) && !predicate.to_sym.in?(ARRAY_PREDICATES)
+
         pred_queries << cfg.call(field, v)
       else
         pred_queries << { field => cfg }

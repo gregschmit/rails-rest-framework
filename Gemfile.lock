@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rest_framework (1.2.0.pre.18.pre.gdddfbf9.pre.dirty)
+    rest_framework (0.dev)
       rails (>= 4.0)
 
 GEM

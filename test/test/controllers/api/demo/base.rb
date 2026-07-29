@@ -32,6 +32,19 @@ module Api::Demo::Base
     assert_response(:success)
   end
 
+  # A scalar predicate given an array value (e.g. `?name_cont[]=a&name_cont[]=b`, which Rack parses
+  # into an array) must be ignored, not 500: `cont` would raise in `sanitize_sql_like` and the range
+  # predicates while casting the endpoint. Only `in`/`not` accept arrays.
+  def test_index_with_array_value_for_scalar_predicate_is_ignored
+    filter_key = self.class.create_params.keys[0]
+
+    get(:index, as: :json, params: { "#{filter_key}_cont": [ "a", "b" ] })
+    assert_response(:success)
+
+    get(:index, as: :json, params: { "#{filter_key}_lt": [ "a", "b" ] })
+    assert_response(:success)
+  end
+
   def test_index_with_hash_value_for_search_param_is_ignored
     get(:index, as: :json, params: { search: { "evil" => "x" } })
     assert_response(:success)
