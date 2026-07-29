@@ -497,9 +497,17 @@ module RESTFramework::Controller
       400
     end
 
+    # `StatementInvalid` messages commonly embed SQL fragments and schema details, so don't leak
+    # them to clients unless backtraces are explicitly enabled.
+    message = if e.is_a?(ActiveRecord::StatementInvalid) && !RESTFramework.config.show_backtrace
+      "Invalid query."
+    else
+      e.message
+    end
+
     render_api(
       {
-        message: e.message,
+        message: message,
         errors: e.try(:record).try(:errors),
         exception: RESTFramework.config.show_backtrace ? e.full_message : nil,
       }.compact,
