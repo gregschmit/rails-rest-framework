@@ -44,10 +44,10 @@ class ApiController < ApplicationController
   include RESTFramework::Controller
 
   # Assignments are local by default; wrap shared config in `propagate` so child controllers inherit
-  # it. A paginator set here makes more sense than defining it on every child controller.
+  # it. Settings you want every resource to share belong here rather than on each child controller.
   propagate do
-    self.paginator_class = RESTFramework::PageNumberPaginator
     self.page_size = 30
+    self.max_page_size = 100
   end
 end
 ```

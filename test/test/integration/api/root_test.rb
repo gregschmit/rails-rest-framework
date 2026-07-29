@@ -7,13 +7,12 @@ class Api::RootTest < ActionDispatch::IntegrationTest
     get("/api.json")
 
     assert_response(:success)
-    assert_includes(response.parsed_body["message"], "three APIs")
+    assert_includes(response.parsed_body["message"], "two APIs")
     assert(response.parsed_body.key?("demo_api"))
   end
 
   def test_each_namespace_root_renders_its_own_content_not_the_inherited_welcome
     {
-      "/api/plain.json" => Api::PlainController::DESCRIPTION,
       "/api/demo.json" => Api::DemoController::DESCRIPTION,
       "/api/test.json" => Api::TestController::DESCRIPTION,
     }.each do |path, description|

@@ -17,7 +17,11 @@ class Api::DemoController < ApiController
     self.enable_action_text = true
     self.enable_active_storage = true
 
+    # Pagination is on by default (`PageNumberPaginator`); the demo customizes the page size and
+    # opts out of the default `max_page_size` cap so it can showcase the `?page_size=0` unpaginated
+    # escape hatch (which requires no cap).
     self.page_size = 30
+    self.max_page_size = nil
 
     self.native_serializer_associations_limit = 6
     self.native_serializer_include_associations_count = true
@@ -27,8 +31,6 @@ class Api::DemoController < ApiController
       RESTFramework::SearchFilter,
       RESTFramework::RansackFilter,
     ]
-
-    self.paginator_class = RESTFramework::PageNumberPaginator
   end
 
   # A propagated extra action: every demo controller and its descendants get `ping`.

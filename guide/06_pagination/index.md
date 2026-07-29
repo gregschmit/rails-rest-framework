@@ -1,15 +1,17 @@
 # Pagination
 
-For large result sets, the framework can wrap the `index` response in a pagination envelope. By
-default `paginator_class` is `nil` (no pagination). Set it to a paginator class to enable:
+For large result sets, the framework wraps the `index` response in a pagination envelope.
+**Pagination is on by default**: `paginator_class` is `RESTFramework::PageNumberPaginator`,
+`page_size` is `20`, and `max_page_size` is `40`, so responses are bounded out of the box. Override
+any of these to customize:
 
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
 
   propagate do
-    self.paginator_class = RESTFramework::PageNumberPaginator
-    self.page_size = 30
+    self.page_size = 30       # default page size
+    self.max_page_size = 100  # ceiling on a client-supplied `page_size`
   end
 end
 ```
@@ -37,7 +39,7 @@ A simple paginator keyed by a page number. Responses take this shape:
 | `page_size`             | `20`          | Default number of records per page.                                                 |
 | `page_query_param`      | `"page"`      | Query param for the requested page number.                                          |
 | `page_size_query_param` | `"page_size"` | Query param that lets clients override the page size. Set to `nil` to forbid this.  |
-| `max_page_size`         | `nil`         | Upper limit on the client-requested page size.                                      |
+| `max_page_size`         | `40`          | Upper limit on the client-requested page size. Set to `nil` to remove the cap.      |
 
 Example requests:
 
@@ -48,16 +50,16 @@ GET /api/movies?page=2&page_size=10
 
 ### Disabling Pagination Per Request
 
-When `page_size_query_param` is set and `max_page_size` is not, a client can disable pagination
+When `page_size_query_param` is set and `max_page_size` is `nil`, a client can disable pagination
 for a single request by passing `page_size=0`:
 
 ```text
 GET /api/movies?page_size=0
 ```
 
-This returns the full (unpaginated) result set. If `max_page_size` is configured, pagination is
-always enforced and this escape hatch is disabled — useful for preventing a client from
-inadvertently requesting every record.
+This returns the full (unpaginated) result set. Because `max_page_size` defaults to `40`, this
+escape hatch is **off by default** — pagination is always enforced, preventing a client from
+inadvertently (or maliciously) requesting every record. Set `max_page_size = nil` to allow it.
 
 ### Invalid or Missing Page Numbers
 
@@ -74,5 +76,11 @@ filters and ordering are preserved when paging. For example, paginating
 
 ## Turning Pagination Off for a Controller
 
-Leave `paginator_class` unset (or set it to `nil`) to disable pagination. The `index` action
-will return the full set of filtered records.
+Since pagination is on by default, set `paginator_class = nil` to disable it. The `index` action
+will then return the full set of filtered records as a bare array.
+
+```ruby
+class Api::ReportController < ApiController
+  self.paginator_class = nil
+end
+```

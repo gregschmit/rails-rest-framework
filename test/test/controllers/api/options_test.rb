@@ -6,17 +6,6 @@ class Api::OptionsTest < ActionDispatch::IntegrationTest
     assert_response(:success)
   end
 
-  def test_plain_api_options
-    options "/api/plain"
-    assert_response(:success)
-
-    options "/api/plain", as: :json
-    assert_response(:success)
-
-    options "/api/plain", as: :xml
-    assert_response(:success)
-  end
-
   def test_demo_api_options
     options "/api/demo"
     assert_response(:success)

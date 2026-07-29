@@ -11,6 +11,11 @@ class Api::TestController < ApiController
   propagate do
     self.enable_action_text = true
     self.enable_active_storage = true
+
+    # These controllers assert on raw serialized output, so opt out of the default pagination; this
+    # also keeps the index code path that skips pagination under test. Controllers that specifically
+    # test pagination re-enable it locally (e.g. `Api::Test::UsersController`).
+    self.paginator_class = nil
   end
 
   before_action do

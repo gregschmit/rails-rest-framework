@@ -1,6 +1,17 @@
 require "test_helper"
 
 class Api::Test::UsersControllerTest < ActionController::TestCase
+  # A client-supplied page size is capped at the (default) `max_page_size`, so a huge value cannot
+  # force an unbounded response. See security review #3.
+  def test_page_size_is_capped_at_max_page_size
+    max = self.class.controller_class.max_page_size
+    assert(max, "expected a default max_page_size to be configured")
+
+    get(:index, as: :json, params: { page_size: max + 1_000_000 })
+    assert_response(:success)
+    assert_equal(max, @response.parsed_body["page_size"])
+  end
+
   # Test bulk update with a nonexistent record ID.
   def test_bulk_update_missing_record
     user = User.create!(login: "bulk_update_test", state: "default", status: "")

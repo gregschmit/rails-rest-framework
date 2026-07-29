@@ -55,7 +55,7 @@ module RESTFramework::Controller
     native_serializer_include_query_param: "include".freeze,
     native_serializer_exclude_query_param: "exclude".freeze,
     native_serializer_associations_limit: 5,
-    native_serializer_associations_limit_max: 5,
+    native_serializer_associations_limit_max: 10,
     native_serializer_associations_limit_query_param: "associations_limit".freeze,
     native_serializer_include_associations_count: false,
 
@@ -91,12 +91,13 @@ module RESTFramework::Controller
     serialize_to_json: true,
     serialize_to_xml: true,
 
-    # Options related to pagination.
-    paginator_class: nil,
+    # Options related to pagination. Pagination is on by default (page-number based) with a capped
+    # page size, so responses are bounded out of the box; set `paginator_class = nil` to disable.
+    paginator_class: RESTFramework::PageNumberPaginator,
     page_size: 20,
     page_query_param: "page".freeze,
     page_size_query_param: "page_size".freeze,
-    max_page_size: nil,
+    max_page_size: 40,
 
     # Option to disable serializer adapters by default, mainly introduced because Active Model
     # Serializers will do things like serialize `[]` into `{"":[]}`.

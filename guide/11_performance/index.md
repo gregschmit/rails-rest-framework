@@ -77,24 +77,25 @@ Why this matters:
 
 ## Always Paginate Large Collections
 
-An unpaginated `index` on a large table is a classic production bug. Configure a paginator at the
-top of the inheritance hierarchy. Configuration assignments are local by default; wrap them in a
-`propagate` block to share them with descendant controllers:
+An unpaginated `index` on a large table is a classic production bug, so pagination is on by default
+(`PageNumberPaginator`, `page_size` 20, `max_page_size` 40) — bounded out of the box. Tune the page
+size and cap at the top of the inheritance hierarchy. Configuration assignments are local by
+default; wrap them in a `propagate` block to share them with descendant controllers:
 
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
 
   propagate do
-    self.paginator_class = RESTFramework::PageNumberPaginator
     self.page_size = 30
-    self.max_page_size = 100   # Prevent `?page_size=1000000` DoS.
+    self.max_page_size = 100   # Ceiling on `?page_size=...`; caps `?page_size=1000000`.
   end
 end
 ```
 
-Setting `max_page_size` also disables the `?page_size=0` "unpaginated" escape hatch — worth the
-tradeoff in production for APIs where no client should be able to dump the full table.
+The `max_page_size` cap also disables the `?page_size=0` "unpaginated" escape hatch (set
+`max_page_size = nil` to allow it) — worth the tradeoff in production for APIs where no client
+should be able to dump the full table.
 
 ## Skip Default Fields for Large Reverse Associations
 
@@ -201,8 +202,8 @@ Or, for a long-lived public document, serve a snapshotted version from a separat
 A short list for going to production:
 
 - [ ] `RESTFramework.config.large_reverse_association_tables` set for expensive tables
-- [ ] `paginator_class` set at the root inside a `propagate` block so it reaches descendant
-      controllers, with `max_page_size` configured
+- [ ] `page_size` / `max_page_size` reviewed for your workload (pagination and a `max_page_size`
+      cap are on by default; tune them at the root inside a `propagate` block)
 - [ ] `filter_fields`, `ordering_fields`, and `search_fields` whitelisted for public APIs
 - [ ] `native_serializer_associations_limit` set if any controller exposes large collection
       associations

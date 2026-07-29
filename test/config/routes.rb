@@ -20,11 +20,6 @@ Rails.application.routes.draw do
   rest_route :api
 
   namespace :api do
-    rest_route :plain
-    namespace :plain do
-      rest_route :emails, :genres, :movies, :phone_numbers, :users
-    end
-
     rest_route :demo
     namespace :demo do
       rest_route :emails, :genres, :movies, :phone_numbers
@@ -52,6 +47,7 @@ Rails.application.routes.draw do
         :users_with_hidden,
         :find_by,
         :users_with_sub_fields,
+        :unpaginated,
       )
 
       rest_route :network

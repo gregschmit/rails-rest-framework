@@ -7,11 +7,7 @@ class ApiController < ApplicationController
 
   def index_content
     {
-      message: "This is the test app for Rails REST Framework. There are three APIs:",
-      plain_api: {
-        message: Api::PlainController::DESCRIPTION,
-        url: api_plain_url,
-      },
+      message: "This is the test app for Rails REST Framework. There are two APIs:",
       demo_api: {
         message: Api::DemoController::DESCRIPTION,
         url: api_demo_url,
