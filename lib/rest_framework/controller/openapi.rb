@@ -180,6 +180,7 @@ module RESTFramework::Controller
           end
 
           v[:readOnly] = true if cfg[:read_only]
+          v[:writeOnly] = true if cfg[:write_only]
           v[:default] = cfg[:default] if cfg.key?(:default)
 
           if enum_variants = cfg[:enum_variants]
