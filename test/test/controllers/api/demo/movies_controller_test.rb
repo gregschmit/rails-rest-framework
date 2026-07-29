@@ -99,6 +99,26 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
     assert_equal(old_count, Movie.count)
   end
 
+  # Regression: JSON clients commonly send the primary key as a string. Bulk update must still
+  # locate and update each record; previously a string id never matched the integer-keyed lookup, so
+  # the record came back nil and `assign_attributes` raised. See security review #7.
+  def test_bulk_update_with_string_primary_keys
+    movie1 = Movie.create!(name: "str_pk_1", price: 4)
+    movie2 = Movie.create!(name: "str_pk_2", price: 7)
+
+    patch(
+      :update_all,
+      as: :json,
+      params: {
+        _json: [ { id: movie1.id.to_s, price: 5 }, { id: movie2.id.to_s, price: 8 } ],
+      },
+    )
+    assert_response(:success)
+
+    assert_equal(5, movie1.reload.price)
+    assert_equal(8, movie2.reload.price)
+  end
+
   def test_bulk_update_with_validation_error
     movie1 = Movie.create!(name: "test_bulk_1", price: 4)
     movie2 = Movie.create!(name: "test_bulk_2", price: 23)

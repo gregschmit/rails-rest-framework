@@ -155,9 +155,11 @@ module RESTFramework::Controller
 
   def update_all_raw!
     pk = self.class.model.primary_key
+    pk_type = self.class.model.type_for_attribute(pk)
     data = self._bulk_object_data(:update, :raw)
 
-    data_ids = data.map { |r| r[pk] }.uniq
+    # Cast ids like `update_all_default!` so the existence check compares matching types.
+    data_ids = data.map { |r| pk_type.cast(r[pk]) }.uniq
     if data_ids.include?(nil)
       raise RESTFramework::InvalidBulkParametersError.new(
         "Bulk update requires the primary key (#{pk}) for all records.",
@@ -183,9 +185,12 @@ module RESTFramework::Controller
 
   def update_all_default!
     pk = self.class.model.primary_key
+    pk_type = self.class.model.type_for_attribute(pk)
     data = self._bulk_object_data(:update, :default)
 
-    data_ids = data.map { |r| r[pk] }.uniq
+    # Cast ids to the pk's type so they match records fetched from the DB; JSON clients often send
+    # ids as strings, which otherwise never match the type-cast keys of `existing` below.
+    data_ids = data.map { |r| pk_type.cast(r[pk]) }.uniq
     if data_ids.include?(nil)
       raise RESTFramework::InvalidBulkParametersError.new(
         "Bulk update requires the primary key (#{pk}) for all records.",
@@ -201,7 +206,7 @@ module RESTFramework::Controller
 
     # Assign attributes to each record.
     records = data.map { |attrs|
-      record = existing[attrs[pk]]
+      record = existing[pk_type.cast(attrs[pk])]
       record.assign_attributes(attrs.except(pk))
       record
     }
