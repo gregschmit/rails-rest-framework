@@ -27,6 +27,7 @@ module RESTFramework
     # Bootstrap Icons
     "bootstrap-icons.min.css" => {
       url: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+      sri: "sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+",
       inline_fonts: true,
     },
 
@@ -54,19 +55,23 @@ module RESTFramework
       extra_tag_attrs: { class: "rrf-light-mode" },
     },
 
-    # NeatJSON
+    # NeatJSON. The package publishes no minified build; jsdelivr's `neatjson.min.js` is synthesized
+    # on the fly (so its bytes/SRI aren't stable), so we pin the published `neatjson.js` instead.
     "neatjson.min.js" => {
-      url: "https://cdn.jsdelivr.net/npm/neatjson@0.10.6/javascript/neatjson.min.js",
+      url: "https://cdn.jsdelivr.net/npm/neatjson@0.10.6/javascript/neatjson.js",
+      sri: "sha384-7yRMvyGBuBnnlsgFwUDx7wY7Y/kXt7Irg5xppXVAI0yp3R0870lWaXNP/JE2rbFA",
       exclude_from_docs: true,
     },
 
     # Trix
     "trix.min.css" => {
       url: "https://unpkg.com/trix@2.0.8/dist/trix.css",
+      sri: "sha384-Cgg84c/W0Q5VrTzc4ITmV88Ocx4Pn1YlTXPvSTJjX6+lxJRLYrZ4chaighxlqOY1",
       exclude_from_docs: true,
     },
     "trix.min.js" => {
       url: "https://unpkg.com/trix@2.0.8/dist/trix.umd.min.js",
+      sri: "sha384-Ki3zDe3whjAHK/GOksrYLGCU8m0SkmiJQ4Kqm3jQlM3YCl2hFBf17s9bzjVYmXWX",
       exclude_from_docs: true,
     },
   }.map { |name, cfg|
