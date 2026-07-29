@@ -140,11 +140,6 @@ module RESTFramework::Controller
   }
   RRF_ACTIVESTORAGE_KEYS = [ :io, :content_type, :filename, :identify, :key ]
 
-  # Default action for API root.
-  def root
-    render_api({ message: "This is the API root." })
-  end
-
   module ClassMethods
     IGNORE_VALIDATORS_WITH_KEYS = [ :if, :unless ].freeze
 

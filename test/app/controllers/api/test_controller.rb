@@ -16,4 +16,8 @@ class Api::TestController < ApiController
   before_action do
     @header_title = "Rails REST Framework Test API"
   end
+
+  def index_content
+    { message: self.class.description }
+  end
 end

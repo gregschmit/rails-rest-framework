@@ -21,13 +21,13 @@ class Api::Test::UsersController < Api::TestController
   self.paginator_class = RESTFramework::PageNumberPaginator
   self.page_size = 2
   self.serializer_class = UsersSerializer
-  add_collection_action(:alternate_list, :get)
-  add_member_action(:description, :get)
+  add_action(:alternate_list, :get, type: :collection)
+  add_action(:description, :get, type: :member)
 
   # Same-named delegated actions: the collection route delegates to `User.status_keys` (class
   # method), the member route to `record.status_keys` — exercising scope disambiguation.
-  add_collection_action(:status_keys, :get, metadata: { delegate: true })
-  add_member_action(:status_keys, :get, metadata: { delegate: true })
+  add_action(:status_keys, :get, type: :collection, metadata: { delegate: true })
+  add_action(:status_keys, :get, type: :member, metadata: { delegate: true })
 
   def alternate_list
     self.index

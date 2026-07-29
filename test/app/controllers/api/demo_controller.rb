@@ -6,6 +6,9 @@ class Api::DemoController < ApiController
     primarily pagination, nested resources, and integration with Action Text and Active Storage.
   TEXT
 
+  self.description = DESCRIPTION
+  self.openapi_include_children = true
+
   # Shared across all demo resources, so propagate to descendants.
   propagate do
     self.bulk = true
@@ -29,13 +32,22 @@ class Api::DemoController < ApiController
   end
 
   # A propagated extra action: every demo controller and its descendants get `ping`.
-  add_collection_action(:ping, :get, propagate: true)
+  add_action(:ping, :get, propagate: true)
 
   # A descendants-only extra action: demo resource controllers get `child_ping`, but not this base.
-  add_collection_action(:child_ping, :get, propagate: :exclude_self)
+  add_action(:child_ping, :get, propagate: :exclude_self)
+
+  # Root-only extra actions, local to this base so they don't leak onto demo resource controllers.
+  add_action(:nil, :get)
+  add_action(:blank, :get)
+  add_action(:echo, :post)
 
   before_action do
     @header_title = "Rails REST Framework Demo API"
+  end
+
+  def index_content
+    { message: self.class.description }
   end
 
   def ping
@@ -44,5 +56,17 @@ class Api::DemoController < ApiController
 
   def child_ping
     render_api({ message: "child pong" })
+  end
+
+  def nil
+    render(api: nil)
+  end
+
+  def blank
+    render(api: "")
+  end
+
+  def echo
+    render(api: { message: "Here is your data:", data: request.request_parameters })
   end
 end

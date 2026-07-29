@@ -2,48 +2,11 @@ require "action_dispatch/routing/mapper"
 
 module ActionDispatch::Routing
   class Mapper
-    # Internal interface to get the controller class from the name and current scope.
-    def _get_controller_class(name, pluralize: true, fallback_reverse_pluralization: true)
-      # Get class name.
-      name = name.to_s.camelize  # Camelize to leave plural names plural.
-      name = name.pluralize if pluralize
-      if name == name.pluralize
-        name_reverse = name.singularize
-      else
-        name_reverse = name.pluralize
-      end
-      name += "Controller"
-      name_reverse += "Controller"
-
-      # Get scope for the class.
-      if @scope[:module]
-        mod = @scope[:module].to_s.camelize.constantize
-      else
-        mod = Object
-      end
-
-      # Convert class name to class.
-      begin
-        controller = mod.const_get(name)
-      rescue NameError
-        if fallback_reverse_pluralization
-          reraise = false
-
-          begin
-            controller = mod.const_get(name_reverse)
-          rescue NameError
-            reraise = true
-          end
-
-          if reraise
-            raise
-          end
-        else
-          raise
-        end
-      end
-
-      controller
+    # Resolve a controller class from a route name and the current scope. The name must match the
+    # controller exactly (camelized, plus `Controller`) — there is no pluralization fallback.
+    def _rrf_controller_class(name)
+      mod = @scope[:module] ? @scope[:module].to_s.camelize.constantize : Object
+      mod.const_get("#{name.to_s.camelize}Controller")
     end
 
     # Route each action from a controller's action store.
@@ -69,14 +32,25 @@ module ActionDispatch::Routing
       end
     end
 
-    # Unified REST route helper, driven by the controller's action store. Plural model controllers
-    # get collection/member scopes; singular and non-model controllers route everything at the root.
-    def rest_route(name = nil, **kwargs, &block)
+    # Route one or more controllers from their action stores. Plural model controllers get
+    # collection/member scopes; singular and non-model controllers route everything at the root.
+    # Passing several names condenses simple routes into one call; per-name options (`path:`, `as:`,
+    # `controller:`, and a block) only apply to a single name.
+    def rest_route(*names, **kwargs, &block)
+      if names.size > 1 && (block || (kwargs.keys & [ :path, :as, :controller ]).any?)
+        raise ArgumentError, "rest_route: options and a block require a single name"
+      end
+
+      names.each { |name| _rrf_rest_route(name, **kwargs, &block) }
+    end
+
+    # Route a single controller from its action store.
+    def _rrf_rest_route(name, **kwargs)
       controller = kwargs.delete(:controller) || name
       if controller.is_a?(Class)
         controller_class = controller
       else
-        controller_class = self._get_controller_class(controller, pluralize: false)
+        controller_class = self._rrf_controller_class(controller)
       end
 
       # Set controller if it's not explicitly set.
@@ -84,7 +58,7 @@ module ActionDispatch::Routing
 
       has_model = !!controller_class.model
       singular = controller_class.singular
-      collection_actions = controller_class.actions
+      actions = controller_class.actions
       member_actions = controller_class.member_actions
 
       # Use `resources` (plural) for plural model controllers to get the member `:id` scope; use
@@ -92,32 +66,23 @@ module ActionDispatch::Routing
       resource_method = (has_model && !singular) ? :resources : :resource
 
       public_send(resource_method, name, only: [], **kwargs) do
-        if has_model && !singular
-          collection { self._rrf_route_actions(collection_actions) }
-          member { self._rrf_route_actions(member_actions) }
-        elsif has_model
-          # Singular model controller: member and collection actions all route at the root path.
-          self._rrf_route_actions(member_actions)
-          self._rrf_route_actions(collection_actions)
+        if has_model
+          if singular
+            # Singular model controller: actions and member actions are the same.
+            self._rrf_route_actions(actions)
+            self._rrf_route_actions(member_actions)
+          else
+            # Plural model controller: route collection/member actions separately.
+            collection { self._rrf_route_actions(actions) }
+            member { self._rrf_route_actions(member_actions) }
+          end
         else
-          # Non-model controller: only collection actions (there is no member `:id` scope).
-          self._rrf_route_actions(collection_actions)
+          # Non-model controller: only actions (there is no member `:id` scope).
+          self._rrf_route_actions(actions)
         end
 
         yield if block_given?
       end
-    end
-
-    # Route a controller's `#root` to '/' in the current scope/namespace, along with other actions.
-    def rest_root(name = nil, **kwargs, &block)
-      controller = kwargs.delete(:controller) || name || :root
-
-      # Remove path if name is nil (routing to the root of current namespace).
-      unless name
-        kwargs[:path] = ""
-      end
-
-      rest_route(controller, **kwargs, &block)
     end
   end
 end

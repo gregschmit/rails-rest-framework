@@ -1,7 +1,6 @@
 class Api::Test::ReadOnlyController < Api::TestController
   self.model = User
-  remove_collection_actions(:create, :update_all, :destroy_all)
-  remove_member_actions(:update, :destroy)
+  remove_actions(:create, :update, :destroy, :update_all, :destroy_all)
 
   class SingularManagerSerializer < RESTFramework::NativeSerializer
     self.config = { only: [ :login, :age, :balance ] }

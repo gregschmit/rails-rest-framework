@@ -88,11 +88,11 @@ browsable-API clients and tools that want to consume the full field metadata.
 
 ### Route-level (on each operation)
 
-Any extra metadata you provide via `add_collection_action` / `add_member_action` flows through
+Any extra metadata you provide via `add_action` flows through
 to the operation spec:
 
 ```ruby
-add_member_action(:disable, :patch, metadata: {
+add_action(:disable, :patch, type: :member, metadata: {
   label: "Disable Movie",
   description: "Marks the movie as disabled without deleting it.",
 })

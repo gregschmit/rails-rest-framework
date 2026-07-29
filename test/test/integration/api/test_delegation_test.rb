@@ -18,4 +18,14 @@ class Api::TestDelegationTest < ActionDispatch::IntegrationTest
     assert_response(:success)
     assert_equal(user.status_keys.map(&:to_s), response.parsed_body)
   end
+
+  def test_singular_controller_delegates_to_the_record
+    # `Api::Test::UserController` is singular and declares `delegated` with bare `add_action`, which
+    # makes it a member action — so delegation targets the record, not the model class.
+    get("/api/test/user/delegated.json")
+
+    assert_response(:success)
+    record = User.first!
+    assert_equal({ "login" => record.login, "is_admin" => record.is_admin }, response.parsed_body)
+  end
 end

@@ -1,12 +1,16 @@
 class Api::Demo::MoviesController < Api::DemoController
   self.model = Movie
 
-  add_collection_action(
-    :random, :get, metadata: { description: "Get a random number.", method: "Dice roll." }
-  )
-  add_member_action(
+  add_action(
     :random,
     :get,
+    type: :collection,
+    metadata: { description: "Get a random number.", method: "Dice roll." },
+  )
+  add_action(
+    :random,
+    :get,
+    type: :member,
     metadata: {
       description: "Get a random number for this record.",
       method: "Still a dice roll.",

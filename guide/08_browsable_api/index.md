@@ -84,17 +84,6 @@ end
 Now every controller under `Api::Demo` inherits the branded header without touching individual
 controllers.
 
-### Example: Hiding Chrome on the Root
-
-```ruby
-class Api::RootController < ApiController
-  before_action(only: :root) do
-    @hide_breadcrumbs = true
-    @hide_request_metadata = true
-  end
-end
-```
-
 ## Adding to the Layout with `content_for`
 
 Two Rails `content_for` regions are available:

@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Api::Demo::RootControllerTest < ActionController::TestCase
+class Api::DemoControllerTest < ActionController::TestCase
   def test_nil_fails
     assert_raises(RESTFramework::NilPassedToRenderAPIError) do
       get(:nil)
@@ -45,7 +45,7 @@ class Api::Demo::RootControllerTest < ActionController::TestCase
     #     actionpack (7.2.1.2) lib/action_dispatch/testing/assertions/response.rb:95:in `response_body_if_short'
     #     actionpack (7.2.1.2) lib/action_dispatch/testing/assertions/response.rb:91:in `generate_response_message'
     #     actionpack (7.2.1.2) lib/action_dispatch/testing/assertions/response.rb:34:in `assert_response'
-    #     test/controllers/api/demo/root_controller_test.rb:31:in `test_blank_json'
+    #     test/controllers/api/demo_controller_test.rb:28:in `test_blank_json'
     #     minitest (5.25.4) lib/minitest/test.rb:94:in `block (2 levels) in run'
     #     minitest (5.25.4) lib/minitest/test.rb:190:in `capture_exceptions'
     #     minitest (5.25.4) lib/minitest/test.rb:89:in `block in run'

@@ -63,34 +63,32 @@ Here is what the directory structure might look like for resource controllers:
 controllers/
 ├─ api_controller.rb
 └─ api/
-   ├─ root_controller.rb
    ├─ movies_controller.rb
    └─ users_controller.rb
 ```
 
-### Root Controller
+### Serving the Root API Index
 
-It is typically a good pattern for the root of your API to have a dedicated `Api::RootController`
-outside the inheritance chain of your other API controllers, so that you can define actions on the
-root without them propagating to child controllers, and so you can set global configuration on the
-`ApiController`.
+A controller without a `model` renders its `index_content` at its index path, which serves as the
+API root. Because declared actions are local by default (they don't propagate to subclasses), you
+can serve the index — and any root-specific extra actions — straight from your API's base
+controller:
 
 ```ruby
-class Api::RootController < ApiController
+class ApiController < ApplicationController
+  include RESTFramework::Controller
+
   add_action(:test, :get)
 
-  # The root action is routed by `rest_root`.
-  def root
-    render(
-      api: {
-        message: "Welcome to the API.",
-        how_to_authenticate: <<~END.lines.map(&:strip).join(" "),
-          You can use this API with your normal login session. Otherwise, you can insert your API
-          key into a Bearer Authorization header, or into the URL parameters with the name
-          `api_key`.
-        END
-      },
-    )
+  # Rendered at the `/api` root. Defaults to the controller's `description`.
+  def index_content
+    {
+      message: "Welcome to the API.",
+      how_to_authenticate: <<~END.lines.map(&:strip).join(" "),
+        You can use this API with your normal login session. Otherwise, you can insert your API key
+        into a Bearer Authorization header, or into the URL parameters with the name `api_key`.
+      END
+    }
   end
 
   def test
@@ -109,7 +107,7 @@ class Api::MoviesController < ApiController
   self.model = Movie  # Automatically routes the standard CRUD actions for this controller.
   self.bulk = true  # Enables bulk create/update/destroy actions for this controller.
   self.fields = [:id, :name, :release_date, :enabled]
-  add_member_action(:first, :get)
+  add_action(:first, :get, type: :member)
 
   def first
     # Always use bang methods, since the framework will rescue `RecordNotFound` and return a
@@ -128,31 +126,29 @@ to include or exclude fields rather than defining them manually:
 
 ```ruby
 class Api::UsersController < ApiController
-  self.fields = {include: [:calculated_popularity], exclude: [:impersonation_token]}
+  # Include a method `popularity` and exclude the `impersonation_token` column.
+  self.fields = {include: [:popularity], exclude: [:impersonation_token]}
 
   # You can even disable some of the builtin actions. For example, this effectively makes the
   # resource read-only:
-  remove_collection_actions(:create, :update_all, :destroy_all)
-  remove_member_actions(:update, :destroy)
+  remove_actions(:create, :update, :destroy, :update_all, :destroy_all)
 end
 ```
 
 ### Routing
 
-Use `rest_route` for non-resourceful controllers, or `rest_resource` / `rest_resources` resourceful
-routers. These routers add some features to the Rails builtin `resource`/`resources` routers, such
-as automatically routing extra actions defined on the controller. To route the root, use
-`rest_root`.
+Use `rest_route` to route any controller. It wraps Rails' `resource` / `resources` routers, picking
+`resources` for a plural model controller and `resource` otherwise, and automatically routes the
+controller's built-in and extra actions. A controller with a `model` gets the full CRUD set; a
+modelless controller is routed at its root (its `index`, which renders `index_content`).
 
 ```ruby
 Rails.application.routes.draw do
-  # If you wanted to route actions from the `ApiController`, then you would use this:
-  # rest_root :api  # Will find `api_controller` and route the `root` action to '/api'.
+  rest_route :api  # `ApiController` serves the `/api` root.
 
   namespace :api do
-    rest_root  # Will route `Api::RootController#root` to '/' in this namespace ('/api').
-    rest_resources :movies
-    rest_resources :users
+    rest_route :movies
+    rest_route :users
   end
 end
 ```

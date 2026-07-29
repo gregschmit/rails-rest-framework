@@ -27,10 +27,10 @@ Including `Controller` by itself gives you a "base" controller — no CRUD actio
 you get:
 
 - The `api` renderer (and the `render_api` helper) that powers the browsable API.
-- A default `root` action that renders a simple welcome message.
+- A default `index_content` — rendered at the index of a modelless controller — for a simple root.
 - Auto-rescue of common `ActiveRecord` and `ActionController` exceptions into JSON error responses.
-- Support for declaring extra routed actions via `add_action` / `add_collection_action` /
-  `add_member_action` (see [Extra Actions](#extra-actions)).
+- Support for declaring extra routed actions via `add_action` (with a `type:` for collection vs.
+  member — see [Extra Actions](#extra-actions)).
 - Automatic CSRF skip (`skip_before_action :verify_authenticity_token`).
 
 To turn a controller into a full CRUD controller, set `model` (and optionally `bulk`):
@@ -51,47 +51,43 @@ collection `POST`), `update_all`, and `destroy_all`.
 > controller name. If `model` is nil, the controller simply won't respond to the built-in CRUD
 > actions (you will get routing errors or "Unknown action" responses).
 
-### Root Controller Pattern
+### Serving the Root API Index
 
-It's typically best to dedicate a controller for the API root so that root-specific actions stay
-isolated from resource controllers. A common layout:
+A controller without a `model` renders its `index_content` at its index path, which serves as the
+API root. Because declared actions are local by default (they don't propagate to subclasses), you
+can serve the index — and any root-specific extra actions — straight from your API's base
+controller. A typical file structure for an API might look like this:
 
 ```text
 app/controllers/
 ├── api/
-│   ├── root_controller.rb
 │   ├── movies_controller.rb
 │   └── users_controller.rb
 ├── api_controller.rb
 └── application_controller.rb
 ```
 
-`ApiController` holds shared configuration (pagination, filters, etc.). Since assignments are local
-by default, wrap anything you want every resource controller to inherit in a `propagate` block:
+`ApiController` holds shared configuration (pagination, filters, etc.) and the root payload. Since
+assignments are local by default, wrap anything you want every resource controller to inherit in a
+`propagate` block:
 
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
 
+  add_action(:test, :get)
+
   propagate do
     self.paginator_class = RESTFramework::PageNumberPaginator
     self.page_size = 30
   end
-end
-```
 
-`Api::RootController` holds the API root action and anything else you want routed at `/api`:
-
-```ruby
-class Api::RootController < ApiController
-  add_action(:test, :get)
-
-  # `rest_root` routes this action to '/' within the `:api` namespace.
-  def root
-    render(api: {
+  # Rendered at `/api`. Defaults to the controller's `description`; override for a richer root.
+  def index_content
+    {
       message: "Welcome to the API.",
       how_to_authenticate: "Use a Bearer token or the `api_key` query parameter.",
-    })
+    }
   end
 
   def test
@@ -99,6 +95,8 @@ class Api::RootController < ApiController
   end
 end
 ```
+
+Point `rest_route` at the base controller to route it (see [Routers](../02_routers/index.md)).
 
 ## Response Rendering
 
@@ -122,9 +120,6 @@ end
 `render_api` accepts a hash, a string, an `ActiveRecord::Base`, or an `ActiveRecord::Relation`.
 When given a record or relation, it automatically runs it through the configured serializer.
 
-> The historical `api_response` method still works but emits a deprecation warning — use
-> `render_api` (or `render(api: ...)`) in new code.
-
 ### Format Fallback
 
 If a request arrives with a format the controller doesn't serve, `render_api` falls back to the
@@ -133,19 +128,15 @@ If a request arrives with a format the controller doesn't serve, `render_api` fa
 
 ## Extra Actions
 
-Routing additional actions on the controller is done declaratively by calling the `add_*` helpers
-in the class body, just like other configuration. The resourceful routers read the resulting
-`actions` / `member_actions` and wire up the routes. Each declaration takes the action key (a
-symbol), its HTTP method(s) (a symbol or array), and keyword options.
-
-### Collection Actions
-
-`add_collection_action(name, methods, ...)` adds a collection-level action (no `id` in the URL).
+Routing additional actions on the controller is done declaratively by calling `add_action` in the
+class body, just like other configuration. The resourceful routers wire up the routes. Each
+declaration takes the action key (a symbol), its HTTP method(s) (a symbol or array), and keyword
+options.
 
 ```ruby
 class Api::MoviesController < ApiController
   self.model = Movie
-  add_collection_action(:test, :get)
+  add_action(:test, :get, type: :collection)
 
   def test
     render(api: { message: "Test successful!" })
@@ -156,7 +147,7 @@ end
 Multiple HTTP methods — pass an array:
 
 ```ruby
-add_collection_action(:test, [ :get, :post ])
+add_action(:test, [ :get, :post ], type: :collection)
 ```
 
 Use `path:` to route a different URL to the action (useful when the action name would otherwise
@@ -164,9 +155,10 @@ conflict), and `metadata:` to supply browsable-API / OpenAPI metadata. Any extra
 are passed straight through to the router:
 
 ```ruby
-add_collection_action(
+add_action(
   :test_action,
   :get,
+  type: :collection,
   path: :test,            # Route `/test` to `test_action`.
   metadata: {
     label: "Run Test",
@@ -175,33 +167,16 @@ add_collection_action(
 )
 ```
 
-### Bare `add_action`
+### Collection vs. Member (`type:`)
 
-`add_action(name, methods, ...)` is a shorthand that targets the **collection**. It exists for
-modelless controllers (which have no members), where the collection/member distinction is
-meaningless. On a controller with a `model` set it still adds a collection action, but logs a
-warning nudging you toward the explicit `add_collection_action` (or `add_member_action`):
-
-```ruby
-class Api::RootController < ApiController
-  add_action(:test, :get)
-
-  def test
-    render(api: { message: "Test successful!" })
-  end
-end
-```
-
-### Member Actions
-
-`add_member_action(name, methods, ...)` adds an action that operates on a single record (requiring
-an `id` path parameter). These only apply to resourceful (model) controllers and take the same
-`path:`, `metadata:`, and pass-through keyword options.
+An action is either a **collection** action (operates on the set — no `id` in the URL) or a
+**member** action (operates on a single record — requires an `id` path parameter). The `type:`
+keyword selects which:
 
 ```ruby
 class Api::MoviesController < ApiController
   self.model = Movie
-  add_member_action(:disable, :patch)
+  add_action(:disable, :patch, type: :member)
 
   def disable
     # `get_record` raises `ActiveRecord::RecordNotFound` on miss, which the framework rescues.
@@ -209,6 +184,26 @@ class Api::MoviesController < ApiController
     # `update!` raises on validation failure, which the framework also rescues.
     record.update!(enabled: false)
     render(api: record)
+  end
+end
+```
+
+`type:` only matters on a **plural** model controller, where collection and member route to
+different URLs — so you must pass it there, or you get a warning that names the offending call.
+Elsewhere the scope is implied and `type:` is unnecessary (passing it warns, unless the action is
+[delegated](#delegating-to-model-methods)):
+
+- **Modelless controllers** have no members, so an action is always a collection action.
+- **Singular model controllers** route member and collection actions at the same path; the sole
+  resource is a single record, so `add_action` is a **member** action (which also makes `delegate`
+  target the record).
+
+```ruby
+class Api::StatusController < ApiController
+  add_action(:test, :get)   # Modelless: collection, no `type:` needed.
+
+  def test
+    render(api: { message: "Test successful!" })
   end
 end
 ```
@@ -225,12 +220,9 @@ keyword controls whether the action is inherited by descendant controllers:
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
-  add_collection_action(:health, :get, propagate: true)   # Every descendant gets `health`.
+  add_action(:health, :get, propagate: true)   # Every descendant gets `health`.
 end
 ```
-
-Because `propagate:` handles inheritance directly, there's no need for a dedicated "root"
-controller just to keep an action from leaking to child controllers.
 
 ### Delegating to Model Methods
 
@@ -238,10 +230,10 @@ If a declared action's `metadata[:delegate]` is `true` and the model responds to
 framework auto-defines the controller action for you and forwards `params`:
 
 ```ruby
-add_collection_action(:archive_stale, :post, metadata: { delegate: true })
+add_action(:archive_stale, :post, type: :collection, metadata: { delegate: true })
 ```
 
-This also works for `add_member_action`, where the record is the receiver.
+This also works for member actions (`type: :member`), where the record is the receiver.
 
 ### Reading the Effective Actions
 
@@ -330,10 +322,11 @@ all bulk operations run inside a single database transaction.
 
 ### Removing Actions — Disabling Built-in Actions
 
-The `remove_*` helpers exclude actions from routing — including builtins. Use them to trim down a
-CRUD controller (for example, to make it read-only) without giving up the framework's behavior for
-the remaining actions. On a model controller, bare `remove_action(s)` removes the key from **both**
-the collection and member scopes, so you don't have to remember which scope an action is in:
+The `remove_action(s)` helpers exclude actions from routing — including builtins. Use them to trim
+down a CRUD controller (for example, to make it read-only) without giving up the framework's
+behavior for the remaining actions. Bare `remove_action(s)` (no `type:`) removes the key from
+**both** the collection and member scopes on any controller, so you don't have to remember which
+scope an action is in:
 
 ```ruby
 class Api::ReadOnlyMoviesController < ApiController
@@ -342,19 +335,19 @@ class Api::ReadOnlyMoviesController < ApiController
 end
 ```
 
-Use `remove_collection_action(s)` / `remove_member_action(s)` to target a single scope. The builtin
-collection actions are `:index`, `:create`, `:update_all`, `:destroy_all`, and
-`:options`; the builtin member actions are `:show`, `:update`, and `:destroy`. The bulk actions
-(`:update_all` / `:destroy_all`) only exist when `bulk` is enabled. Like `add_*`, the `remove_*`
-helpers accept `propagate:` (`false` / `true` / `:exclude_self`) to control inheritance — so
-descendants can be trimmed without a dedicated base controller.
+Pass `type:` to `remove_action(s)` to target a single scope. The builtin collection actions are
+`:index`, `:create`, `:update_all`, `:destroy_all`, and `:options`; the builtin member actions are
+`:show`, `:update`, and `:destroy`. The bulk actions (`:update_all` / `:destroy_all`) only exist
+when `bulk` is enabled. Like `add_action`, `remove_action(s)` accept `propagate:` (`false` / `true`
+/ `:exclude_self`) to control inheritance — so descendants can be trimmed without a dedicated base
+controller.
 
 ### `singular`
 
 If set to `true`, the resourceful router will generate singular (`resource`) rather than plural
 (`resources`) routes for this controller — meaning no `id` in the URL and no `index` action. You
-can also force plural by setting it to `false`. When `nil` (the default), the router uses the
-plurality implied by `rest_resource` vs `rest_resources`.
+can also force plural by setting it to `false`. When `nil` (the default), `rest_route` uses plural
+routes for controllers with a `model` and singular routes otherwise.
 
 ## Fields
 
@@ -869,8 +862,7 @@ A common pattern:
 ```ruby
 class Api::ReadOnlyMoviesController < ApiController
   self.model = Movie
-  remove_collection_actions(:create, :update_all, :destroy_all)
-  remove_member_actions(:update, :destroy)
+  remove_actions(:create, :update, :destroy, :update_all, :destroy_all)
 end
 ```
 
@@ -881,7 +873,7 @@ class Api::MoviesController < ApiController
   self.model = Movie
   self.bulk = true
   self.fields = [ :id, :name, :release_date, :enabled ]
-  add_member_action(:first, :get)
+  add_action(:first, :get, type: :member)
 
   def first
     render(api: self.get_records.first!)

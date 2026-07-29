@@ -1,10 +1,10 @@
 require "test_helper"
 
 class Api::Test::NetworkControllerTest < ActionController::TestCase
-  def test_cannot_list
-    assert_raises(ActionController::UrlGenerationError) do
-      get(:index)
-    end
+  def test_index_serves_the_root
+    # A modelless controller's index renders `index_content` (its root), not a resource list.
+    get(:index)
+    assert_response(:success)
   end
 
   def test_can_get_test_action

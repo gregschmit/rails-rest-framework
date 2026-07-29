@@ -14,7 +14,7 @@ module RESTFramework::Controller
   end
 
   def index
-    render_api(self.index!)
+    render_api(self.class.model ? self.index! : self.index_content)
   end
 
   # Get records with both filtering and pagination applied.
@@ -36,6 +36,11 @@ module RESTFramework::Controller
     end
 
     records
+  end
+
+  # The payload rendered at a non-model controller's index (e.g. an API root). Override this.
+  def index_content
+    { message: self.class.description.presence || "This is the API root." }
   end
 
   def show

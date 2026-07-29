@@ -17,48 +17,42 @@ Rails.application.routes.draw do
     asset: /[a-zA-Z0-9_\.-]+/,
   )
 
-  namespace :api do
-    rest_root
+  rest_route :api
 
+  namespace :api do
+    rest_route :plain
     namespace :plain do
-      rest_root
-      rest_route :emails
-      rest_route :genres
-      rest_route :movies
-      rest_route :phone_numbers
-      rest_route :users
+      rest_route :emails, :genres, :movies, :phone_numbers, :users
     end
 
+    rest_route :demo
     namespace :demo do
-      rest_root
-      rest_route :emails
-      rest_route :genres
-      rest_route :movies
-      rest_route :phone_numbers
+      rest_route :emails, :genres, :movies, :phone_numbers
       rest_route :users do
         rest_route :movies
       end
     end
 
-    rest_root :test
+    rest_route :test
     namespace :test do
-      rest_route :user
-      rest_route :users
+      rest_route :user, :users
       resources :users, only: [] do
         rest_route :user_emails
       end
 
-      rest_route :added_select
-      rest_route :bare_create
-      rest_route :fields_hash_except
-      rest_route :fields_hash_exclude
-      rest_route :fields_hash_only
-      rest_route :fields_hash_only_except
-      rest_route :no_rescue_unknown_format
-      rest_route :read_only
-      rest_route :users_with_hidden
-      rest_route :find_by
-      rest_route :users_with_sub_fields
+      rest_route(
+        :added_select,
+        :bare_create,
+        :fields_hash_except,
+        :fields_hash_exclude,
+        :fields_hash_only,
+        :fields_hash_only_except,
+        :no_rescue_unknown_format,
+        :read_only,
+        :users_with_hidden,
+        :find_by,
+        :users_with_sub_fields,
+      )
 
       rest_route :network
 

@@ -7,7 +7,7 @@ module RESTFramework::Controller
   # Builtin actions keyed by name, each gated by a `condition` so only applicable ones surface in
   # `actions` / `member_actions`. They route at the base path (`""`) of their scope.
   RRF_BUILTIN_COLLECTION_ACTIONS = {
-    index: { methods: [ :get ], condition: ->(c) { c.model && !c.singular } },
+    index: { methods: [ :get ], condition: ->(c) { !c.singular }, kwargs: { as: "" } },
     create: { methods: [ :post ], condition: ->(c) { c.model } },
     update_all: {
       methods: [ :put, :patch ],
@@ -20,7 +20,6 @@ module RESTFramework::Controller
       kwargs: { anchor: true },
     },
     options: { methods: [ :options ], condition: ->(_c) { true }, kwargs: { anchor: true } },
-    root: { methods: [ :get ], condition: ->(c) { !c.model }, kwargs: { as: "" } },
   }.freeze
   RRF_BUILTIN_MEMBER_ACTIONS = {
     show: { methods: [ :get ], condition: ->(c) { c.model } },
@@ -46,47 +45,36 @@ module RESTFramework::Controller
       end
     end
 
-    # Besides `path:`, `metadata:`, and `propagate:`, `add_*` passes any extra kwargs to the router.
-    def add_collection_action(name, methods, **opts)
-      _rrf_add_action(:collection, name, methods, **opts)
+    # Route an action, choosing the collection/member scope. Pass `type:` on a plural model
+    # controller, where the scopes differ; elsewhere the scope is implied — a singular controller's
+    # sole resource is a member (so `delegate` targets the record), a modelless one has only a
+    # collection — and `type:` warns as unnecessary (unless the action is delegated).
+    def add_action(name, methods, type: nil, **opts)
+      singular_model = self.model && self.singular
+
+      if self.model && !self.singular
+        _rrf_warn_action(name, methods, type, :ambiguous) if type.nil?
+      elsif singular_model && type && !opts[:metadata]&.[](:delegate)
+        _rrf_warn_action(name, methods, type, :redundant)
+      end
+
+      _rrf_add_action(type || (singular_model ? :member : :collection), name, methods, **opts)
     end
 
-    def add_member_action(name, methods, **opts)
-      _rrf_add_action(:member, name, methods, **opts)
+    # Remove an action from routing (including builtins). With no `type:`, both scopes are removed —
+    # keeping removal simple, and letting `propagate:` carry it to model descendants where member
+    # scope matters. Pass `type:` to target a single scope.
+    def remove_action(name, type: nil, propagate: false)
+      if type
+        _rrf_remove_action(type, name, propagate: propagate)
+      else
+        _rrf_remove_action(:collection, name, propagate: propagate)
+        _rrf_remove_action(:member, name, propagate: propagate)
+      end
     end
 
-    # Bare `add_action` targets the collection (how modelless controllers work, since they have no
-    # members); it warns on model controllers to nudge toward the explicit variants.
-    def add_action(name, methods, **opts)
-      _rrf_warn_bare_action(:add_action) if self.model
-      add_collection_action(name, methods, **opts)
-    end
-
-    def remove_collection_action(name, propagate: false)
-      _rrf_remove_action(:collection, name, propagate: propagate)
-    end
-
-    def remove_collection_actions(*names, propagate: false)
-      names.each { |name| remove_collection_action(name, propagate: propagate) }
-    end
-
-    def remove_member_action(name, propagate: false)
-      _rrf_remove_action(:member, name, propagate: propagate)
-    end
-
-    def remove_member_actions(*names, propagate: false)
-      names.each { |name| remove_member_action(name, propagate: propagate) }
-    end
-
-    # Bare `remove_*` removes the collection action, and on model controllers the member action too,
-    # so you can remove by key without tracking the scope (or to remove both scopes intentionally).
-    def remove_action(name, propagate: false)
-      remove_collection_action(name, propagate: propagate)
-      remove_member_action(name, propagate: propagate) if self.model
-    end
-
-    def remove_actions(*names, propagate: false)
-      names.each { |name| remove_action(name, propagate: propagate) }
+    def remove_actions(*names, type: nil, propagate: false)
+      names.each { |name| remove_action(name, type: type, propagate: propagate) }
     end
 
     # Source of truth: the effective collection / member actions (builtins + declared, composed
@@ -197,12 +185,21 @@ module RESTFramework::Controller
       self.ancestors.select { |a| a.is_a?(Class) && a.respond_to?(:_rrf_action_adds) }.reverse
     end
 
-    def _rrf_warn_bare_action(method)
-      explicit = method.to_s.sub("action", "collection_action")
-      Rails.logger.warn(
-        "RRF: `#{method}` on a model controller is ambiguous; use `#{explicit}` (or the member " \
-        "variant) to be explicit about collection vs. member.",
-      )
+    # Build the `type:` warning for `add_action`, echoing the call so its source is easy to find.
+    def _rrf_warn_action(name, methods, type, reason)
+      type_arg = type ? ", type: #{type.inspect}" : ""
+      sig = "add_action(#{name.inspect}, #{methods.inspect}#{type_arg})"
+
+      detail =
+        if reason == :ambiguous
+          "needs an explicit `type:` (`:collection` or `:member`); collection and member route " \
+            "differently on a plural model controller"
+        else
+          "has an unnecessary `type:`; member and collection route the same path on a singular " \
+            "model controller"
+        end
+
+      Rails.logger.warn("RRF: `#{sig}` #{detail}.")
     end
   end
 
