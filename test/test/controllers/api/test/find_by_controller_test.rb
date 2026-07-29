@@ -13,4 +13,9 @@ class Api::Test::FindByControllerTest < ActionController::TestCase
     get(:show, as: :json, params: { id: "nonexistent_login", find_by: "login" })
     assert_response(404)
   end
+
+  def test_show_by_virtual_field_is_not_allowed_by_default
+    get(:show, as: :json, params: { id: "5.45", find_by: "calculated_property" })
+    assert_response(404)
+  end
 end

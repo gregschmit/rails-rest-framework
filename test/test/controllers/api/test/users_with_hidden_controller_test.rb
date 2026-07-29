@@ -25,6 +25,12 @@ class Api::Test::UsersWithHiddenControllerTest < ActionController::TestCase
     assert_not(first["random2"])
   end
 
+  def test_list_with_virtual_field_filter_returns_controlled_error
+    get(:index, as: :json, params: { random1: "10" })
+    assert_response(400)
+    assert(@response.parsed_body["message"].present?)
+  end
+
   def test_show
     uid = User.first.id
     get(:show, as: :json, params: { id: uid })
