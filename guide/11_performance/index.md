@@ -13,7 +13,10 @@ which can blow up response size and query time for records with many association
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
-  self.native_serializer_associations_limit = 10
+
+  propagate do
+    self.native_serializer_associations_limit = 10
+  end
 end
 ```
 
@@ -74,16 +77,19 @@ Why this matters:
 
 ## Always Paginate Large Collections
 
-An unpaginated `index` on a large table is a classic production bug. Configure a paginator at
-the top of the inheritance hierarchy:
+An unpaginated `index` on a large table is a classic production bug. Configure a paginator at the
+top of the inheritance hierarchy. Configuration assignments are local by default; wrap them in a
+`propagate` block to share them with descendant controllers:
 
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
 
-  self.paginator_class = RESTFramework::PageNumberPaginator
-  self.page_size = 30
-  self.max_page_size = 100   # Prevent `?page_size=1000000` DoS.
+  propagate do
+    self.paginator_class = RESTFramework::PageNumberPaginator
+    self.page_size = 30
+    self.max_page_size = 100   # Prevent `?page_size=1000000` DoS.
+  end
 end
 ```
 
@@ -133,7 +139,10 @@ If your API doesn't need XML (many don't), turn it off:
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
-  self.serialize_to_xml = false
+
+  propagate do
+    self.serialize_to_xml = false
+  end
 end
 ```
 
@@ -159,9 +168,8 @@ text/html`.
 
 ## Vendor Browsable API Assets When Needed
 
-By default the browsable API loads Bootstrap, highlight.js, Trix, and friends from public CDNs
-with SRI integrity. If your deploys are air-gapped or behind strict CSP, serve the assets
-yourself:
+By default the browsable API loads Bootstrap, highlight.js, Trix, and friends from public CDNs with
+SRI integrity. If your deploys are air-gapped or behind strict CSP, serve the assets yourself:
 
 ```ruby
 RESTFramework.configure do |config|
@@ -171,21 +179,10 @@ end
 
 Requires Propshaft (default on Rails 8+) or Sprockets. The vendored files ship with the gem.
 
-## Reduce Error-Response Overhead
-
-In production, make sure `show_backtrace` is `false` (it is by default, unless
-`Rails.env.development?`):
-
-```ruby
-config.show_backtrace = false
-```
-
-With this off, error responses skip the backtrace formatting work and don't leak internals.
-
 ## Cache the OpenAPI Document
 
-The OpenAPI document is computed from live reflections, which isn't cheap. If many clients
-fetch it, consider caching with HTTP caching headers:
+The OpenAPI document is computed from live reflections, which isn't cheap. If many clients fetch it,
+consider caching with HTTP caching headers:
 
 ```ruby
 class Api::MoviesController < ApiController
@@ -196,16 +193,16 @@ class Api::MoviesController < ApiController
 end
 ```
 
-Or, for a long-lived public document, serve a snapshotted version from a separate endpoint
-(see the [OpenAPI section](../09_openapi/#consuming-the-document)).
+Or, for a long-lived public document, serve a snapshotted version from a separate endpoint (see the
+[OpenAPI section](../09_openapi/#consuming-the-document)).
 
 ## Production Checklist
 
 A short list for going to production:
 
-- [ ] `RESTFramework.config.show_backtrace = false`
 - [ ] `RESTFramework.config.large_reverse_association_tables` set for expensive tables
-- [ ] `paginator_class` set at the root, with `max_page_size` configured
+- [ ] `paginator_class` set at the root inside a `propagate` block so it reaches descendant
+      controllers, with `max_page_size` configured
 - [ ] `filter_fields`, `ordering_fields`, and `search_fields` whitelisted for public APIs
 - [ ] `native_serializer_associations_limit` set if any controller exposes large collection
       associations

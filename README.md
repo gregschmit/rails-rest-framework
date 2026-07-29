@@ -43,14 +43,19 @@ To add REST framework features to a controller, include the `Controller` module:
 class ApiController < ApplicationController
   include RESTFramework::Controller
 
-  # Here is where you can set configuration class attributes that will propagate to child
-  # controllers.
-
-  # Setting up a paginator class here makes more sense than defining it on every child controller.
-  self.paginator_class = RESTFramework::PageNumberPaginator
-  self.page_size = 30
+  # Assignments are local by default; wrap shared config in `propagate` so child controllers inherit
+  # it. A paginator set here makes more sense than defining it on every child controller.
+  propagate do
+    self.paginator_class = RESTFramework::PageNumberPaginator
+    self.page_size = 30
+  end
 end
 ```
+
+> **Note:** Configuration assignments are **local by default** — `self.x = value` sets `x` on that
+> controller alone and does not propagate to subclasses. To share a setting with every descendant
+> (pagination, filter backends, serializer config, and so on), wrap the assignment in a
+> `propagate do … end` block on a base controller.
 
 Here is what the directory structure might look like for resource controllers:
 
@@ -96,7 +101,8 @@ end
 
 ### Resource Controllers
 
-Other API controllers can be associated to a resource/model by setting the `model` class attribute.
+Other API controllers can be associated to a resource/model by setting `model`, e.g.
+`self.model = Movie`.
 
 ```ruby
 class Api::MoviesController < ApiController

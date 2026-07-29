@@ -7,8 +7,11 @@ class Api::TestController < ApiController
 
   self.description = DESCRIPTION
 
-  self.enable_action_text = true
-  self.enable_active_storage = true
+  # Shared across all test resources, so propagate to descendants.
+  propagate do
+    self.enable_action_text = true
+    self.enable_active_storage = true
+  end
 
   before_action do
     @header_title = "Rails REST Framework Test API"

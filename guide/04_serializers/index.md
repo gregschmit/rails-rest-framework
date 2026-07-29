@@ -154,7 +154,10 @@ By default, `has_many` / `has_and_belongs_to_many` associations are capped at 5 
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
-  self.native_serializer_associations_limit = 10
+
+  propagate do
+    self.native_serializer_associations_limit = 10
+  end
 end
 ```
 

@@ -10,7 +10,10 @@ Opt in at the controller level by setting `enable_action_text = true`:
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
-  self.enable_action_text = true
+
+  propagate do
+    self.enable_action_text = true
+  end
 end
 ```
 
@@ -58,7 +61,10 @@ Opt in at the controller level with `enable_active_storage = true`:
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
-  self.enable_active_storage = true
+
+  propagate do
+    self.enable_active_storage = true
+  end
 end
 ```
 
@@ -136,7 +142,9 @@ filter backend:
 class ApiController < ApplicationController
   include RESTFramework::Controller
 
-  self.filter_backends += [ RESTFramework::RansackFilter ]
+  propagate do
+    self.filter_backends += [ RESTFramework::RansackFilter ]
+  end
 end
 ```
 

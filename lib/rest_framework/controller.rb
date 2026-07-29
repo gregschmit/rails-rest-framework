@@ -151,6 +151,67 @@ module RESTFramework::Controller
   module ClassMethods
     IGNORE_VALIDATORS_WITH_KEYS = [ :if, :unless ].freeze
 
+    # Thread-local key toggled by `propagate` while its block runs.
+    RRF_PROPAGATING_KEY = :rrf_propagating
+
+    # Define one or more class-level configuration attributes. Assignments are **local by default**:
+    #
+    #   self.x = value               # applies to THIS controller only; descendants don't inherit it
+    #   propagate { self.x = value } # applies to this controller AND all descendants
+    #
+    # This gives a single, uniform rule (an assignment is local unless wrapped in `propagate`), so
+    # there's no per-attribute "does this inherit?" knowledge to carry around. Values are stored in
+    # closures on redefined singleton methods (the same mechanism as `class_attribute`), never in
+    # instance variables, so there is exactly one interface for configuration: the setter.
+    #
+    # Only singleton (class-level) methods are defined, so config never leaks to controller
+    # instances (which would risk colliding with action methods).
+    def rrf_class_attribute(*names, default: nil)
+      names.each do |name|
+        # Propagating baseline: every controller sees the default until it's overridden.
+        singleton_class.define_method(name) { default }
+
+        # Parity with `class_attribute`, which also defines a predicate.
+        singleton_class.define_method("#{name}?") { !!public_send(name) }
+
+        singleton_class.define_method("#{name}=") do |value|
+          if Thread.current[RRF_PROPAGATING_KEY]
+            # Propagate: descendants inherit this plain getter via the singleton chain.
+            singleton_class.define_method(name) { value }
+          else
+            # Local: `value` for this class only; descendants fall back through `super` to the
+            # nearest propagated ancestor, or the default (the declaring class has no `super`).
+            klass = self
+            singleton_class.define_method(name) do
+              if equal?(klass)
+                value
+              elsif defined?(super)
+                super()
+              else
+                default
+              end
+            end
+          end
+        end
+      end
+    end
+
+    # Run a block in which configuration setters (`self.x = value`) propagate to descendant
+    # controllers instead of applying locally. Use this on a shared base controller for settings you
+    # want every subclass to inherit:
+    #
+    #   propagate do
+    #     self.paginator_class = RESTFramework::PageNumberPaginator
+    #     self.page_size = 30
+    #   end
+    def propagate
+      previous = Thread.current[RRF_PROPAGATING_KEY]
+      Thread.current[RRF_PROPAGATING_KEY] = true
+      yield
+    ensure
+      Thread.current[RRF_PROPAGATING_KEY] = previous
+    end
+
     # By default, this is the name of the controller class, titleized and with any custom inflection
     # acronyms applied.
     def get_title
@@ -434,18 +495,21 @@ module RESTFramework::Controller
     # By default, the layout should be set to `rest_framework`.
     base.layout("rest_framework")
 
-    # Add class attributes unless they already exist.
+    # Materialize config with `rrf_class_attribute` (local by default) rather than `class_attribute`
+    # (always inherited).
     RRF_BASE_CONFIG.each do |a, default|
       next if base.respond_to?(a)
 
-      # Don't leak class attributes to the instance to avoid conflicting with action methods.
-      base.class_attribute(a, default: default, instance_accessor: false)
+      base.rrf_class_attribute(a, default: default)
     end
 
-    # Alias `extra_actions` to `extra_collection_actions`.
+    # Live alias for `extra_actions`: delegate rather than `alias_method`, since the getter is
+    # redefined on each assignment (a copied alias wouldn't track it).
     unless base.respond_to?(:extra_collection_actions)
-      base.singleton_class.alias_method(:extra_collection_actions, :extra_actions)
-      base.singleton_class.alias_method(:extra_collection_actions=, :extra_actions=)
+      base.singleton_class.define_method(:extra_collection_actions) { extra_actions }
+      base.singleton_class.define_method(:extra_collection_actions=) do |value|
+        self.extra_actions = value
+      end
     end
 
     # Skip CSRF since this is an API.

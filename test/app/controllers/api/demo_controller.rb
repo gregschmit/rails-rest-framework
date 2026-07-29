@@ -6,24 +6,27 @@ class Api::DemoController < ApiController
     primarily pagination, nested resources, and integration with Action Text and Active Storage.
   TEXT
 
-  self.bulk = true
-  self.bulk_allow_mode_override = true
+  # Shared across all demo resources, so propagate to descendants.
+  propagate do
+    self.bulk = true
+    self.bulk_allow_mode_override = true
 
-  self.enable_action_text = true
-  self.enable_active_storage = true
+    self.enable_action_text = true
+    self.enable_active_storage = true
 
-  self.page_size = 30
+    self.page_size = 30
 
-  self.native_serializer_associations_limit = 6
-  self.native_serializer_include_associations_count = true
-  self.filter_backends = [
-    RESTFramework::QueryFilter,
-    RESTFramework::OrderingFilter,
-    RESTFramework::SearchFilter,
-    RESTFramework::RansackFilter,
-  ]
+    self.native_serializer_associations_limit = 6
+    self.native_serializer_include_associations_count = true
+    self.filter_backends = [
+      RESTFramework::QueryFilter,
+      RESTFramework::OrderingFilter,
+      RESTFramework::SearchFilter,
+      RESTFramework::RansackFilter,
+    ]
 
-  self.paginator_class = RESTFramework::PageNumberPaginator
+    self.paginator_class = RESTFramework::PageNumberPaginator
+  end
 
   before_action do
     @header_title = "Rails REST Framework Demo API"

@@ -21,12 +21,15 @@ To add Ransack support, append `RESTFramework::RansackFilter`:
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
-  self.filter_backends = [
-    RESTFramework::QueryFilter,
-    RESTFramework::OrderingFilter,
-    RESTFramework::SearchFilter,
-    RESTFramework::RansackFilter,
-  ]
+
+  propagate do
+    self.filter_backends = [
+      RESTFramework::QueryFilter,
+      RESTFramework::OrderingFilter,
+      RESTFramework::SearchFilter,
+      RESTFramework::RansackFilter,
+    ]
+  end
 end
 ```
 

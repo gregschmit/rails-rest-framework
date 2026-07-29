@@ -12,9 +12,8 @@ wire up extra actions, built-in actions, and bulk routes automatically.
 
 Your API root typically explains how to authenticate and provides a description of the API.
 
-The recommended pattern is a dedicated `RootController` inside the `api` namespace, so
-root-specific actions and configuration don't propagate through inheritance to every descendant
-resource controller:
+The recommended pattern is a dedicated `RootController` inside the `api` namespace, so root-specific
+actions stay isolated from your resource controllers:
 
 ```text
 app/controllers/

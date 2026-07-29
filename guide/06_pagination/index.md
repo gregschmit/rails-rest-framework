@@ -7,8 +7,10 @@ default `paginator_class` is `nil` (no pagination). Set it to a paginator class 
 class ApiController < ApplicationController
   include RESTFramework::Controller
 
-  self.paginator_class = RESTFramework::PageNumberPaginator
-  self.page_size = 30
+  propagate do
+    self.paginator_class = RESTFramework::PageNumberPaginator
+    self.page_size = 30
+  end
 end
 ```
 

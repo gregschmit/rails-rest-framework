@@ -4,8 +4,9 @@ This is the core of the REST Framework. Projects typically already have an exist
 inheritance hierarchy, and different controllers which inherit from the same parent often need
 different REST Framework behavior. For these reasons, the framework ships a single
 `RESTFramework::Controller` module that you `include` into any controller you want to become a
-REST API controller. Behavior is then configured via class attributes — most notably `model`,
-`bulk`, `excluded_actions`, `fields`, and `field_config`.
+REST API controller. Behavior is then configured via class-level attributes (backed by RRF's
+`rrf_class_attribute` helper). Assignments are local by default; wrap them in a `propagate` block to
+share them with child controllers (see the note below).
 
 ## The `Controller` Module
 
@@ -14,10 +15,13 @@ To transform any controller into a REST Framework controller, include the `Contr
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
-
-  # Configuration set here propagates to child controllers via Rails' `class_attribute`.
 end
 ```
+
+> **Note:** Configuration assignments are **local by default** — `self.x = value` sets `x` on that
+> controller alone and does not propagate to subclasses. To share a setting with every descendant
+> (pagination, filter backends, serializer config, etc.), wrap the assignment in a
+> `propagate do … end` block on a base controller.
 
 Including `Controller` by itself gives you a "base" controller — no CRUD actions are exposed, but
 you get:
@@ -48,8 +52,8 @@ collection `POST`), `update_all`, and `destroy_all`.
 
 ### Root Controller Pattern
 
-It's typically best to dedicate a controller for the API root so that root-specific actions and
-configuration don't propagate through inheritance to every resource controller. A common layout:
+It's typically best to dedicate a controller for the API root so that root-specific actions stay
+isolated from resource controllers. A common layout:
 
 ```text
 app/controllers/
@@ -61,14 +65,17 @@ app/controllers/
 └── application_controller.rb
 ```
 
-`ApiController` holds shared configuration (pagination, filters, etc.):
+`ApiController` holds shared configuration (pagination, filters, etc.). Since assignments are local
+by default, wrap anything you want every resource controller to inherit in a `propagate` block:
 
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
 
-  self.paginator_class = RESTFramework::PageNumberPaginator
-  self.page_size = 30
+  propagate do
+    self.paginator_class = RESTFramework::PageNumberPaginator
+    self.page_size = 30
+  end
 end
 ```
 
@@ -693,7 +700,8 @@ These can be controlled per-controller with `permit_id_assignment` and
 ## Configuration Reference
 
 The class attributes below all have sensible defaults and can be set at any level of the
-inheritance hierarchy (child controllers inherit from parents). Grouped by concern:
+inheritance hierarchy. Assignments are local to the controller they're written on; wrap them in a
+`propagate` block to share them with descendant controllers. Grouped by concern:
 
 ### Core / Resource
 
