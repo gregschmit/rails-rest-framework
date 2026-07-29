@@ -221,20 +221,6 @@ module RESTFramework::Controller
       self.model&.human_attribute_name(s, default: default_title) || default_title
     end
 
-    # Define any behavior to execute at the end of controller definition.
-    # :nocov:
-    def rrf_finalize
-      if RESTFramework.config.freeze_config
-        self::RRF_BASE_CONFIG.keys.each { |k|
-          v = self.send(k)
-          v.freeze if v.is_a?(Hash) || v.is_a?(Array)
-        }
-      end
-
-      # self.setup_channel if self.model
-    end
-    # :nocov:
-
     # Get the available fields. Fallback to this controller's model columns, or an empty array. This
     # should always return an array of strings.
     def get_fields(input_fields: nil)
@@ -472,21 +458,6 @@ module RESTFramework::Controller
     # Handle exceptions.
     base.rescue_from(*RRF_RESCUED_EXCEPTIONS, with: :rrf_error_handler)
     base.rescue_from(*RRF_RESCUED_RAILS_EXCEPTIONS, with: :rrf_error_handler)
-
-    # Use `TracePoint` hook to automatically call `rrf_finalize`.
-    if RESTFramework.config.auto_finalize
-      # :nocov:
-      TracePoint.trace(:end) do |t|
-        next if base != t.self
-
-        base.rrf_finalize
-
-        # It's important to disable the trace once we've found the end of the base class definition,
-        # for performance.
-        t.disable
-      end
-      # :nocov:
-    end
   end
 
   def get_serializer_class

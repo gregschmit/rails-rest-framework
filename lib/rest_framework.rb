@@ -129,19 +129,6 @@ module RESTFramework
     # Permits use of `render(api: obj)` syntax over `render_api(obj)`; `true` by default.
     attr_accessor :register_api_renderer
 
-    # Run `rrf_finalize` on controllers automatically using a `TracePoint` hook. This is `true` by
-    # default, and can be disabled for performance, and must be global because we have to determine
-    # this before any controller-specific configuration is set. If this is set to `false`, then you
-    # must manually call `rrf_finalize` after any configuration on each controller that needs to
-    # participate in:
-    #  - Model delegation, for the helper methods to be defined dynamically.
-    #  - Websockets, for `::Channel` class to be defined dynamically.
-    #  - Controller configuration freezing.
-    attr_accessor :auto_finalize
-
-    # Freeze configuration attributes during finalization to prevent accidental mutation.
-    attr_accessor :freeze_config
-
     # Specify reverse association tables that are typically very large, and therefore should not be
     # added to fields by default.
     attr_accessor :large_reverse_association_tables
@@ -168,8 +155,6 @@ module RESTFramework
 
     def initialize
       self.register_api_renderer = true
-      self.auto_finalize = true
-      self.freeze_config = true
 
       self.show_backtrace = Rails.env.development?
 

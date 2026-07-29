@@ -902,20 +902,3 @@ Error responses have the form:
 
 Because of this, your code can (and should) use exception-raising methods like `find`, `update!`,
 and `destroy!` — the framework will turn the raised exceptions into clean API responses.
-
-## Controller Finalization
-
-The framework uses a `TracePoint` hook to automatically call `rrf_finalize` at the end of every
-controller class definition. This is what sets up model delegation for actions declared with
-`metadata: { delegate: true }` and (optionally) freezes configuration.
-
-If you set `RESTFramework.config.auto_finalize = false` for performance, call `rrf_finalize`
-manually at the end of each controller class.
-
-```ruby
-class Api::MoviesController < ApiController
-  self.model = Movie
-  # ...
-  rrf_finalize
-end
-```
