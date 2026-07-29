@@ -22,12 +22,14 @@ module RESTFramework
       UNKNOWN
     end
 
-    def self.stamp_version
-      # Only stamp the version if it's not unknown.
-      version = self.get_version
+    def self.stamp_version(version = nil)
+      # Stamp the given version into the VERSION file, deriving it from git when none is provided.
+      # Returns the stamped version so callers don't rely on the (require-time) `VERSION` constant.
+      version ||= self.get_version
       if version != UNKNOWN
         File.write(VERSION_FILEPATH, version)
       end
+      version
     end
 
     def self.unstamp_version

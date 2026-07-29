@@ -1,13 +1,13 @@
-rrf_version = ENV["RRF_OVERRIDE_VERSION"]
+require_relative "lib/rest_framework/version"
 
-unless rrf_version
-  require_relative "lib/rest_framework/version"
-
-  # Stamp version before packaging.
+# A release build sets `RRF_STAMP_VERSION` so the version is derived from git and stamped into the
+# VERSION file that ships in the gem. Otherwise stamp a stable "0.dev" so anything that resolves the
+# bundle (Ruby LSP's composed bundle, editors, plain `bundle install`) never churns `Gemfile.lock`
+# with `git describe` output.
+rrf_version = if ENV["RRF_STAMP_VERSION"]
   RESTFramework::Version.stamp_version
-
-  # Use the stamped version.
-  rrf_version = RESTFramework::VERSION
+else
+  RESTFramework::Version.stamp_version("0.dev")
 end
 
 Gem::Specification.new do |spec|

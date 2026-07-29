@@ -1,7 +1,5 @@
 source "https://rubygems.org"
 
-# We force the Gem version to "0.dev" so it doesn't keep changing inside the `Gemfile.lock`.
-ENV["RRF_OVERRIDE_VERSION"] = "0.dev"
 gemspec
 
 # Support setting ruby version from env, and default to `.ruby-version` file.
