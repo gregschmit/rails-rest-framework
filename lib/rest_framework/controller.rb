@@ -162,19 +162,23 @@ module RESTFramework::Controller
     # instances (which would risk colliding with action methods).
     def rrf_class_attribute(*names, default: nil)
       names.each do |name|
-        # Propagating baseline: every controller sees the default until it's overridden.
-        singleton_class.define_method(name) { default }
+        # Propagating baseline: every controller sees the default until it's overridden. This lives
+        # in the propagated module (see `rrf_propagated_module`) rather than directly on the
+        # singleton class, so a local assignment can coexist with it via `super`.
+        rrf_propagated_module.define_method(name) { default }
 
         # Parity with `class_attribute`, which also defines a predicate.
         singleton_class.define_method("#{name}?") { !!public_send(name) }
 
         singleton_class.define_method("#{name}=") do |value|
           if Thread.current[RRF_PROPAGATING_KEY]
-            # Propagate: descendants inherit this plain getter via the singleton chain.
-            singleton_class.define_method(name) { value }
+            # Propagate: descendants inherit this getter via the module in the singleton chain. It's
+            # kept separate from any local getter (defined directly on the singleton class) so a
+            # subsequent local assignment doesn't clobber the value propagated to descendants.
+            rrf_propagated_module.define_method(name) { value }
           else
             # Local: `value` for this class only; descendants fall back through `super` to the
-            # nearest propagated ancestor, or the default (the declaring class has no `super`).
+            # nearest propagated ancestor value, or the default.
             klass = self
             singleton_class.define_method(name) do
               if equal?(klass)
@@ -188,6 +192,16 @@ module RESTFramework::Controller
           end
         end
       end
+    end
+
+    # The per-class module holding this class's propagated attribute getters (and the default
+    # baseline). It's included into the singleton class so descendants inherit propagated values
+    # through the singleton-class chain, while local assignments—defined directly on the singleton
+    # class—take precedence for the class itself and can `super()` back into this module. Created
+    # lazily and memoized per class (instance variables aren't inherited, so each class gets its
+    # own).
+    def rrf_propagated_module
+      @rrf_propagated_module ||= Module.new.tap { |mod| singleton_class.include(mod) }
     end
 
     # Run a block in which configuration setters (`self.x = value`) propagate to descendant

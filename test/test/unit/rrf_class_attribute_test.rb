@@ -112,7 +112,7 @@ class RRFClassAttributeTest < Minitest::Test
     base.thing = :local_again
 
     assert_equal(:local_again, base.thing)
-    refute_equal(:local_again, child.thing, "the post-block assignment must not propagate")
+    assert_equal(:shared, child.thing, "the post-block assignment must not propagate")
   end
 
   def test_propagate_restores_flag_on_exception
