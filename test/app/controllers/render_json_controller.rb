@@ -3,10 +3,13 @@ if defined?(ActiveModel::Serializer)
     include RESTFramework::Controller
 
     self.model = User
-    self.excluded_actions = [ :create, :update, :destroy, :update_all, :destroy_all ]
+    remove_collection_actions(:create, :update_all, :destroy_all)
+    remove_member_actions(:update, :destroy)
 
-    self.extra_actions = { list_rest_serializer: :get, list_am_serializer: :get }
-    self.extra_member_actions = { show_rest_serializer: :get, show_am_serializer: :get }
+    add_collection_action(:list_rest_serializer, :get)
+    add_collection_action(:list_am_serializer, :get)
+    add_member_action(:show_rest_serializer, :get)
+    add_member_action(:show_am_serializer, :get)
 
     def list_rest_serializer
       @users = self.get_recordset

@@ -195,16 +195,4 @@ class RRFClassAttributeTest < Minitest::Test
     assert_equal(:shared_model, base.model)
     assert_equal(:shared_model, child.model)
   end
-
-  def test_extra_collection_actions_is_a_live_alias_for_extra_actions
-    base, _child = build_controller_tree
-
-    base.extra_actions = { foo: :get }
-    assert_equal(
-      { foo: :get }, base.extra_collection_actions, "reading the alias must reflect the value"
-    )
-
-    base.extra_collection_actions = { bar: :get }
-    assert_equal({ bar: :get }, base.extra_actions, "writing the alias must set `extra_actions`")
-  end
 end

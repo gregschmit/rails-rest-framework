@@ -55,7 +55,7 @@ end
 > **Note:** Configuration assignments are **local by default** — `self.x = value` sets `x` on that
 > controller alone and does not propagate to subclasses. To share a setting with every descendant
 > (pagination, filter backends, serializer config, and so on), wrap the assignment in a
-> `propagate do … end` block on a base controller.
+> `propagate` block on a base controller.
 
 Here is what the directory structure might look like for resource controllers:
 
@@ -77,7 +77,7 @@ root without them propagating to child controllers, and so you can set global co
 
 ```ruby
 class Api::RootController < ApiController
-  self.extra_actions = {test: :get}
+  add_action(:test, :get)
 
   # The root action is routed by `rest_root`.
   def root
@@ -109,7 +109,7 @@ class Api::MoviesController < ApiController
   self.model = Movie  # Automatically routes the standard CRUD actions for this controller.
   self.bulk = true  # Enables bulk create/update/destroy actions for this controller.
   self.fields = [:id, :name, :release_date, :enabled]
-  self.extra_member_actions = {first: :get}
+  add_member_action(:first, :get)
 
   def first
     # Always use bang methods, since the framework will rescue `RecordNotFound` and return a
@@ -132,7 +132,8 @@ class Api::UsersController < ApiController
 
   # You can even disable some of the builtin actions. For example, this effectively makes the
   # resource read-only:
-  self.excluded_actions = [:create, :update, :destroy, :update_all, :destroy_all]
+  remove_collection_actions(:create, :update_all, :destroy_all)
+  remove_member_actions(:update, :destroy)
 end
 ```
 

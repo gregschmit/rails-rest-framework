@@ -3,8 +3,6 @@
 # module rather than defining a separate submodule.
 module RESTFramework::Controller
   RRF_BASE_CONFIG = {
-    extra_actions: nil,
-    extra_member_actions: nil,
     singular: nil,
 
     # Options related to metadata and display.
@@ -17,7 +15,6 @@ module RESTFramework::Controller
     # Options related to models.
     model: nil,
     recordset: nil,
-    excluded_actions: nil,
 
     # Bulk configuration.
     #
@@ -156,7 +153,7 @@ module RESTFramework::Controller
 
     # Define one or more class-level configuration attributes. Assignments are **local by default**:
     #
-    #   self.x = value               # applies to THIS controller only; descendants don't inherit it
+    #   self.x = value               # applies to this controller ONLY; descendants don't inherit it
     #   propagate { self.x = value } # applies to this controller AND all descendants
     #
     # This gives a single, uniform rule (an assignment is local unless wrapped in `propagate`), so
@@ -239,7 +236,6 @@ module RESTFramework::Controller
         }
       end
 
-      self.setup_delegation if self.model
       # self.setup_channel if self.model
     end
     # :nocov:
@@ -452,39 +448,6 @@ module RESTFramework::Controller
         next [ f, cfg ]
       }.to_h.compact.with_indifferent_access
     end
-
-    # Only for model controllers.
-    def setup_delegation
-      # Delegate extra actions.
-      self.extra_actions&.each do |action, config|
-        next unless config.is_a?(Hash) && config.dig(:metadata, :delegate)
-        next unless self.model.respond_to?(action)
-
-        self.define_method(action) do
-          if self.class.model.method(action).parameters.last&.first == :keyrest
-            render_api(self.class.model.send(action, **request.query_parameters.symbolize_keys))
-          else
-            render_api(self.class.model.send(action))
-          end
-        end
-      end
-
-      # Delegate extra member actions.
-      self.extra_member_actions&.each do |action, config|
-        next unless config.is_a?(Hash) && config.dig(:metadata, :delegate)
-        next unless self.model.method_defined?(action)
-
-        self.define_method(action) do
-          record = self.get_record
-
-          if record.method(action).parameters.last&.first == :keyrest
-            render_api(record.send(action, **request.query_parameters.symbolize_keys))
-          else
-            render_api(record.send(action))
-          end
-        end
-      end
-    end
   end
 
   def self.included(base)
@@ -501,15 +464,6 @@ module RESTFramework::Controller
       next if base.respond_to?(a)
 
       base.rrf_class_attribute(a, default: default)
-    end
-
-    # Live alias for `extra_actions`: delegate rather than `alias_method`, since the getter is
-    # redefined on each assignment (a copied alias wouldn't track it).
-    unless base.respond_to?(:extra_collection_actions)
-      base.singleton_class.define_method(:extra_collection_actions) { extra_actions }
-      base.singleton_class.define_method(:extra_collection_actions=) do |value|
-        self.extra_actions = value
-      end
     end
 
     # Skip CSRF since this is an API.
@@ -893,6 +847,7 @@ module RESTFramework::Controller
   end
 end
 
+require_relative "controller/actions"
 require_relative "controller/bulk"
 require_relative "controller/crud"
 require_relative "controller/openapi"

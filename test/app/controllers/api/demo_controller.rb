@@ -28,7 +28,21 @@ class Api::DemoController < ApiController
     self.paginator_class = RESTFramework::PageNumberPaginator
   end
 
+  # A propagated extra action: every demo controller and its descendants get `ping`.
+  add_collection_action(:ping, :get, propagate: true)
+
+  # A descendants-only extra action: demo resource controllers get `child_ping`, but not this base.
+  add_collection_action(:child_ping, :get, propagate: :exclude_self)
+
   before_action do
     @header_title = "Rails REST Framework Demo API"
+  end
+
+  def ping
+    render_api({ message: "pong" })
+  end
+
+  def child_ping
+    render_api({ message: "child pong" })
   end
 end

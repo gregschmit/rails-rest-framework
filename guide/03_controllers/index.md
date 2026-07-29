@@ -21,7 +21,7 @@ end
 > **Note:** Configuration assignments are **local by default** — `self.x = value` sets `x` on that
 > controller alone and does not propagate to subclasses. To share a setting with every descendant
 > (pagination, filter backends, serializer config, etc.), wrap the assignment in a
-> `propagate do … end` block on a base controller.
+> `propagate` block on a base controller.
 
 Including `Controller` by itself gives you a "base" controller — no CRUD actions are exposed, but
 you get:
@@ -29,7 +29,8 @@ you get:
 - The `api` renderer (and the `render_api` helper) that powers the browsable API.
 - A default `root` action that renders a simple welcome message.
 - Auto-rescue of common `ActiveRecord` and `ActionController` exceptions into JSON error responses.
-- Support for `extra_actions` / `extra_member_actions` metadata-driven routing.
+- Support for declaring extra routed actions via `add_action` / `add_collection_action` /
+  `add_member_action` (see [Extra Actions](#extra-actions)).
 - Automatic CSRF skip (`skip_before_action :verify_authenticity_token`).
 
 To turn a controller into a full CRUD controller, set `model` (and optionally `bulk`):
@@ -83,7 +84,7 @@ end
 
 ```ruby
 class Api::RootController < ApiController
-  self.extra_actions = { test: :get }
+  add_action(:test, :get)
 
   # `rest_root` routes this action to '/' within the `:api` namespace.
   def root
@@ -110,7 +111,7 @@ The framework provides an `api` renderer, which is a thin wrapper around the `re
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
-  self.extra_actions = { test: :get }
+  add_action(:test, :get)
 
   def test
     render(api: { message: "Test successful!" })
@@ -132,17 +133,19 @@ If a request arrives with a format the controller doesn't serve, `render_api` fa
 
 ## Extra Actions
 
-Routing additional actions on the controller is done declaratively through `extra_actions` and
-`extra_member_actions`. The resourceful routers automatically read these and wire up the routes.
+Routing additional actions on the controller is done declaratively by calling the `add_*` helpers
+in the class body, just like other configuration. The resourceful routers read the resulting
+`actions` / `member_actions` and wire up the routes. Each declaration takes the action key (a
+symbol), its HTTP method(s) (a symbol or array), and keyword options.
 
-### `extra_actions` (collection actions)
+### Collection Actions
 
-`extra_actions` defines collection-level actions as a hash of `endpoint => method(s)`.
+`add_collection_action(name, methods, ...)` adds a collection-level action (no `id` in the URL).
 
 ```ruby
-class ApiController < ApplicationController
-  include RESTFramework::Controller
-  self.extra_actions = { test: :get }
+class Api::MoviesController < ApiController
+  self.model = Movie
+  add_collection_action(:test, :get)
 
   def test
     render(api: { message: "Test successful!" })
@@ -150,38 +153,55 @@ class ApiController < ApplicationController
 end
 ```
 
-Multiple HTTP methods:
+Multiple HTTP methods — pass an array:
 
 ```ruby
-self.extra_actions = { test: [ :get, :post ] }
+add_collection_action(:test, [ :get, :post ])
 ```
 
-Hash form for full control (custom path, multiple methods, metadata for OpenAPI):
+Use `path:` to route a different URL to the action (useful when the action name would otherwise
+conflict), and `metadata:` to supply browsable-API / OpenAPI metadata. Any extra keyword arguments
+are passed straight through to the router:
 
 ```ruby
-self.extra_actions = {
-  test_action: {
-    path: :test,          # Route `/test` to `test_action` (useful when the action name conflicts).
-    methods: :get,
-    metadata: {
-      label: "Run Test",
-      description: "Executes the test action.",
-    },
+add_collection_action(
+  :test_action,
+  :get,
+  path: :test,            # Route `/test` to `test_action`.
+  metadata: {
+    label: "Run Test",
+    description: "Executes the test action.",
   },
-}
+)
 ```
 
-> `extra_collection_actions` is an alias for `extra_actions`.
+### Bare `add_action`
 
-### `extra_member_actions`
+`add_action(name, methods, ...)` is a shorthand that targets the **collection**. It exists for
+modelless controllers (which have no members), where the collection/member distinction is
+meaningless. On a controller with a `model` set it still adds a collection action, but logs a
+warning nudging you toward the explicit `add_collection_action` (or `add_member_action`):
 
-`extra_member_actions` defines actions that operate on a single record (requiring an `id` path
-parameter). These only apply to resourceful routes.
+```ruby
+class Api::RootController < ApiController
+  add_action(:test, :get)
+
+  def test
+    render(api: { message: "Test successful!" })
+  end
+end
+```
+
+### Member Actions
+
+`add_member_action(name, methods, ...)` adds an action that operates on a single record (requiring
+an `id` path parameter). These only apply to resourceful (model) controllers and take the same
+`path:`, `metadata:`, and pass-through keyword options.
 
 ```ruby
 class Api::MoviesController < ApiController
   self.model = Movie
-  self.extra_member_actions = { disable: :patch }
+  add_member_action(:disable, :patch)
 
   def disable
     # `get_record` raises `ActiveRecord::RecordNotFound` on miss, which the framework rescues.
@@ -193,18 +213,46 @@ class Api::MoviesController < ApiController
 end
 ```
 
+### Propagation
+
+By default a declared action is **local** to the controller it's declared on. The `propagate:`
+keyword controls whether the action is inherited by descendant controllers:
+
+- `false` (the default) — the action applies only to this controller.
+- `true` — the action applies to this controller **and** all descendants.
+- `:exclude_self` — the action applies to descendants only, not this controller.
+
+```ruby
+class ApiController < ApplicationController
+  include RESTFramework::Controller
+  add_collection_action(:health, :get, propagate: true)   # Every descendant gets `health`.
+end
+```
+
+Because `propagate:` handles inheritance directly, there's no need for a dedicated "root"
+controller just to keep an action from leaking to child controllers.
+
 ### Delegating to Model Methods
 
-If an extra action's `metadata[:delegate]` is `true` and the model responds to the action, the
+If a declared action's `metadata[:delegate]` is `true` and the model responds to the action, the
 framework auto-defines the controller action for you and forwards `params`:
 
 ```ruby
-self.extra_actions = {
-  archive_stale: { methods: :post, metadata: { delegate: true } },
-}
+add_collection_action(:archive_stale, :post, metadata: { delegate: true })
 ```
 
-This also works for `extra_member_actions`, where the record is the receiver.
+This also works for `add_member_action`, where the record is the receiver.
+
+### Reading the Effective Actions
+
+The `actions` and `member_actions` class readers return the effective collection and member actions
+— builtins plus everything declared, composed across the inheritance chain — as an ordered
+`Hash{name => ActionSpec}`. These are the source of truth the routers consult:
+
+```ruby
+Api::MoviesController.actions         # => collection actions (index, create, ..., plus declared)
+Api::MoviesController.member_actions  # => member actions (show, update, destroy, plus declared)
+```
 
 ## Resource Configuration
 
@@ -280,22 +328,26 @@ Destroy payload format (array of primary keys):
 Bulk responses include a per-record `errors` key so clients can detect partial failures. Note that
 all bulk operations run inside a single database transaction.
 
-### `excluded_actions` — Disabling Built-in Actions
+### Removing Actions — Disabling Built-in Actions
 
-`excluded_actions` is an array of action names to exclude from routing. Use this to trim down a
+The `remove_*` helpers exclude actions from routing — including builtins. Use them to trim down a
 CRUD controller (for example, to make it read-only) without giving up the framework's behavior for
-the remaining actions.
+the remaining actions. On a model controller, bare `remove_action(s)` removes the key from **both**
+the collection and member scopes, so you don't have to remember which scope an action is in:
 
 ```ruby
 class Api::ReadOnlyMoviesController < ApiController
   self.model = Movie
-  self.excluded_actions = [ :create, :update, :destroy, :update_all, :destroy_all ]
+  remove_actions(:create, :update, :destroy, :update_all, :destroy_all)
 end
 ```
 
-Valid values include the built-in REST actions (`:index`, `:show`, `:create`, `:update`,
-`:destroy`) and, if `bulk` is enabled, the bulk actions (`:update_all`, `:destroy_all`). The
-resourceful routers will skip routing excluded actions.
+Use `remove_collection_action(s)` / `remove_member_action(s)` to target a single scope. The builtin
+collection actions are `:index`, `:create`, `:update_all`, `:destroy_all`, and
+`:options`; the builtin member actions are `:show`, `:update`, and `:destroy`. The bulk actions
+(`:update_all` / `:destroy_all`) only exist when `bulk` is enabled. Like `add_*`, the `remove_*`
+helpers accept `propagate:` (`false` / `true` / `:exclude_self`) to control inheritance — so
+descendants can be trimmed without a dedicated base controller.
 
 ### `singular`
 
@@ -344,8 +396,8 @@ listing every column:
 class Api::UsersController < ApiController
   self.model = User
   self.fields = {
-    include: [ :calculated_popularity ],   # Add a method to the default set.
-    exclude: [ :impersonation_token ],     # Remove something from the default set.
+    include: [ :calculated_popularity ],  # Add a method to the default set.
+    exclude: [ :impersonation_token ],    # Remove something from the default set.
   }
 end
 ```
@@ -710,11 +762,12 @@ inheritance hierarchy. Assignments are local to the controller they're written o
 | `model`                      | `nil`   | The `ActiveRecord` model. Required for built-in CRUD behavior.                           |
 | `recordset`                  | `nil`   | Static recordset. Falls back to `model.all`.                                             |
 | `bulk`                       | `false` | Enables bulk `create`, `update_all`, and `destroy_all` actions.                          |
-| `excluded_actions`           | `nil`   | Array of built-in actions to skip routing.                                               |
 | `singular`                   | `nil`   | Force singular/plural resourceful routing.                                               |
-| `extra_actions`              | `nil`   | Hash of extra collection actions.                                                        |
-| `extra_member_actions`       | `nil`   | Hash of extra member actions.                                                            |
 | `create_from_recordset`      | `true`  | Create new records through the recordset (inherit recordset conditions as defaults).     |
+
+Extra and removed actions are declared with the `add_*` / `remove_*` helpers rather than class
+attributes — see [Extra Actions](#extra-actions) and
+[Removing Actions](#removing-actions--disabling-built-in-actions).
 
 ### Fields
 
@@ -816,7 +869,8 @@ A common pattern:
 ```ruby
 class Api::ReadOnlyMoviesController < ApiController
   self.model = Movie
-  self.excluded_actions = [ :create, :update, :destroy, :update_all, :destroy_all ]
+  remove_collection_actions(:create, :update_all, :destroy_all)
+  remove_member_actions(:update, :destroy)
 end
 ```
 
@@ -827,7 +881,7 @@ class Api::MoviesController < ApiController
   self.model = Movie
   self.bulk = true
   self.fields = [ :id, :name, :release_date, :enabled ]
-  self.extra_member_actions = { first: :get }
+  add_member_action(:first, :get)
 
   def first
     render(api: self.get_records.first!)
@@ -860,7 +914,7 @@ and `destroy!` — the framework will turn the raised exceptions into clean API 
 ## Controller Finalization
 
 The framework uses a `TracePoint` hook to automatically call `rrf_finalize` at the end of every
-controller class definition. This is what sets up model delegation for `extra_actions` with
+controller class definition. This is what sets up model delegation for actions declared with
 `metadata: { delegate: true }` and (optionally) freezes configuration.
 
 If you set `RESTFramework.config.auto_finalize = false` for performance, call `rrf_finalize`

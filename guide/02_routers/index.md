@@ -6,7 +6,7 @@ wire up extra actions, built-in actions, and bulk routes automatically.
 
 - `rest_root` — route a controller's `root` action to the current scope root.
 - `rest_route` — route a controller; if the controller has a `model`, CRUD actions are routed
-  automatically, otherwise only the `root` action and `extra_actions` are routed.
+  automatically, otherwise only the `root` action and the controller's `actions` store are routed.
 
 ## Routing the API Root
 
@@ -46,11 +46,11 @@ When a controller has a `model` set, `rest_route` automatically routes the stand
 1. For plural controllers: `index`, `create`, `show`, `update`, `destroy`.
 2. For singular controllers (`self.singular = true`): `create`, `show`, `update`, `destroy` (no
    `index`, no `:id` in URLs).
-3. Actions are only routed if the controller defines the method and it is not listed in
-   `excluded_actions`.
+3. Actions are only routed if the controller defines the method and it has not been removed via
+   `remove_collection_action` / `remove_member_action`.
 4. If `bulk = true`, `update_all` (`PATCH`/`PUT /resource`) and `destroy_all`
    (`DELETE /resource`) are also routed. Bulk `create` (array POSTs) uses the regular `create`
-   route. Individual bulk actions can be opted out through `excluded_actions`.
+   route. Individual bulk actions can be opted out through `remove_collection_action`.
 
 ```ruby
 Rails.application.routes.draw do
@@ -84,12 +84,14 @@ rest_route :movies, path: "films", as: "films"
 
 ## Non-resourceful Routing
 
-When a controller has no `model` set, `rest_route` routes the `root` action and any `extra_actions`
-defined on the controller. Use it for singleton API endpoints like a network status or health check:
+When a controller has no `model` set, `rest_route` routes the `root` action and any actions from the
+controller's `actions` store. Use it for singleton API endpoints like a network status or health
+check:
 
 ```ruby
 class Api::NetworkController < ApiController
-  self.extra_actions = { ping: :get, stats: :get }
+  add_action(:ping, :get)
+  add_action(:stats, :get)
 
   def ping
     render(api: { status: "ok" })
@@ -112,16 +114,16 @@ end
 
 ## Routing Behavior Details
 
-- `extra_actions` is aliased to `extra_collection_actions`; you can use either.
-- If an extra action specifies `path:`, the framework uses that as the URL segment; otherwise the
+- The actions from the controller's `actions` / `member_actions` store are routed automatically.
+- If an action specifies `path:`, the framework uses that as the URL segment; otherwise the
   action name is used. Useful when you need a path that would collide with a method name.
-- `extra_actions` hash values may be a single method symbol, an array of methods, or a hash with
-  `methods:`, `path:`, and `metadata:` (used for OpenAPI documentation).
+- When declaring an action, `methods` may be a single method symbol or an array of methods, with
+  optional `path:` and `metadata:` (used for OpenAPI documentation).
 - The `options` action is always routed when the controller responds to it, so clients can fetch
   OpenAPI metadata for an endpoint with a regular `OPTIONS` request.
 - Built-in CRUD routes are skipped when:
   - The controller has no `model` set.
   - The action method is not defined on the controller.
-  - The action is listed in `excluded_actions`.
+  - The action has been removed via `remove_collection_action` / `remove_member_action`.
 - Bulk routes (`update_all`, `destroy_all`) are only added when both `model` and `bulk = true` are
-  set on the controller. Individual bulk actions can be removed via `excluded_actions`.
+  set on the controller. Individual bulk actions can be removed via `remove_collection_action`.

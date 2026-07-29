@@ -46,31 +46,31 @@ module ActionDispatch::Routing
       controller
     end
 
-    # Internal interface for routing extra actions.
-    def _route_extra_actions(actions, &block)
-      parsed_actions = RESTFramework::Utils.parse_extra_actions(actions)
-
-      parsed_actions.each do |action, config|
-        config[:methods].each do |m|
-          public_send(m, config[:path], action: action, **config[:kwargs])
+    # Route each action from a controller's action store.
+    def _rrf_route_actions(actions)
+      actions.each_value do |spec|
+        # Delegated actions keep their declared action name (so routing and OpenAPI show the real
+        # name); `method_for_action` redirects dispatch to `rrf_delegate`, which needs the scope.
+        kwargs = spec.kwargs
+        if !spec.builtin && spec.metadata&.[](:delegate)
+          kwargs = kwargs.merge(rrf_delegate_scope: spec.type)
         end
 
-        # Record that this route is an extra action and any metadata associated with it.
-        metadata = config[:metadata]
-        key = "#{@scope[:path]}/#{config[:path]}"
-        RESTFramework::EXTRA_ACTION_ROUTES.add(key)
-        RESTFramework::ROUTE_METADATA[key] = metadata if metadata
+        spec.methods.each do |m|
+          public_send(m, spec.path, action: spec.name, **kwargs)
+        end
 
-        yield if block_given?
+        # Record non-builtin (extra) actions and their metadata for the browsable API / OpenAPI.
+        next if spec.builtin
+
+        key = "#{@scope[:path]}/#{spec.path}"
+        RESTFramework::EXTRA_ACTION_ROUTES.add(key)
+        RESTFramework::ROUTE_METADATA[key] = spec.metadata if spec.metadata
       end
     end
 
-    # Unified REST route helper. Routes are determined by the controller's configuration:
-    # - If the controller has a model, CRUD actions are routed explicitly.
-    # - If the controller has no model, the `root` action is routed.
-    # - Extra actions and extra member actions are always routed.
-    # - Bulk actions (update_all, destroy_all) are routed if `bulk` is enabled.
-    # - Singular controllers route `show` at the root instead of `index`.
+    # Unified REST route helper, driven by the controller's action store. Plural model controllers
+    # get collection/member scopes; singular and non-model controllers route everything at the root.
     def rest_route(name = nil, **kwargs, &block)
       controller = kwargs.delete(:controller) || name
       if controller.is_a?(Class)
@@ -84,88 +84,24 @@ module ActionDispatch::Routing
 
       has_model = !!controller_class.model
       singular = controller_class.singular
-      excluded = controller_class.excluded_actions&.map(&:to_sym)&.to_set || Set.new
+      collection_actions = controller_class.actions
+      member_actions = controller_class.member_actions
 
-      # Use `resources` (plural) for plural model controllers to get member `:id` scope; use
+      # Use `resources` (plural) for plural model controllers to get the member `:id` scope; use
       # `resource` (singular) for everything else.
       resource_method = (has_model && !singular) ? :resources : :resource
 
       public_send(resource_method, name, only: [], **kwargs) do
-        if has_model
-          if singular
-            # Singular model controller: all CRUD actions at root path.
-            get("", action: :show) unless excluded.include?(:show)
-            post("", action: :create) unless excluded.include?(:create)
-            unless excluded.include?(:update)
-              put("", action: :update)
-              patch("", action: :update)
-            end
-            delete("", action: :destroy) unless excluded.include?(:destroy)
-
-            # Extra member actions at root scope for singular resources.
-            if controller_class.respond_to?(:extra_member_actions)
-              self._route_extra_actions(controller_class.extra_member_actions)
-            end
-
-            # Bulk actions.
-            if controller_class.bulk
-              unless excluded.include?(:update_all)
-                put("", action: :update_all, anchor: true)
-                patch("", action: :update_all, anchor: true)
-              end
-              unless excluded.include?(:destroy_all)
-                delete("", action: :destroy_all, anchor: true)
-              end
-            end
-
-            # Extra collection actions.
-            self._route_extra_actions(controller_class.extra_actions)
-
-            # Route OPTIONS action. Anchor to prevent greedy matching in Rails 8.1+.
-            options("", action: :options, anchor: true)
-          else
-            # Plural model controller: collection and member routes.
-            collection do
-              get("", action: :index) unless excluded.include?(:index)
-              post("", action: :create) unless excluded.include?(:create)
-
-              # Bulk actions.
-              if controller_class.bulk
-                unless excluded.include?(:update_all)
-                  put("", action: :update_all, anchor: true)
-                  patch("", action: :update_all, anchor: true)
-                end
-                unless excluded.include?(:destroy_all)
-                  delete("", action: :destroy_all, anchor: true)
-                end
-              end
-
-              # Extra collection actions.
-              self._route_extra_actions(controller_class.extra_actions)
-
-              # Route OPTIONS action. Anchor to prevent greedy matching in Rails 8.1+.
-              options("", action: :options, anchor: true)
-            end
-
-            member do
-              get("", action: :show) unless excluded.include?(:show)
-              unless excluded.include?(:update)
-                put("", action: :update)
-                patch("", action: :update)
-              end
-              delete("", action: :destroy) unless excluded.include?(:destroy)
-
-              # Extra member actions.
-              if controller_class.respond_to?(:extra_member_actions)
-                self._route_extra_actions(controller_class.extra_member_actions)
-              end
-            end
-          end
+        if has_model && !singular
+          collection { self._rrf_route_actions(collection_actions) }
+          member { self._rrf_route_actions(member_actions) }
+        elsif has_model
+          # Singular model controller: member and collection actions all route at the root path.
+          self._rrf_route_actions(member_actions)
+          self._rrf_route_actions(collection_actions)
         else
-          # Non-model controller: route `root` action and OPTIONS.
-          get("", action: :root, as: "")
-          self._route_extra_actions(controller_class.extra_actions)
-          options("", action: :options, anchor: true)
+          # Non-model controller: only collection actions (there is no member `:id` scope).
+          self._rrf_route_actions(collection_actions)
         end
 
         yield if block_given?

@@ -1,46 +1,6 @@
 module RESTFramework::Utils
   HTTP_VERB_ORDERING = %w[GET POST PUT PATCH DELETE OPTIONS HEAD]
 
-  # Convert `extra_actions` hash to a consistent format: `{path:, methods:, metadata:, kwargs:}`.
-  def self.parse_extra_actions(extra_actions)
-    (extra_actions || {}).map { |k, v|
-      path = k
-      kwargs = {}
-
-      # Convert structure to path/methods/kwargs.
-      if v.is_a?(Hash)
-        # Symbolize keys (which also makes a copy so we don't mutate the original).
-        v = v.symbolize_keys
-
-        # Cast method/methods to an array.
-        methods = [ v.delete(:methods), v.delete(:method) ].flatten.compact
-
-        # Override path if it's provided.
-        if v.key?(:path)
-          path = v.delete(:path)
-        end
-
-        # Extract metadata, if provided.
-        metadata = v.delete(:metadata).presence
-
-        # Pass any further kwargs to the underlying Rails interface.
-        kwargs = v
-      else
-        methods = [ v ].flatten
-      end
-
-      next [
-        k,
-        {
-          path: path,
-          methods: methods,
-          metadata: metadata,
-          kwargs: kwargs,
-        }.compact,
-      ]
-    }.to_h
-  end
-
   # Get the first route pattern which matches the given request.
   def self.get_request_route(application_routes, request)
     # Prefer the route already resolved by the router to avoid an expensive `recognize` call. This

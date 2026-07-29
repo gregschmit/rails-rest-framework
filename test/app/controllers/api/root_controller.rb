@@ -1,11 +1,9 @@
 class Api::RootController < ApiController
   include RESTFramework::Controller
 
-  self.extra_actions = {
-    dev_test: :get,
-    ip: :get,
-    c: { methods: [ :get, :post ], metadata: { test: 5 } },
-  }
+  add_action(:dev_test, :get)
+  add_action(:ip, :get)
+  add_action(:c, [ :get, :post ], metadata: { test: 5 })
 
   def root
     render(

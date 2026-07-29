@@ -7,7 +7,7 @@ class Api::Test::UserController < Api::TestController
 
   self.singular = true
   self.fields = %w[login is_admin balance]
-  self.extra_member_actions = { delegated: { methods: :get, metadata: { delegate: true } } }
+  add_member_action(:delegated, :get, metadata: { delegate: true })
   self.serializer_class = UsersSerializer
 
   def get_record

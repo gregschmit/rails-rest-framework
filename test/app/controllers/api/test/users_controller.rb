@@ -21,8 +21,13 @@ class Api::Test::UsersController < Api::TestController
   self.paginator_class = RESTFramework::PageNumberPaginator
   self.page_size = 2
   self.serializer_class = UsersSerializer
-  self.extra_collection_actions = { alternate_list: :get }
-  self.extra_member_actions = { description: :get }
+  add_collection_action(:alternate_list, :get)
+  add_member_action(:description, :get)
+
+  # Same-named delegated actions: the collection route delegates to `User.status_keys` (class
+  # method), the member route to `record.status_keys` — exercising scope disambiguation.
+  add_collection_action(:status_keys, :get, metadata: { delegate: true })
+  add_member_action(:status_keys, :get, metadata: { delegate: true })
 
   def alternate_list
     self.index
@@ -31,5 +36,11 @@ class Api::Test::UsersController < Api::TestController
   def description
     record = self.get_record
     render(api: { message: "This is record #{record.id} (#{record.login})" })
+  end
+
+  # A method sharing the delegated `status_keys` action's name: dispatch is route-based, so the
+  # delegated routes must never reach this (the delegation tests would fail if they did).
+  def status_keys
+    render_api({ should_not_be_reached: true })
   end
 end

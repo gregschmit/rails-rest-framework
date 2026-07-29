@@ -1,6 +1,7 @@
 class Api::Test::BareCreateController < Api::TestController
   self.model = Movie
   self.fields = %w[id name]
-  self.excluded_actions = [ :index, :show, :update, :destroy ]
+  remove_collection_action(:index)
+  remove_member_actions(:show, :update, :destroy)
   self.create_from_recordset = false
 end
