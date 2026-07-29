@@ -11,12 +11,12 @@ module RESTFramework::Controller
     create: { methods: [ :post ], condition: ->(c) { c.model } },
     update_all: {
       methods: [ :put, :patch ],
-      condition: ->(c) { c.model && c.bulk },
+      condition: ->(c) { c.model && c.bulk && !c.singular },
       kwargs: { anchor: true },
     },
     destroy_all: {
       methods: [ :delete ],
-      condition: ->(c) { c.model && c.bulk },
+      condition: ->(c) { c.model && c.bulk && !c.singular },
       kwargs: { anchor: true },
     },
     options: { methods: [ :options ], condition: ->(_c) { true }, kwargs: { anchor: true } },
