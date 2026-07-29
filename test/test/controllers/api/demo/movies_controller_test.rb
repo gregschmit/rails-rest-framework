@@ -188,6 +188,40 @@ class Api::Demo::MoviesControllerTest < ActionController::TestCase
     assert_nil(Movie.find_by(id: movie2.id))
   end
 
+  # Regression: read-only fields must be stripped from each element of a bulk payload, not just the
+  # top-level params. The primary key is read-only by default, so bulk create must not let a client
+  # choose record IDs. See security review #1.
+  def test_bulk_create_strips_read_only_primary_key
+    post(
+      :create,
+      as: :json,
+      params: {
+        _json: [ { id: 999_999, name: "bulk_pk_1" }, { id: 1_000_000, name: "bulk_pk_2" } ],
+      },
+    )
+    assert_response(:created)
+    assert_nil(Movie.find_by(id: 999_999))
+    assert_nil(Movie.find_by(id: 1_000_000))
+    assert(Movie.find_by(name: "bulk_pk_1"))
+    assert(Movie.find_by(name: "bulk_pk_2"))
+  end
+
+  def test_bulk_update_keeps_pk_for_lookup_but_strips_other_read_only_fields
+    movie = Movie.create!(name: "bulk_ro_update", price: 4)
+    created = movie.created_at
+
+    patch(
+      :update_all,
+      as: :json,
+      params: { _json: [ { id: movie.id, price: 9, created_at: "1999-01-01T00:00:00Z" } ] },
+    )
+    assert_response(:success)
+
+    movie.reload
+    assert_equal(9, movie.price) # Writable field is applied (pk located the record).
+    assert_equal(created.to_i, movie.created_at.to_i) # Read-only field is ignored.
+  end
+
   def test_filtering_predicates
     # This feature is only available in Rails 7 and above.
     return if Rails::VERSION::MAJOR < 7

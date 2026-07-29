@@ -24,16 +24,21 @@ class Api::Demo::GenresControllerTest < ActionController::TestCase
     assert(Genre.find_by(name: "test_raw_2"))
   end
 
-  def test_bulk_create_raw_skips_conflicting_primary_key
+  # A client must not be able to set the primary key on a (raw) bulk create: the pk is read-only and
+  # stripped from each element, so a conflicting `id` is ignored and a fresh record is created
+  # rather than colliding with an existing one. See security review #1.
+  def test_bulk_create_raw_ignores_client_supplied_primary_key
     existing = Genre.first
     post(
       :create,
       as: :json,
       params: { _json: [ { id: existing.id, name: "test_raw_pk" } ] },
     )
-    # Raw insert_all with unique_by silently skips conflicting rows.
     assert_response(:success)
-    assert_nil(Genre.find_by(name: "test_raw_pk"))
+    created = Genre.find_by(name: "test_raw_pk")
+    assert(created, "a new genre should have been created")
+    assert_not_equal(existing.id, created.id, "client-supplied primary key must be ignored")
+    assert_equal(existing.name, existing.reload.name) # Pre-existing record untouched.
   end
 
   def test_bulk_create_raw_requires_uniform_keys

@@ -94,8 +94,8 @@ module RESTFramework::Controller
     # Options related to pagination.
     paginator_class: nil,
     page_size: 20,
-    page_query_param: "page",
-    page_size_query_param: "page_size",
+    page_query_param: "page".freeze,
+    page_size_query_param: "page_size".freeze,
     max_page_size: nil,
 
     # Option to disable serializer adapters by default, mainly introduced because Active Model
@@ -732,10 +732,18 @@ module RESTFramework::Controller
       body_params[k].unshift(*v)
     end
 
-    # Filter read-only fields.
-    body_params.delete_if do |f, _|
-      cfg = self.class.field_configuration[f]
-      cfg && cfg[:read_only]
+    # Filter read-only fields. For bulk actions the permitted structure is `{ _json: [...] }`, so we
+    # strip read-only keys from each element rather than the top-level hash (whose only key is
+    # `_json`). Bulk update keeps the primary key, which it needs to locate each record.
+    if bulk_action
+      keep = bulk_action == :update ? [ pk.to_s ] : []
+      body_params[:_json]&.each do |element|
+        next unless element.is_a?(ActionController::Parameters)
+
+        self._rrf_strip_read_only_fields(element, keep: keep)
+      end
+    else
+      self._rrf_strip_read_only_fields(body_params)
     end
 
     body_params
@@ -743,6 +751,17 @@ module RESTFramework::Controller
   alias_method :get_create_params, :get_body_params
   alias_method :get_update_params, :get_body_params
   alias_method :get_destroy_params, :get_body_params
+
+  # Remove read-only fields from a permitted params hash in place. `keep` lists field names to
+  # preserve even when read-only (e.g. the primary key on bulk update, used to locate records).
+  def _rrf_strip_read_only_fields(params, keep: [])
+    params.delete_if do |f, _|
+      next false if f.in?(keep)
+
+      cfg = self.class.field_configuration[f]
+      cfg && cfg[:read_only]
+    end
+  end
 
   # Get the set of records this controller has access to.
   def get_recordset
