@@ -800,10 +800,11 @@ module RESTFramework::Controller
           self.class.find_by_fields&.map(&:to_s) || self.class.model.columns_hash.keys
         )
 
-        if find_by.in?(find_by_fields)
-          is_pk = false unless find_by_key == find_by
-          find_by_key = find_by
-        end
+        # A `find_by` was explicitly requested, so it must be a permitted field.
+        raise ActiveRecord::RecordNotFound unless find_by.in?(find_by_fields)
+
+        is_pk = false unless find_by_key == find_by
+        find_by_key = find_by
       end
     end
 
