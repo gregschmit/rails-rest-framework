@@ -430,13 +430,6 @@ module RESTFramework::Controller
           # Update `required` if we find a presence validator.
           cfg[:required] = true if kind == :presence
 
-          # Resolve procs (and lambdas), and symbols for certain arguments.
-          if options[:in].is_a?(Proc)
-            options = options.merge(in: options[:in].call)
-          elsif options[:in].is_a?(Symbol)
-            options = options.merge(in: self.model.send(options[:in]))
-          end
-
           cfg[:validators] ||= {}
           cfg[:validators][kind] ||= []
           cfg[:validators][kind] << options
