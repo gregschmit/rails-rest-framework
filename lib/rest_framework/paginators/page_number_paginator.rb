@@ -17,7 +17,7 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
 
     # Get from query param, if allowed.
     if param = @controller.class.page_size_query_param
-      if raw = @controller.params[param].presence
+      if raw = @controller.request.query_parameters[param].presence
         parsed = raw.to_i
         page_size = parsed if parsed > 0
       end
@@ -38,9 +38,9 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
 
   # Get the page and return it so the caller can serialize it.
   def get_page(page_number = nil)
-    # If page number isn't provided, infer from the params or use 1 as a fallback value.
+    # If page number isn't provided, infer from the query params or use 1 as a fallback value.
     unless page_number
-      page_number = @controller&.params&.[](@controller.class.page_query_param&.to_sym)
+      page_number = @controller&.request&.query_parameters&.[](@controller.class.page_query_param)
       if page_number.blank?
         page_number = 1
       else

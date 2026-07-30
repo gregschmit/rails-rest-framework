@@ -11,7 +11,7 @@ class RESTFramework::Filters::OrderingFilter < RESTFramework::Filters::BaseFilte
 
     # Ensure ordering_fields are strings since the split param will be strings.
     fields = self._get_fields
-    order_string = @controller.params[param]
+    order_string = @controller.request.query_parameters[param]
 
     # Reject nested-hash inputs like `?ordering[evil]=x` (Rack parses these into
     # a Hash, which can't be split into ordering tokens).
