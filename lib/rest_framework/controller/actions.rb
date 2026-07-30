@@ -218,9 +218,12 @@ module RESTFramework::Controller
     member = request.path_parameters[:rrf_delegate_scope].to_s == "member"
     receiver = member ? self.get_record : self.class.model
 
-    # Only dispatch to publicly-callable methods; a private/protected method (or a typo) resolves to
-    # a clean 404 rather than reaching internals via `send`.
-    raise ActiveRecord::RecordNotFound unless receiver.respond_to?(target)
+    # Delegation targets must be public methods. Anything else — a private/protected method, or a
+    # name that resolves to nothing — is developer misconfiguration (a typo, a missing method, or a
+    # method that should be public), so raise loudly rather than dispatch or mask it as a 404.
+    unless receiver.respond_to?(target)
+      raise RESTFramework::DelegatedMethodError.new(receiver, target)
+    end
 
     parameters = receiver.method(target).parameters
     query = request.query_parameters

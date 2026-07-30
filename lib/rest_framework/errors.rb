@@ -4,7 +4,7 @@ module RESTFramework::Errors
 
   class NilPassedToRenderAPIError < BaseError
     def message
-      <<~MSG.split("\n").join(" ")
+      <<~MSG.squish
         Payload of `nil` was passed to `render_api`; this is unsupported. If you want a blank
         response, pass `''` (an empty string) as the payload. If this was the result of a `find_by`
         (or similar Active Record method) not finding a record, you should use the bang version
@@ -23,6 +23,22 @@ module RESTFramework::Errors
       msg = "Invalid request parameters for bulk action."
       msg += " #{@detail}" if @detail
       msg
+    end
+  end
+
+  class DelegatedMethodError < BaseError
+    def initialize(receiver, target)
+      @receiver = receiver.is_a?(Class) ? receiver : receiver.class
+      @target = target
+    end
+
+    def message
+      <<~MSG.squish
+        Delegated action `#{@target}` does not resolve to a public method on `#{@receiver}`. This is
+        almost certainly a typo, a missing method, or a method that should be public. Define a
+        public class method (for a collection action) or instance method (for a member action), or
+        remove the action.
+      MSG
     end
   end
 
@@ -53,4 +69,5 @@ end
 RESTFramework::BaseError = RESTFramework::Errors::BaseError
 RESTFramework::NilPassedToRenderAPIError = RESTFramework::Errors::NilPassedToRenderAPIError
 RESTFramework::InvalidBulkParametersError = RESTFramework::Errors::InvalidBulkParametersError
+RESTFramework::DelegatedMethodError = RESTFramework::Errors::DelegatedMethodError
 RESTFramework::BulkRecordErrorsError = RESTFramework::Errors::BulkRecordErrorsError

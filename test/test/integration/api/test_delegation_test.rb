@@ -90,11 +90,23 @@ class Api::TestDelegationTest < ActionDispatch::IntegrationTest
     refute(returned.key?("age"))
   end
 
-  def test_delegation_to_a_private_method_is_not_found
-    # `secret` is private, so delegation must resolve to a clean 404 rather than reaching it.
+  def test_delegation_to_a_private_method_raises
+    # `secret` is private. Delegating to it is misconfiguration (the developer likely meant it to be
+    # public), so it must raise loudly rather than silently 404.
     user = User.create!(login: "delegation_private", state: "default", status: "")
-    get("/api/test/users/#{user.id}/secret.json")
 
-    assert_response(404)
+    assert_raises(RESTFramework::DelegatedMethodError) do
+      get("/api/test/users/#{user.id}/secret.json")
+    end
+  end
+
+  def test_delegation_to_a_missing_method_raises
+    # A delegated action whose method doesn't exist is developer misconfiguration (a typo or a
+    # missing model method), so it must raise loudly rather than masquerade as a 404.
+    user = User.create!(login: "delegation_missing", state: "default", status: "")
+
+    assert_raises(RESTFramework::DelegatedMethodError) do
+      get("/api/test/users/#{user.id}/missing_delegated_method.json")
+    end
   end
 end

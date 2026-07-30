@@ -37,6 +37,9 @@ class Api::Test::UsersController < Api::TestController
   add_action(:self_record, :get, type: :member, metadata: { delegate: true })
   add_action(:secret, :get, type: :member, metadata: { delegate: true })
 
+  # Delegated to a method that doesn't exist, to exercise the fail-loudly-on-misconfiguration path.
+  add_action(:missing_delegated_method, :get, type: :member, metadata: { delegate: true })
+
   def alternate_list
     self.index
   end
