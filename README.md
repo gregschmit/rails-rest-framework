@@ -165,3 +165,28 @@ web server and the job queue, which serves the test app and coverage/brakeman re
 - Test App: [http://127.0.0.1:3000](http://127.0.0.1:3000)
 - API: [http://127.0.0.1:3000/api](http://127.0.0.1:3000/api)
 - Reports: [http://127.0.0.1:3000/reports](http://127.0.0.1:3000/reports)
+
+## Migrating from Older Versions
+
+See the guide for details on each item.
+
+- [ ] Replace the `*Mixin` modules with `include RESTFramework::Controller` on the core API
+      controller.
+- [ ] Set `self.model = ...` on every resource controller (it's no longer inferred from the name).
+- [ ] Wrap inherited config in a `propagate` block — assignments are now local by default.
+- [ ] Convert `extra_actions` / `extra_member_actions` hashes to `add_action` / `remove_action`.
+- [ ] Render custom actions with `render(api: ...)`, replacing the older `api_response(...)` /
+      `render_api(...)`.
+- [ ] Replace `rest_resource` / `rest_resources` / `rest_root` with `rest_route`.
+  - Fold any dedicated root controller into the namespace's base controller, which now serves the
+    root via `index_content` (the standalone `root` action and `rest_root` are gone).
+- [ ] Rename `singleton_controller` → `singular`.
+- [ ] Remove `rrf_finalize` calls and the `auto_finalize` / `freeze_config` config (all gone).
+- [ ] Expect paginated `index` responses by default (`self.paginator_class = nil` restores a bare
+      array).
+- [ ] Rename config: `sub_fields` → `fields`, `native_serializer_associations_limit[_max]` →
+      `association_limit[_max]`, `native_serializer_include_associations_count` →
+      `include_association_count`; the `?associations_limit=N` param is gone.
+- [ ] Note client-visible behavior changes: delegated actions wrap their result under a `return`
+      key; a non-permitted `find_by` returns `404`; `update_all` / `destroy_all` are plural-only;
+      ordering/pagination read from the query string only.
