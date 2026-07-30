@@ -226,14 +226,23 @@ end
 
 ### Delegating to Model Methods
 
-If a declared action's `metadata[:delegate]` is `true` and the model responds to the action, the
-framework auto-defines the controller action for you and forwards `params`:
+If a declared action's `metadata[:delegate]` is `true`, the framework dispatches the action to the
+model class (collection) or record (member) for you:
 
 ```ruby
 add_action(:archive_stale, :post, type: :collection, metadata: { delegate: true })
 ```
 
 This also works for member actions (`type: :member`), where the record is the receiver.
+
+Only **publicly** callable methods are reachable — a private/protected method (or a typo) returns a
+clean `404`. The method's return value is rendered under a `return` key. Arguments are drawn from
+the query string:
+
+- **Keyword arguments:** if the method accepts arbitrary keywords (`**opts`), the query params are
+  splatted in as kwargs.
+- **Positional arguments:** the reserved `args` param supplies them — a scalar becomes a single
+  positional (`?args=x`), an array is splatted (`?args[]=x&args[]=y`).
 
 ### Reading the Effective Actions
 

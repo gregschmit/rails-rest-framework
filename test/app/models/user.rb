@@ -53,6 +53,36 @@ class User < ApplicationRecord
     { login: self.login, is_admin: self.is_admin }
   end
 
+  # Delegation targets exercising argument handling: `**opts` (kwargs), a trailing block after
+  # `**opts` (the `:keyrest` must still be detected), and positional args (supplied via `args`).
+  def echo_kwargs(**opts)
+    opts
+  end
+
+  def echo_kwargs_with_block(**opts, &_block)
+    opts
+  end
+
+  def echo_positional(first, second = nil)
+    [ first, second ]
+  end
+
+  def returns_nil
+    nil
+  end
+
+  # Returns an Active Record record so delegation must serialize it through the framework
+  # serializer.
+  def self_record
+    self
+  end
+
+  # A private method must never be reachable via delegation.
+  private def secret
+    "should not be reachable"
+  end
+  public
+
   def random1
     rand(100)
   end

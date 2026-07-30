@@ -218,10 +218,36 @@ module RESTFramework::Controller
     member = request.path_parameters[:rrf_delegate_scope].to_s == "member"
     receiver = member ? self.get_record : self.class.model
 
-    if receiver.method(target).parameters.last&.first == :keyrest
-      render_api(receiver.send(target, **request.query_parameters.symbolize_keys))
+    # Only dispatch to publicly-callable methods; a private/protected method (or a typo) resolves to
+    # a clean 404 rather than reaching internals via `send`.
+    raise ActiveRecord::RecordNotFound unless receiver.respond_to?(target)
+
+    parameters = receiver.method(target).parameters
+    query = request.query_parameters
+
+    # Positional arguments come from the reserved `args` param: a scalar becomes a single
+    # positional, an array is splatted as all of them.
+    args = query.key?("args") ? Array.wrap(query["args"]) : []
+
+    # Remaining query params splat as kwargs only when the method accepts arbitrary keywords
+    # (`**opts`); scan all params so a trailing block (`&blk`) doesn't hide the `:keyrest`.
+    kwargs = if parameters.any? { |type, _| type == :keyrest }
+      query.except("args").symbolize_keys
     else
-      render_api(receiver.send(target))
+      {}
     end
+
+    result = receiver.public_send(target, *args, **kwargs)
+
+    # Serialize Active Record return values through the framework serializer (honoring field
+    # exclusions); `render_api` only does this for top-level payloads, and we nest under `return`.
+    if result.is_a?(ActiveRecord::Base) || result.is_a?(ActiveRecord::Relation)
+      result = self.serialize(result)
+    end
+
+    # Wrap the result under a `return` key rather than rendering it at the top level: the method may
+    # return `nil` (which `render_api` rejects) or a bare scalar/array that isn't a good serializer
+    # root, and this leaves room to attach metadata alongside it later.
+    render_api({ return: result })
   end
 end

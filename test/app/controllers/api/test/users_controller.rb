@@ -29,6 +29,14 @@ class Api::Test::UsersController < Api::TestController
   add_action(:status_keys, :get, type: :collection, metadata: { delegate: true })
   add_action(:status_keys, :get, type: :member, metadata: { delegate: true })
 
+  # Delegated member actions exercising argument passing and the `public_send` guard.
+  add_action(:echo_kwargs, :get, type: :member, metadata: { delegate: true })
+  add_action(:echo_kwargs_with_block, :get, type: :member, metadata: { delegate: true })
+  add_action(:echo_positional, :get, type: :member, metadata: { delegate: true })
+  add_action(:returns_nil, :get, type: :member, metadata: { delegate: true })
+  add_action(:self_record, :get, type: :member, metadata: { delegate: true })
+  add_action(:secret, :get, type: :member, metadata: { delegate: true })
+
   def alternate_list
     self.index
   end
