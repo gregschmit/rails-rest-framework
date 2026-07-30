@@ -22,10 +22,10 @@ SimpleCov.start do
   coverage_dir "test/public/reports/coverage"
 
   # Filter out everything but the lib directory.
-  add_filter "app/"
-  add_filter "bin/"
-  add_filter "docs/"
-  add_filter "test/"
+  skip "app/"
+  skip "bin/"
+  skip "docs/"
+  skip "test/"
 
   # Setup formatter for submission to `coveralls.io` if configured, otherwise use an HTML formatter.
   if IS_COVERALLS

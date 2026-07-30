@@ -16,7 +16,7 @@ class RESTFramework::Serializers::BaseSerializer
   end
 
   # Synonym for `serialize` for compatibility with `active_model_serializers`.
-  # :nocov:
+  # simplecov:disable
   def serializable_hash(*args)
     self.serialize(*args)
   end
@@ -35,7 +35,7 @@ class RESTFramework::Serializers::BaseSerializer
   def associations(*args, **kwargs)
     []
   end
-  # :nocov:
+  # simplecov:enable
 end
 
 # Alias for convenience.

@@ -166,7 +166,46 @@ web server and the job queue, which serves the test app and coverage/brakeman re
 - API: [http://127.0.0.1:3000/api](http://127.0.0.1:3000/api)
 - Reports: [http://127.0.0.1:3000/reports](http://127.0.0.1:3000/reports)
 
-## Migrating from Older Versions
+## Version 2
+
+Version 2 is a substantial overhaul. The highlights below cover the major additions and behavior
+changes; the migration checklist that follows walks through updating an existing app.
+
+### New Features & Improvements
+
+- **Simpler setup** — a single `include RESTFramework::Controller` replaces the per-type `*Mixin`
+  modules.
+- **Local-by-default configuration** — assignments stay on the controller they're set on; wrap
+  shared settings in a `propagate` block to hand them down. Config no longer leaks silently onto
+  every resource.
+- **Declarative actions** — `add_action` / `remove_action` declare extra routes with an explicit
+  `member` / `collection` scope and per-declaration propagation, and can disable built-ins too,
+  replacing the `extra_actions` config hashes.
+- **Unified routing** — one `rest_route` (accepting several names) replaces `rest_resource` /
+  `rest_resources` / `rest_root`; a modelless controller serves the API root from its
+  `index_content`.
+- **Action delegation** — mark an action `metadata: { delegate: true }` to dispatch it to a model
+  class method (collection) or record method (member), passing query params through as args/kwargs.
+- **Consumer-driven association queries** (opt-in via `enable_association_queries`) — clients can
+  request extra fields for a serialized association (`?associations.<name>.fields=a,b,c`) and raise
+  its per-request record limit (`?associations.<name>.limit=N` or `all`), both bounded by a
+  per-association allowlist so an association never exposes more than its own endpoint would.
+- **`page_total_count`** — skip the `COUNT` query so pagination stays fast on very large tables.
+
+### Behavior Changes
+
+- **Pagination is on by default** (`PageNumberPaginator`, page size 20), so `index` responses are
+  bounded out of the box; opt out per controller with `paginator_class = nil`.
+- **Ordering and pagination read from the query string only**, never the request body.
+- **A `find_by` on a non-permitted field returns `404`** rather than matching a virtual or
+  serialized field.
+- **Delegated actions wrap their result under a `return` key**, and raise on a missing or non-public
+  target instead of silently 404-ing.
+- **Removed** `rrf_finalize` and the `auto_finalize` / `freeze_config` hooks.
+- **Security hardening** — per-element read-only stripping on bulk writes, an ordering-oracle fix,
+  sanitized `StatementInvalid` messages, and safer query-filter parsing.
+
+### Migrating from Older Versions
 
 See the guide for details on each item.
 
