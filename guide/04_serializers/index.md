@@ -134,61 +134,50 @@ using these query parameters:
 | `except`             | `"except"`             | Omit these fields from the default set.              |
 | `include`            | `"include"`            | Opt into `hidden` fields.                            |
 | `exclude`            | `"exclude"`            | Alias for `except`.                                  |
-| `associations_limit` | `"associations_limit"` | Adjust the per-request associations limit.           |
 
 Each of these names is configurable via
-`native_serializer_{only,except,include,exclude,associations_limit}_query_param` on the controller
-(set to `nil` to disable any of them).
+`native_serializer_{only,except,include,exclude}_query_param` on the controller (set to `nil` to
+disable any of them).
 
 The allowed field set is always bounded by the controller's `fields` — clients can narrow it but
 can't expand beyond what the controller declares.
 
 ## Serializing Associations Efficiently
 
-### `native_serializer_associations_limit`
+### `association_limit`
 
-By default, `has_many` / `has_and_belongs_to_many` associations are capped at 5 records each via
-`native_serializer_associations_limit`. Adjust this on the controller to change the default cap
-(set to `nil` to serialize all associated records):
+By default, `has_many` / `has_and_belongs_to_many` associations are capped at `association_limit`
+(10) records each, so responses are bounded out of the box. Adjust it on the controller (set to
+`nil` to serialize all associated records):
 
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
 
   propagate do
-    self.native_serializer_associations_limit = 10
+    self.association_limit = 20
   end
 end
 ```
 
 When a limit is set, the framework stops using `includes` (which would eager-load all rows) and
-instead fires a per-record query with a `.limit(n)` applied. This is a tradeoff between N+1
-queries vs. loading unbounded data — use it only when associations can be large.
+instead fires a per-record query with a `.limit(n)` applied. This is a tradeoff between N+1 queries
+vs. loading unbounded data — use it only when associations can be large.
 
-Clients can adjust the limit per-request via the `associations_limit` query parameter. The value
-they can request is bounded by `native_serializer_associations_limit_max` (defaults to `5`).
-Non-positive values are ignored, and values above the max are clamped to the max — clients can
-never disable the cap. Raise the max to let clients opt into more records, or set it to `nil` to
-disable the query parameter entirely:
+Clients can raise the limit for individual associations when the controller opts into
+`enable_association_queries` — see
+[Consumer-Requested Association Fields](../03_controllers/#consumer-requested-association-fields).
 
-```ruby
-# Allow clients to request up to 50 associated records per collection.
-self.native_serializer_associations_limit_max = 50
-
-# Or forbid client overrides entirely.
-self.native_serializer_associations_limit_max = nil
-```
-
-### `native_serializer_include_associations_count`
+### `include_association_count`
 
 When `true`, the serializer adds a `<assoc>.count` field alongside each collection association,
 exposing how many records exist (independent of any limit applied):
 
 ```ruby
-self.native_serializer_include_associations_count = true
+self.include_association_count = true
 ```
 
-Be aware that this triggers a `COUNT(*)` per record per association.
+Be aware that this triggers a `COUNT` query per record per association.
 
 ## Integrations
 
@@ -210,8 +199,8 @@ When the controller has `enable_active_storage = true`, attached files are seria
 ## Using ActiveModel::Serializer
 
 If your project uses the `active_model_serializers` gem, `serializer_class` can point at an AMS
-class directly. The framework wraps it in an adapter that makes it compatible with the rest of
-the pipeline:
+class directly. The framework wraps it in an adapter that makes it compatible with the rest of the
+pipeline:
 
 ```ruby
 class Api::UsersController < ApiController

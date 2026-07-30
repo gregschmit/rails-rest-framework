@@ -23,8 +23,8 @@ class Api::DemoController < ApiController
     self.page_size = 30
     self.max_page_size = nil
 
-    self.native_serializer_associations_limit = 6
-    self.native_serializer_include_associations_count = true
+    self.association_limit = 6
+    self.include_association_count = true
 
     self.enable_association_queries = true
     self.filter_backends = [

@@ -6,30 +6,34 @@ the other sections into one place, with guidance on when to use each.
 
 ## Limit Serialized Associations
 
-Collection associations (`has_many`, `has_and_belongs_to_many`) are serialized fully by default,
-which can blow up response size and query time for records with many associations. Set
-`native_serializer_associations_limit` to cap it:
+Collection associations (`has_many`, `has_and_belongs_to_many`) are capped at
+`association_limit` (10) records each by default, bounding response size and query time. Set
+it to change the cap (or `nil` to serialize all records):
 
 ```ruby
 class ApiController < ApplicationController
   include RESTFramework::Controller
 
   propagate do
-    self.native_serializer_associations_limit = 10
+    self.association_limit = 20
   end
 end
 ```
 
-Clients can raise or lower this per request via the `associations_limit` query parameter, up to the
-server-side cap. When a limit is set, the framework stops eager-loading via `includes` (as
-`includes` would load every row regardless of limit) and instead issues a per-record query with
-`.limit(n)`. This trades the eager-load optimization for a guarantee of bounded response size — use
-it only for associations that really can be large.
+When a limit is set, the framework stops eager-loading via `includes` (as `includes` would load
+every row regardless of limit) and instead issues a per-record query with `.limit(n)`. This trades
+the eager-load optimization for a guarantee of bounded response size — use it only for associations
+that really can be large.
+
+Clients can raise the limit for individual associations when the controller opts into
+`enable_association_queries`, via `?associations.<name>.limit=N` (bounded by
+`association_limit_max`) — see
+[Consumer-Requested Association Fields](../03_controllers/#consumer-requested-association-fields).
 
 If you need an accurate total as well as a bounded preview, enable:
 
 ```ruby
-self.native_serializer_include_associations_count = true
+self.include_association_count = true
 ```
 
 This adds a `<assoc>.count` field to each record. Note that this triggers a `COUNT(*)` per record
@@ -205,8 +209,7 @@ A short list for going to production:
 - [ ] `page_size` / `max_page_size` reviewed for your workload (pagination and a `max_page_size`
       cap are on by default; tune them at the root inside a `propagate` block)
 - [ ] `filter_fields`, `ordering_fields`, and `search_fields` whitelisted for public APIs
-- [ ] `native_serializer_associations_limit` set if any controller exposes large collection
-      associations
+- [ ] `association_limit` reviewed if any controller exposes large collection associations
 - [ ] Bullet or equivalent run in CI to catch N+1s
 - [ ] `serialize_to_xml = false` if you don't serve XML
 - [ ] `use_vendored_assets = true` if you can't reach public CDNs

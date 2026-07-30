@@ -58,6 +58,7 @@ Rails.application.routes.draw do
       # `Api::Test::UsersController`.
       namespace :assoc_exp do
         rest_route :users, :users_explicit, :users_disabled, :movies, :genres
+        rest_route :limits, :limits_per_assoc, :limits_disabled, :limits_unlimited
       end
 
       if defined?(ActiveModel::Serializer)

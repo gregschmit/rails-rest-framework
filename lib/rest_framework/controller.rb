@@ -40,9 +40,6 @@ module RESTFramework::Controller
     find_by_fields: nil,
     find_by_query_param: "find_by".freeze,
 
-    # What should be included/excluded from default fields.
-    exclude_associations: false,
-
     # Handling request body parameters.
     allowed_parameters: nil,
 
@@ -54,16 +51,24 @@ module RESTFramework::Controller
     native_serializer_except_query_param: "except".freeze,
     native_serializer_include_query_param: "include".freeze,
     native_serializer_exclude_query_param: "exclude".freeze,
-    native_serializer_associations_limit: 5,
-    native_serializer_associations_limit_max: 10,
-    native_serializer_associations_limit_query_param: "associations_limit".freeze,
-    native_serializer_include_associations_count: false,
 
-    # Let clients request extra fields for one serialized association via
-    # `?<prefix>.<association>.fields=a,b,c`. Requested fields are bounded by an allowlist so an
-    # association can never expose more than its own endpoint would: an explicit per-association
-    # `requestable_fields` in `field_config`, else the fields the associated model's sibling
-    # controller serializes. Off/secure by default.
+    # Options for including associations and collection counts.
+    exclude_associations: false,
+    include_association_count: false,
+
+    # The number of records serialized per collection association, so responses are bounded out of
+    # the box (`nil` = unlimited). With `enable_association_queries`, a client can raise it for a
+    # given association via `?<prefix>.<name>.limit=N` or `limit=all` (`none`/`0` are aliases), both
+    # capped at `association_limit_max` (the "all" forms yield the cap). Set the max to `nil` to let
+    # a client request unlimited records.
+    association_limit: 10,
+    association_limit_max: 100,
+
+    # Let clients request extra fields for a serialized association via
+    # `?<prefix>.<association>.fields=a,b,c`. The allowlist keeps an association from ever exposing
+    # more than its own endpoint would: an explicit per-association `requestable_fields` in
+    # `field_config`, else the fields the associated model's sibling controller serializes.
+    # Off/secure by default.
     enable_association_queries: false,
     association_query_prefix: "associations".freeze,
 

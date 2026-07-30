@@ -111,38 +111,59 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     controller_serializer || @controller.class.native_serializer_config
   end
 
-  # Get the associations limit from the controller.
-  def _associations_limit
-    return @_associations_limit if defined?(@_associations_limit)
+  # The record cap for a collection association (`nil` = unlimited). The default is applied even
+  # when the feature is off, so responses are always bounded. `key?` (not `||`) reads the
+  # `field_config` override so an explicit `nil` there means unlimited/uncapped rather than falling
+  # back to the controller default.
+  def _effective_association_limit(association_name, field_config)
+    controller = @controller&.class
 
-    limit = @controller&.class&.native_serializer_associations_limit
-    max = @controller&.class&.native_serializer_associations_limit_max
+    default = field_config.key?(:limit) ?
+      field_config[:limit] : controller&.association_limit
+    return default unless controller&.enable_association_queries
 
-    # If a max is configured, allow the query parameter to adjust the limit up to that max.
-    if max && (query_param = @controller&.class&.native_serializer_associations_limit_query_param)
-      if @controller.request.query_parameters.key?(query_param)
-        query_limit = @controller.request.query_parameters[query_param].to_i
-        limit = [ query_limit, max ].min if query_limit > 0
-      end
-    end
+    requested = self._requested_association_limit(association_name)
+    return default if requested.nil?
 
-    @_associations_limit = limit
+    max = field_config.key?(:limit_max) ?
+      field_config[:limit_max] : controller.association_limit_max
+
+    # `all` means "as many as allowed" — the cap, or unlimited when the cap is `nil`.
+    return max if requested == :all
+
+    max ? [ requested, max ].min : requested
   end
 
-  # The fields to serialize for association `f`: the configured defaults, or — when a consumer
-  # requests them via `?<prefix>.<f>.fields=…` — the subset of the request that clears the allowlist
-  # (see `enable_association_queries` in the controller config).
+  # `all`, `none`, and `0` all mean "no limit" — `0` is free to reuse as a sentinel since an
+  # association is dropped via `except`, not `limit=0`. Anything else must be a plain positive
+  # integer, so a nested/array param or junk can't drive the query.
+  def _requested_association_limit(association_name)
+    return nil unless prefix = @controller.class.association_query_prefix.presence
+
+    raw = @controller.request&.query_parameters&.[]("#{prefix}.#{association_name}.limit")
+    return nil unless raw.is_a?(String)
+
+    raw = raw.strip
+    return :all if raw.in?(%w[all none])
+    return nil unless raw.match?(/\A\d+\z/)
+
+    # The regex guarantees a non-negative integer, so anything but zero is a positive limit.
+    limit = raw.to_i
+    limit.zero? ? :all : limit
+  end
+
+  # The fields to serialize for association `f`, honoring a consumer's `?<prefix>.<f>.fields=`
+  # request bounded by the allowlist. Only active when the feature is enabled.
   def _effective_association_fields(association_name, ref, field_config)
     default_fields = field_config[:fields]
     return default_fields unless @controller&.class&.enable_association_queries
-    return default_fields if ref.polymorphic? # no single target class to bound against
+    return default_fields if ref.polymorphic? # no single target class to bound the request
 
     requested = self._requested_association_fields(association_name)
     return default_fields if requested.blank?
 
-    # `requestable_fields` is the allowlist beyond the defaults, compiled once in
-    # `field_configuration` (explicit host list, else what the sibling serializes). Keep the primary
-    # key so records stay identifiable; reject anything that isn't a real, non-association field.
+    # The primary key is always kept so records stay identifiable. `_valid_association_field?` is
+    # the last line of defense against leaking a non-serializable or nested-association field.
     allowed = (default_fields + (field_config[:requestable_fields] || [])).uniq
     valid = (requested & allowed).select { |sf| self._valid_association_field?(ref, sf) }
     (Array(ref.klass.primary_key).map(&:to_s) + valid).uniq
@@ -200,9 +221,9 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
 
         # Apply certain rules regarding collection associations.
         if ref.collection?
-          # If we need to limit the number of serialized association records, then dynamically add a
-          # serializer method to do so.
-          if limit = self._associations_limit
+          # A finite limit needs a per-record `.limit` query, since eager `includes` can't cap rows
+          # per parent; an unlimited (`nil`) association falls through to `includes` preloading.
+          if limit = self._effective_association_limit(f, field_config)
             serializer_methods[f] = f
             self.define_singleton_method(f) do |record|
               next record.send(f).limit(limit).as_json(**sub_config)
@@ -212,7 +233,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
             #
             # # Even though we use a serializer method, if the count will later be added, then put
             # # this field into the includes_map.
-            # if @controller.class.native_serializer_include_associations_count
+            # if @controller.class.include_association_count
             #   includes_map[f] = f.to_sym
             # end
           else
@@ -221,7 +242,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
           end
 
           # If we need to include the association count, then add it here.
-          if @controller.class.native_serializer_include_associations_count
+          if @controller.class.include_association_count
             method_name = "#{f}.count"
             serializer_methods[method_name] = method_name
             self.define_singleton_method(method_name) do |record|
