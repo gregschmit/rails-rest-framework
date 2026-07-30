@@ -3,6 +3,6 @@ class Api::Demo::UsersController < Api::DemoController
 
   self.field_config = {
     status: { options: User::STATUS_OPTS },
-    phone_number: { sub_fields: [ :id, :number ] },
+    phone_number: { fields: [ :id, :number ] },
   }
 end

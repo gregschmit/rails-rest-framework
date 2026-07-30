@@ -59,6 +59,14 @@ module RESTFramework::Controller
     native_serializer_associations_limit_query_param: "associations_limit".freeze,
     native_serializer_include_associations_count: false,
 
+    # Let clients request extra fields for one serialized association via
+    # `?<prefix>.<association>.fields=a,b,c`. Requested fields are bounded by an allowlist so an
+    # association can never expose more than its own endpoint would: an explicit per-association
+    # `requestable_fields` in `field_config`, else the fields the associated model's sibling
+    # controller serializes. Off/secure by default.
+    enable_association_queries: false,
+    association_query_prefix: "associations".freeze,
+
     # Options for filtering, ordering, and searching.
     filter_backends: [
       RESTFramework::QueryFilter,
@@ -360,17 +368,22 @@ module RESTFramework::Controller
         if ref = reflections[f]
           cfg[:kind] = "association"
 
-          # Determine sub-fields for associations.
+          # Determine the association's fields.
           if ref.polymorphic?
             ref_columns = {}
           else
             ref_columns = ref.klass.columns_hash
           end
-          cfg[:sub_fields] ||= RESTFramework::Utils.sub_fields_for(ref)
-          cfg[:sub_fields] = cfg[:sub_fields].map(&:to_s)
+          cfg[:fields] ||= RESTFramework::Utils.association_fields_for(ref)
+          cfg[:fields] = cfg[:fields].map(&:to_s)
 
-          # Very basic metadata about sub-fields.
-          cfg[:sub_fields_metadata] = cfg[:sub_fields].map { |sf|
+          # Strings, to match `:fields` when intersecting requested fields against the allowlist.
+          if cfg[:requestable_fields]
+            cfg[:requestable_fields] = cfg[:requestable_fields].map(&:to_s)
+          end
+
+          # Very basic metadata about the association's fields.
+          cfg[:association_fields_metadata] = cfg[:fields].map { |sf|
             v = {}
 
             if ref_columns[sf]
@@ -440,6 +453,42 @@ module RESTFramework::Controller
 
         next [ f, cfg ]
       }.to_h.compact.with_indifferent_access
+
+      # Compile each association's requestable-fields allowlist once (see
+      # `enable_association_queries`). This runs as a second pass, after `@field_configuration` is
+      # memoized, because resolving a sibling's fields reads its `field_configuration` — and a
+      # self-referential or mutual association would otherwise recurse into this build.
+      if self.enable_association_queries
+        @field_configuration.each do |_f, cfg|
+          next unless cfg[:kind] == "association"
+
+          cfg[:requestable_fields] ||= self.association_requestable_fields(cfg[:reflection])
+        end
+      end
+
+      @field_configuration
+    end
+
+    # The fields a consumer may request for an association beyond its defaults, derived from the
+    # associated model's sibling controller: what that controller serializes, so the association can
+    # never expose more than its own endpoint would. Empty unless the sibling is discoverable and
+    # introspectable — a custom serializer makes its `get_fields` meaningless. Hidden fields are
+    # included (retrievable via `?only=` there); write-only fields and nested associations aren't.
+    def association_requestable_fields(ref)
+      return [] if ref.polymorphic?
+
+      sibling = RESTFramework::Utils.controller_for_model(self, ref.klass)
+      return [] unless sibling
+      return [] if sibling.serializer_class ||
+        sibling.native_serializer_config ||
+        sibling.native_serializer_singular_config ||
+        sibling.native_serializer_plural_config
+
+      cfg = sibling.field_configuration
+      sibling.get_fields.reject { |sf|
+        c = cfg[sf]
+        c.nil? || c[:write_only] || c[:kind] == "association"
+      }
     end
   end
 
@@ -642,7 +691,7 @@ module RESTFramework::Controller
         # TODO: Consider adjusting this based on `nested_attributes_options`.
         if self.class.permit_nested_attributes_assignment
           hash_variations["#{f}_attributes"] = (
-            config[:sub_fields] + [ "_destroy" ]
+            config[:fields] + [ "_destroy" ]
           )
         end
 

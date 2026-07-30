@@ -438,7 +438,7 @@ self.fields = [
 ```
 
 - Columns are serialized as scalar values and included in strong params.
-- Associations are serialized using their `sub_fields` (see below), and the association is
+- Associations are serialized using their `fields` (see below), and the association is
   translated into either `<foreign_key>` / `<name>_ids` (for id assignment) or
   `<name>_attributes` (for nested attributes) in strong params.
 - Methods are read-only (never accepted in the request body), but their return values are
@@ -478,7 +478,7 @@ from the model's schema and validators.
 | `default`                    | Default value (inferred from the schema).                                                       |
 | `type`                       | The field's type (inferred from columns/attributes).                                            |
 | `enum_variants`              | For enum columns, a map of value to database representation.                                    |
-| `sub_fields`                 | For associations, the sub-fields to render/accept. See [Association Sub-Fields](#association-sub-fields). |
+| `fields`                     | For associations, the fields to render/accept. See [Association Fields](#association-fields). |
 | `id_field`                   | For associations, the scalar id field (e.g., `user_id`, `tag_ids`).                             |
 | `nested_attributes_options`  | Passed through for `accepts_nested_attributes_for` associations.                                |
 
@@ -525,7 +525,7 @@ Api::MoviesController.field_configuration
 # => {
 #   "id" => { primary_key: true, read_only: true, kind: "column", type: :integer, label: "ID", ... },
 #   "name" => { kind: "column", type: :string, required: true, validators: { presence: [{}] }, ... },
-#   "director" => { kind: "association", sub_fields: ["id", "name"], id_field: "director_id", ... },
+#   "director" => { kind: "association", fields: ["id", "name"], id_field: "director_id", ... },
 #   ...
 # }
 ```
@@ -534,31 +534,83 @@ This hash drives the browsable API, the OpenAPI schema, strong parameters, and t
 metadata. If you build any custom behavior, consult `field_configuration` rather than
 re-deriving field info from the model.
 
-### Association Sub-Fields
+### Association Fields
 
-When a field is an association, the framework automatically picks a set of `sub_fields` — by
+When a field is an association, the framework automatically picks a set of `fields` — by
 default, the primary key plus the first "label-like" column that exists (from
 `RESTFramework.config.label_fields`: `name`, `label`, `login`, `title`, `email`, `username`,
 `url`).
 
-You can override the sub-fields for any association via `field_config`:
+You can override the fields for any association via `field_config`:
 
 ```ruby
 class Api::MoviesController < ApiController
   self.model = Movie
   self.fields = [ :id, :name, :director, :cast_members ]
   self.field_config = {
-    director: { sub_fields: [ :id, :name, :date_of_birth ] },
-    cast_members: { sub_fields: [ :id, :name, :net_worth ] },
+    director: { fields: [ :id, :name, :date_of_birth ] },
+    cast_members: { fields: [ :id, :name, :net_worth ] },
   }
 end
 ```
 
-Sub-fields participate in:
+Association fields participate in:
 
 - Serialization (nested associations use them by default).
 - Filtering (e.g., `?director.name_cont=chris`).
 - Ordering (e.g., `?ordering=director.name`).
+
+### Consumer-Requested Association Fields
+
+By default the association `fields` above are fixed by the controller. For admin-style APIs you can
+let a consumer request **extra** fields for a specific serialized association per request, without
+widening what every response returns. Opt in with `enable_association_queries`:
+
+```ruby
+class Api::Admin::MoviesController < ApiController
+  self.model = Movie
+  self.enable_association_queries = true
+end
+```
+
+A consumer then requests fields for one association with
+`?associations.<association>.fields=a,b,c`:
+
+```text
+GET /api/admin/movies?associations.main_genre.fields=id,name,description
+```
+
+The requested list **replaces** the default set for that association (like a top-level `?only=`),
+and the primary key is always kept. This is **secure by default** — requested fields are bounded by
+an allowlist, and disallowed/unknown fields are silently dropped:
+
+1. **Explicit allowlist.** Declare the extra fields a consumer may request for an association via
+   `field_config` (the defaults are always allowed, so list only what's beyond them). This is a
+   trusted list you own (like `fields` itself):
+
+   ```ruby
+   self.field_config = {
+     main_genre: {
+       fields: [ :id, :name ],                # serialized by default
+       requestable_fields: [ :description ],  # additionally requestable
+     },
+   }
+   ```
+
+2. **Sibling-controller discovery.** With no explicit allowlist, the framework looks for
+   the associated model's REST controller **at the same namespace level** (e.g.
+   `Api::Admin::MoviesController` → `Api::Admin::GenresController` for a `Genre` association) and
+   allows exactly what that controller would itself serialize. This guarantees **an association can
+   never expose more than the associated resource's own endpoint** — a `write_only` column (a
+   password, say) on the sibling can never be pulled in through the parent. Hidden fields *are*
+   requestable (they're already retrievable via `?only=` on that endpoint). If the sibling uses a
+   custom `serializer_class`, its output can't be introspected, so no expansion happens via this
+   path.
+
+3. **No allowlist source → no expansion.** With neither an explicit list nor a discoverable sibling,
+   the framework can't know which columns are safe, so only the default `fields` are serialized.
+
+The feature affects reads (serialization) only.
 
 ### Association Assignment
 
@@ -568,9 +620,9 @@ attributes assignment in strong params:
 - **Id assignment:** scalars are accepted under the reflection's foreign key (`belongs_to`) or
   singularized + `_ids` (`has_many` / `has_and_belongs_to_many`). Controlled by
   `permit_id_assignment` (default `true`).
-- **Nested attributes:** hashes are accepted under `<assoc>_attributes`, with the same
-  `sub_fields` plus `_destroy`. Controlled by `permit_nested_attributes_assignment` (default
-  `true`). Requires `accepts_nested_attributes_for` on the model.
+- **Nested attributes:** hashes are accepted under `<assoc>_attributes`, with the same `fields` plus
+  `_destroy`. Controlled by `permit_nested_attributes_assignment` (default `true`). Requires
+  `accepts_nested_attributes_for` on the model.
 
 At request time, the framework inspects the payload: arrays/hashes-of-hashes are treated as
 nested attributes, and scalars/arrays-of-scalars are treated as id assignment. Your API consumers
@@ -652,8 +704,8 @@ class Api::MoviesController < ApiController
   self.field_config = {
     name:         { required: true, label: "Title" },
     summary:      { hidden_from_index: true },
-    director:     { sub_fields: [ :id, :name, :date_of_birth ] },
-    cast_members: { sub_fields: [ :id, :name, :net_worth ] },
+    director:     { fields: [ :id, :name, :date_of_birth ] },
+    cast_members: { fields: [ :id, :name, :net_worth ] },
     is_featured:  { read_only: true },
     poster:       { required: true },
   }

@@ -25,6 +25,8 @@ class Api::DemoController < ApiController
 
     self.native_serializer_associations_limit = 6
     self.native_serializer_include_associations_count = true
+
+    self.enable_association_queries = true
     self.filter_backends = [
       RESTFramework::QueryFilter,
       RESTFramework::OrderingFilter,

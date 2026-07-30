@@ -46,12 +46,19 @@ Rails.application.routes.draw do
         :read_only,
         :users_with_hidden,
         :find_by,
-        :users_with_sub_fields,
+        :users_with_association_fields,
         :unpaginated,
         :no_total_count,
       )
 
       rest_route :network
+
+      # Isolated namespace for the association-expansion feature: the parent controller and the
+      # sibling it discovers are both under `assoc_exp`, so they don't collide with the real
+      # `Api::Test::UsersController`.
+      namespace :assoc_exp do
+        rest_route :users, :users_explicit, :users_disabled, :movies, :genres
+      end
 
       if defined?(ActiveModel::Serializer)
         namespace :active_model_serializer do

@@ -207,8 +207,8 @@ module RESTFramework::Controller
               join_table: ref.respond_to?(:join_table) ? ref.join_table : nil,
             }.compact
             v[:"x-rrf-association_pk"] = cfg[:association_pk]
-            v[:"x-rrf-sub_fields"] = cfg[:sub_fields]
-            v[:"x-rrf-sub_fields_metadata"] = cfg[:sub_fields_metadata]
+            v[:"x-rrf-association_fields"] = cfg[:fields]
+            v[:"x-rrf-association_fields_metadata"] = cfg[:association_fields_metadata]
             v[:"x-rrf-id_field"] = cfg[:id_field]
             v[:"x-rrf-nested_attributes_options"] = cfg[:nested_attributes_options]
           end

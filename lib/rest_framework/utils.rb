@@ -119,9 +119,8 @@ module RESTFramework::Utils
     parsed_fields.map(&:to_s)
   end
 
-  # Get the fields for a given model, including not just columns (which includes
-  # foreign keys), but also associations. Note that we always return an array of
-  # strings, not symbols.
+  # Get the fields for a given model, including not just columns (which includes foreign keys), but
+  # also associations. Note that we always return an array of strings, not symbols.
   def self.fields_for(model, exclude_associations:, action_text:, active_storage:)
     foreign_keys = model.reflect_on_all_associations(:belongs_to).map(&:foreign_key)
     base_fields = model.column_names.reject { |c| c.in?(foreign_keys) }
@@ -155,23 +154,23 @@ module RESTFramework::Utils
     base_fields + associations + atf + asf
   end
 
-  # Get the sub-fields that may be serialized and filtered/ordered for a reflection.
-  def self.sub_fields_for(ref)
+  # Get the association's fields that may be serialized and filtered/ordered for a reflection.
+  def self.association_fields_for(ref)
     if !ref.polymorphic? && model = ref.klass
-      sub_fields = [ model.primary_key ].flatten.compact
+      fields = [ model.primary_key ].flatten.compact
       label_fields = RESTFramework.config.label_fields
 
       # Preferably find a database column to use as label.
       if match = label_fields.find { |f| f.in?(model.column_names) }
-        return sub_fields + [ match ]
+        return fields + [ match ]
       end
 
       # Otherwise, find a method.
       if match = label_fields.find { |f| model.method_defined?(f) }
-        return sub_fields + [ match ]
+        return fields + [ match ]
       end
 
-      return sub_fields
+      return fields
     end
 
     [ "id", "name" ]
@@ -185,6 +184,30 @@ module RESTFramework::Utils
       # The id field for belongs_to is always the foreign key column name, even if the
       # association is named differently.
       return reflection.foreign_key
+    end
+
+    nil
+  end
+
+  # Find the REST controller for `model` at the same namespace level as `current_controller`, e.g.
+  # `Api::Demo::MoviesController` + `Genre` => `Api::Demo::GenresController`, or `nil` if none. The
+  # `model` match guards against trusting a same-named controller for a different model.
+  def self.controller_for_model(current_controller, model)
+    return nil unless model && (base_name = current_controller.name)
+
+    namespace = base_name.deconstantize
+    model_name = model.model_name
+
+    # Plural for a collection controller, singular for a singular-resource one.
+    [ model_name.plural, model_name.singular ].each do |name|
+      candidate_name = "#{name.camelize}Controller"
+      candidate_name = "#{namespace}::#{candidate_name}" if namespace.present?
+
+      candidate = candidate_name.safe_constantize
+      next unless candidate.is_a?(Class) && candidate.include?(RESTFramework::Controller)
+      next unless candidate.model == model
+
+      return candidate
     end
 
     nil

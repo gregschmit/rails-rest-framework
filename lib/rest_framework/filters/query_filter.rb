@@ -94,11 +94,11 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
         if sub_field
           next nil unless root_field.in?(fields)
 
-          sub_fields = @controller.class.field_configuration[root_field][:sub_fields] || []
-          if sub_field.in?(sub_fields)
+          association_fields = @controller.class.field_configuration[root_field][:fields] || []
+          if sub_field.in?(association_fields)
             includes << root_field.to_sym
             next [ field, v ]
-          elsif pred_sub_field && pred_sub_field.in?(sub_fields)
+          elsif pred_sub_field && pred_sub_field.in?(association_fields)
             includes << root_field.to_sym
             field = pred_field
           else

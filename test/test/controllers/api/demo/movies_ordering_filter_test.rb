@@ -2,7 +2,7 @@ require "test_helper"
 
 # Security regression for the ordering filter's association sub-field allowlist.
 #
-# `Movie#main_genre` (a `Genre`) exposes only `id`/`name` as serializable sub_fields, while
+# `Movie#main_genre` (a `Genre`) exposes only `id`/`name` as serializable association fields, while
 # `Genre#description` is a real column that is NOT allowlisted. OrderingFilter used to validate only
 # the *root* of a dotted `?ordering=main_genre.description` token, so — once a sibling QueryFilter
 # dotted filter (`?main_genre.name_in=...`) forced a JOIN on the genres table — a client could
@@ -39,12 +39,12 @@ class Api::Demo::MoviesOrderingFilterTest < ActionController::TestCase
   end
 
   # Guard the assumptions the exploit depends on, so the test can't silently rot into a no-op if the
-  # model or the sub_fields defaults change.
+  # model or the association-fields defaults change.
   def test_hidden_association_subfield_precondition
     assert_includes(Genre.column_names, "description")
-    sub_fields = Api::Demo::MoviesController.field_configuration["main_genre"][:sub_fields]
-    assert_includes(sub_fields, "name")
-    assert_not_includes(sub_fields, "description")
+    association_fields = Api::Demo::MoviesController.field_configuration["main_genre"][:fields]
+    assert_includes(association_fields, "name")
+    assert_not_includes(association_fields, "description")
   end
 
   def test_ordering_by_non_allowlisted_association_subfield_is_ignored

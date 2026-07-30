@@ -73,8 +73,8 @@ browsable-API clients and tools that want to consume the full field metadata.
 | `x-rrf-validators`                   | Hash of validator kind → array of option hashes, for every model-level validator.           |
 | `x-rrf-reflection`                   | Association metadata: `class_name`, `foreign_key`, `association_foreign_key`, `association_primary_key`, `inverse_of`, `join_table`. |
 | `x-rrf-association_pk`               | The primary key of the associated class.                                                    |
-| `x-rrf-sub_fields`                   | Sub-fields used for serializing/filtering/ordering the association.                         |
-| `x-rrf-sub_fields_metadata`          | Kind (`column` vs `method`) for each sub-field.                                             |
+| `x-rrf-association_fields`           | Fields used for serializing/filtering/ordering the association.                             |
+| `x-rrf-association_fields_metadata`  | Kind (`column` vs `method`) for each association field.                                     |
 | `x-rrf-id_field`                     | The scalar id field (e.g., `user_id`, `tag_ids`).                                           |
 | `x-rrf-nested_attributes_options`    | `accepts_nested_attributes_for` options for the association.                                |
 

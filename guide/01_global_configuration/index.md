@@ -43,8 +43,8 @@ config.show_backtrace = Rails.env.development? || Rails.env.test?
 - **Type:** Array of strings
 - **Default:** `%w[ name label login title email username url ]`
 
-The list of "label-like" columns the framework probes when picking default `sub_fields` for
-associations. The first column from this list that exists on the associated model is used as
+The list of "label-like" columns the framework probes when picking default association `fields`.
+The first column from this list that exists on the associated model is used as
 the label alongside the primary key. Add domain-specific label columns here to get nicer
 defaults:
 

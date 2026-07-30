@@ -38,13 +38,13 @@ class RESTFramework::Filters::OrderingFilter < RESTFramework::Filters::BaseFilte
       end
 
       # A dotted `association.sub_field` token. The root must be an allowlisted association field,
-      # and the sub-field must be one of that association's allowlisted sub_fields. Otherwise a
-      # client could order by (and infer, via an ordering oracle) a column that is never serialized.
+      # and the sub-field must be one of that association's allowlisted fields. Otherwise a client
+      # could order by (and infer, via an ordering oracle) a column that is never serialized.
       root, sub = column.split(".", 2)
       next unless sub && root.in?(fields)
 
       cfg = @controller.class.field_configuration[root]
-      next unless cfg && sub.in?(cfg[:sub_fields] || [])
+      next unless cfg && sub.in?(cfg[:fields] || [])
 
       ordering[column] = direction
       references << root.to_sym

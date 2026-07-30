@@ -129,6 +129,40 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     @_associations_limit = limit
   end
 
+  # The fields to serialize for association `f`: the configured defaults, or — when a consumer
+  # requests them via `?<prefix>.<f>.fields=…` — the subset of the request that clears the allowlist
+  # (see `enable_association_queries` in the controller config).
+  def _effective_association_fields(association_name, ref, field_config)
+    default_fields = field_config[:fields]
+    return default_fields unless @controller&.class&.enable_association_queries
+    return default_fields if ref.polymorphic? # no single target class to bound against
+
+    requested = self._requested_association_fields(association_name)
+    return default_fields if requested.blank?
+
+    # `requestable_fields` is the allowlist beyond the defaults, compiled once in
+    # `field_configuration` (explicit host list, else what the sibling serializes). Keep the primary
+    # key so records stay identifiable; reject anything that isn't a real, non-association field.
+    allowed = (default_fields + (field_config[:requestable_fields] || [])).uniq
+    valid = (requested & allowed).select { |sf| self._valid_association_field?(ref, sf) }
+    (Array(ref.klass.primary_key).map(&:to_s) + valid).uniq
+  end
+
+  # Only a plain scalar string is honored, so a nested-hash/array param can't reach `where`/`split`.
+  def _requested_association_fields(association_name)
+    return nil unless prefix = @controller.class.association_query_prefix.presence
+
+    raw = @controller.request&.query_parameters&.[]("#{prefix}.#{association_name}.fields")
+    return nil unless raw.is_a?(String)
+
+    raw.split(",").map { |x| x.strip.presence }.compact
+  end
+
+  def _valid_association_field?(ref, field)
+    field.in?(ref.klass.column_names) ||
+      (ref.klass.method_defined?(field) && !ref.klass.reflect_on_association(field.to_sym))
+  end
+
   # Get a serializer configuration from the controller. `@controller` and `@model` must be set.
   def _get_controller_serializer_config
     columns = []
@@ -155,7 +189,7 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       elsif ref = reflections[f]
         sub_columns = []
         sub_methods = []
-        field_config[:sub_fields].each do |sf|
+        self._effective_association_fields(f, ref, field_config).each do |sf|
           if !ref.polymorphic? && sf.in?(ref.klass.column_names)
             sub_columns << sf
           else

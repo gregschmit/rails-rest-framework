@@ -65,9 +65,9 @@ Multiple predicates on the same field are combined correctly:
 GET /api/movies?year_gte=1990&year_lt=2000&genre_in=scifi,drama
 ```
 
-### Filtering on Association Sub-Fields
+### Filtering on Association Fields
 
-If a field is an association, you can filter on any of its `sub_fields` (see
+If a field is an association, you can filter on any of its `fields` (see
 [Fields](../03_controllers/#fields) in the Controllers section) using dot notation, optionally
 with a predicate:
 
