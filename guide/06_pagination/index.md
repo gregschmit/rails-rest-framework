@@ -40,6 +40,33 @@ A simple paginator keyed by a page number. Responses take this shape:
 | `page_query_param`      | `"page"`      | Query param for the requested page number.                                          |
 | `page_size_query_param` | `"page_size"` | Query param that lets clients override the page size. Set to `nil` to forbid this.  |
 | `max_page_size`         | `40`          | Upper limit on the client-requested page size. Set to `nil` to remove the cap.      |
+| `page_total_count`      | `true`        | Whether to run a `COUNT(*)` to report `count`/`total_pages`. Set to `false` on large tables to skip it. |
+
+### Skipping the Total Count on Large Tables
+
+Every paginated request runs a `COUNT(*)` over the whole filtered set to report `count` and
+`total_pages`. On very large tables that count can dominate the request cost. Set
+`page_total_count = false` to skip it:
+
+```ruby
+class Api::EventsController < ApiController
+  self.model = Event         # a table with hundreds of millions of rows
+  self.page_total_count = false
+end
+```
+
+The response then omits `count` and `total_pages`, and `next` is derived from a cheap existence
+check (a `LIMIT 1` past the current page) instead of the total count:
+
+```json
+{
+  "page": 3,
+  "page_size": 30,
+  "next": "https://example.com/api/events?page=4",
+  "previous": "https://example.com/api/events?page=2",
+  "results": [ {}, {} ]
+}
+```
 
 Example requests:
 

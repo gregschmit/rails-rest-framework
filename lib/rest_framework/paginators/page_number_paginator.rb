@@ -4,12 +4,19 @@
 class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators::BasePaginator
   def initialize(**kwargs)
     super
-    # Exclude any `select` clauses since that would cause `count` to fail with a SQL `SyntaxError`.
-    @count = @data.except(:select).count
     @page_size = self._page_size
+    @total_count = @controller.class.page_total_count
 
-    @total_pages = @count / @page_size
-    @total_pages += 1 if @count % @page_size != 0
+    # Compute the total count (and total pages) unless disabled. On large tables `page_total_count`
+    # can be set to `false` to skip this `COUNT(*)` over the whole filtered set; `next` is then
+    # derived by fetching one extra record in `get_page`.
+    if @total_count
+      # Exclude any `select` clauses, since that would cause `count` to fail with a SQL
+      # `SyntaxError`.
+      @count = @data.except(:select).count
+      @total_pages = @count / @page_size
+      @total_pages += 1 if @count % @page_size != 0
+    end
   end
 
   def _page_size
@@ -54,14 +61,23 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
 
     # Get the data page and return it so the caller can serialize the data in the proper format.
     page_index = @page_number - 1
-    @data.limit(@page_size).offset(page_index * @page_size)
+    offset = page_index * @page_size
+
+    # Without a total count we can't derive `next` from `total_pages`, so detect whether a further
+    # page exists with a cheap existence check (a `LIMIT 1` past this page) instead of a full count.
+    unless @total_count
+      @has_next = @data.except(:select).offset(offset + @page_size).exists?
+    end
+
+    @data.limit(@page_size).offset(offset)
   end
 
   # Wrap the serialized page with appropriate metadata.
   def get_paginated_response(serialized_page)
     page_query_param = @controller.class.page_query_param
     base_params = @controller.request.query_parameters.symbolize_keys
-    next_url = if @page_number < @total_pages
+    has_next = @total_count ? @page_number < @total_pages : @has_next
+    next_url = if has_next
       @controller.url_for({ **base_params, page_query_param => @page_number + 1 })
     end
     previous_url = if @page_number > 1

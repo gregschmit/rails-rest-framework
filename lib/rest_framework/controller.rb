@@ -98,6 +98,9 @@ module RESTFramework::Controller
     page_query_param: "page".freeze,
     page_size_query_param: "page_size".freeze,
     max_page_size: 40,
+    # Whether the page-number paginator computes the total record count to report `count` and
+    # `total_pages`. Set to `false` on large tables to skip that query.
+    page_total_count: true,
 
     # Option to disable serializer adapters by default, mainly introduced because Active Model
     # Serializers will do things like serialize `[]` into `{"":[]}`.

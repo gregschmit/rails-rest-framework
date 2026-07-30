@@ -48,6 +48,7 @@ Rails.application.routes.draw do
         :find_by,
         :users_with_sub_fields,
         :unpaginated,
+        :no_total_count,
       )
 
       rest_route :network
