@@ -202,8 +202,10 @@ changes; the migration checklist that follows walks through updating an existing
 - **Delegated actions wrap their result under a `return` key**, and raise on a missing or non-public
   target instead of silently 404-ing.
 - **Removed** `rrf_finalize` and the `auto_finalize` / `freeze_config` hooks.
-- **Security hardening** — per-element read-only stripping on bulk writes, an ordering-oracle fix,
-  sanitized `StatementInvalid` messages, and safer query-filter parsing.
+- **Security hardening** — `find_by`, filtering, ordering, and search are scoped to serialized,
+  non-`write_only` fields (so hidden/secret columns can't be used as lookup/enumeration keys), plus
+  per-element read-only stripping on bulk writes, an ordering-oracle fix, sanitized
+  `StatementInvalid` messages, and safer query-filter parsing.
 
 ### Migrating from Older Versions
 
@@ -217,8 +219,8 @@ See the guide for details on each item.
 - [ ] Render custom actions with `render(api: ...)`, replacing the older `api_response(...)` /
       `render_api(...)`.
 - [ ] Replace `rest_resource` / `rest_resources` / `rest_root` with `rest_route`.
-  - Fold any dedicated root controller into the namespace's base controller, which now serves the
-    root via `index_content` (the standalone `root` action and `rest_root` are gone).
+- [ ] Fold any dedicated root controller into the namespace's base controller, which now serves the
+      root via `index_content` (the standalone `root` action and `rest_root` are gone).
 - [ ] Rename `singleton_controller` → `singular`.
 - [ ] Remove `rrf_finalize` calls and the `auto_finalize` / `freeze_config` config (all gone).
 - [ ] Expect paginated `index` responses by default (`self.paginator_class = nil` restores a bare

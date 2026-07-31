@@ -8,8 +8,10 @@ ENV DISABLE_DATABASE_ENVIRONMENT_CHECK="1"
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Setup application gems.
+# Setup application gems. `rest_framework.gemspec` requires `lib/rest_framework/version` at load
+# time, so that file must be present before `bundle install` evaluates the `gemspec` directive.
 COPY .ruby-version .rails-version rest_framework.gemspec Gemfile Gemfile.lock ./
+COPY lib/rest_framework/version.rb ./lib/rest_framework/version.rb
 RUN bundle install --jobs 4
 
 # Setup application.
