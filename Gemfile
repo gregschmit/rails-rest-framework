@@ -2,21 +2,21 @@ source "https://rubygems.org"
 
 gemspec
 
-# Support setting ruby version from env, and default to `.ruby-version` file.
-ruby ENV["CUSTOM_RUBY_VERSION"] || File.read(
-  File.expand_path(".ruby-version", __dir__),
-).strip.split("-")[1]
+# Support testing against multiple Ruby versions.
+OFFICIAL_RUBY_VERSION = File.read(File.expand_path(".ruby-version", __dir__)).strip.split("-")[1]
+ruby ENV["CUSTOM_RUBY_VERSION"] || OFFICIAL_RUBY_VERSION
+RUNNING_OFFICIAL_RUBY = RUBY_VERSION == OFFICIAL_RUBY_VERSION
 
-# The "official" Rails version we target for deployment, from `.rails-version`.
+# Support testing against multiple Rails versions.
 OFFICIAL_RAILS_VERSION = Gem::Version.new(
   File.read(File.expand_path(".rails-version", __dir__)).strip,
 )
-
-# Support testing against multiple Rails versions.
 RAILS_VERSION = ENV["RAILS_VERSION"] ?
   Gem::Version.new(ENV["RAILS_VERSION"]) :
   OFFICIAL_RAILS_VERSION
 RUNNING_OFFICIAL_RAILS = RAILS_VERSION == OFFICIAL_RAILS_VERSION
+
+RUNNING_OFFICIAL_RUBY_RAILS = RUNNING_OFFICIAL_RUBY && RUNNING_OFFICIAL_RAILS
 
 gem "puma"
 gem "rails", RAILS_VERSION
@@ -35,7 +35,7 @@ end
 # Kamal is a deploy-only tool that's only ever exercised under the official Rails version, so only
 # load it there. (It also can't run under Rails <7.1 anyway: its code requires
 # `active_support/broadcast_logger`, which its gemspec understates as `activesupport >= 7.0`.)
-if RUNNING_OFFICIAL_RAILS
+if RUNNING_OFFICIAL_RUBY_RAILS
   gem "kamal"
 end
 
@@ -101,6 +101,11 @@ end
 
 group :test do
   gem "minitest", RAILS_VERSION >= Gem::Version.new("8.1") ? ">= 6" : "~> 5"
-  gem "simplecov", require: false
-  gem "simplecov-lcov", "0.8.0", require: false
+
+  # Coverage tooling only runs on the official Ruby/Rails (see `test/config/simplecov_setup.rb`), so
+  # only install it there; this also avoids resolving an incompatible SimpleCov on older Rubies.
+  if RUNNING_OFFICIAL_RUBY_RAILS
+    gem "simplecov", require: false
+    gem "simplecov-lcov", "0.8.0", require: false
+  end
 end

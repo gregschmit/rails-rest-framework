@@ -77,7 +77,7 @@ class Application < Rails::Application
     config.active_support.to_time_preserves_timezone = :zone
   end
 
-  if Rails::VERSION::MAJOR >= 7 && Rails::VERSION::MINOR >= 1
+  if Rails.gem_version >= Gem::Version.new("7.1")
     config.action_dispatch.show_exceptions = Rails.env.test? ? :none : :all
   else
     config.action_dispatch.show_exceptions = !Rails.env.test?
