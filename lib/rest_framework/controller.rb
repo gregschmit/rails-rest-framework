@@ -253,33 +253,29 @@ module RESTFramework::Controller
       self.model&.human_attribute_name(s, default: default_title) || default_title
     end
 
-    # Get the available fields. Fallback to this controller's model columns, or an empty array. This
-    # should always return an array of strings.
-    def get_fields(input_fields: nil)
-      input_fields ||= self.fields
-
-      # If fields is a hash, then parse it.
-      if input_fields.is_a?(Hash)
-        return RESTFramework::Utils.parse_fields_hash(
-          input_fields,
+    # Resolve the `fields` config to an array of strings. Memoized, since `fields` and the flags it
+    # depends on are class-level config fixed at load time.
+    def get_fields
+      @get_fields ||= if self.fields.is_a?(Hash)
+        RESTFramework::Utils.parse_fields_hash(
+          self.fields,
           self.model,
           exclude_associations: self.exclude_associations,
           action_text: self.enable_action_text,
           active_storage: self.enable_active_storage,
         )
-      elsif !input_fields
-        # Otherwise, if fields is nil, then fallback to columns.
-        return self.model ? RESTFramework::Utils.fields_for(
+      elsif self.fields
+        self.fields.map(&:to_s)
+      elsif self.model
+        RESTFramework::Utils.fields_for(
           self.model,
           exclude_associations: self.exclude_associations,
           action_text: self.enable_action_text,
           active_storage: self.enable_active_storage,
-        ) : []
-      elsif input_fields
-        input_fields = input_fields.map(&:to_s)
+        )
+      else
+        []
       end
-
-      input_fields
     end
 
     # Get a full field configuration, including defaults and inferred values.
@@ -647,7 +643,27 @@ module RESTFramework::Controller
   end
 
   def get_fields
-    self.class.get_fields(input_fields: self.class.fields)
+    self.class.get_fields
+  end
+
+  def readable_fields
+    cfg = self.class.field_configuration
+    self.get_fields.reject { |f| cfg[f]&.[](:write_only) }
+  end
+
+  # `readable_fields` restricted to real columns, for query surfaces that build SQL directly
+  # (find_by, search) and would raise on a virtual/method field.
+  def readable_columns
+    self.readable_fields & self.class.model.column_names
+  end
+
+  # `readable_fields` restricted to columns and associations, for surfaces that also resolve dotted
+  # `association.sub_field` paths (filtering, ordering). Excludes virtual/method fields, which have
+  # no column to order or filter by.
+  def readable_columns_or_associations
+    cfg = self.class.field_configuration
+    columns = self.class.model.column_names
+    self.readable_fields.select { |f| f.in?(columns) || cfg[f]&.[](:kind) == "association" }
   end
 
   # Get a hash of strong parameters for the current action.
@@ -657,7 +673,8 @@ module RESTFramework::Controller
     @_get_allowed_parameters = self.class.allowed_parameters
     return @_get_allowed_parameters if @_get_allowed_parameters
 
-    # Assemble strong parameters.
+    # Assemble strong parameters. Read-only fields are permitted here and stripped later per-action
+    # by `_rrf_strip_read_only_fields` (which keeps the primary key on bulk update to find records).
     variations = []
     hash_variations = {}
     reflections = self.class.model.reflections
@@ -868,9 +885,10 @@ module RESTFramework::Controller
     # Find by another column if it's permitted.
     if find_by_param = self.class.find_by_query_param.presence
       if find_by = request.query_parameters[find_by_param].presence
-        find_by_fields = (
-          self.class.find_by_fields&.map(&:to_s) || self.class.model.columns_hash.keys
-        )
+        # Default to readable columns: excluding write_only keeps hidden values from being used as
+        # lookup keys, and restricting to real columns keeps virtual/method fields from reaching a
+        # doomed `find_by(<not a column>)` (which would raise on the DB).
+        find_by_fields = self.class.find_by_fields&.map(&:to_s) || self.readable_columns
 
         # A `find_by` was explicitly requested, so it must be a permitted field.
         raise ActiveRecord::RecordNotFound unless find_by.in?(find_by_fields)

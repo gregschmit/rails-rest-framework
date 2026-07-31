@@ -1,7 +1,8 @@
 # A filter backend which handles ordering of the recordset.
 class RESTFramework::Filters::OrderingFilter < RESTFramework::Filters::BaseFilter
   def _get_fields
-    @controller.class.ordering_fields&.map(&:to_s) || @controller.get_fields
+    # Always return a list of strings; `@controller.readable_columns_or_associations` already does.
+    @controller.class.ordering_fields&.map(&:to_s) || @controller.readable_columns_or_associations
   end
 
   # Convert the ordering param into an `[ordering, references]` pair: the ordering config for

@@ -25,10 +25,12 @@ class Api::Test::UsersWithHiddenControllerTest < ActionController::TestCase
     assert_not(first["random2"])
   end
 
-  def test_list_with_virtual_field_filter_returns_controlled_error
+  def test_list_filter_by_virtual_field_is_ignored
+    # `random1` is a virtual/method field, not a real column, so it isn't a filterable field: the
+    # param is ignored (like any non-filterable key) instead of reaching the DB and raising.
     get(:index, as: :json, params: { random1: "10" })
-    assert_response(400)
-    assert(@response.parsed_body["message"].present?)
+    assert_response(:success)
+    assert_operator(@response.parsed_body.length, :>, 0)
   end
 
   def test_show

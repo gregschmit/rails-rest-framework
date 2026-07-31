@@ -1,13 +1,9 @@
 class RESTFramework::Filters::SearchFilter < RESTFramework::Filters::BaseFilter
   def _get_fields
-    if search_fields = @controller.class.search_fields
-      return search_fields&.map(&:to_s)
-    end
-
-    columns = @controller.class.model.column_names
-    @controller.get_fields.select { |f|
-      f.in?(RESTFramework.config.search_columns) && f.in?(columns)
-    }
+    # Always return a list of strings; `@controller.readable_columns` already does.
+    @controller.class.search_fields&.map(&:to_s) || (
+      @controller.readable_columns & RESTFramework.config.search_columns
+    )
   end
 
   # Filter data according to the request query parameters.

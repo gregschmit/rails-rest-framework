@@ -43,8 +43,8 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
   ARRAY_PREDICATES = %i[in not].freeze
 
   def _get_fields
-    # Always return a list of strings; `@controller.get_fields` already does this.
-    @controller.class.filter_fields&.map(&:to_s) || @controller.get_fields
+    # Always return a list of strings; `@controller.readable_columns_or_associations` already does.
+    @controller.class.filter_fields&.map(&:to_s) || @controller.readable_columns_or_associations
   end
 
   # Helper to find a variation of a field using a predicate. For example, there could be a field
