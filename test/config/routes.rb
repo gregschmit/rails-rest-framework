@@ -46,6 +46,7 @@ Rails.application.routes.draw do
         :read_only,
         :users_with_hidden,
         :find_by,
+        :nested_field_config,
         :users_with_association_fields,
         :unpaginated,
         :no_total_count,

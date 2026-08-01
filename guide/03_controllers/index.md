@@ -560,6 +560,35 @@ Association fields participate in:
 - Filtering (e.g., `?director.name_cont=chris`).
 - Ordering (e.g., `?ordering=director.name`).
 
+#### Nesting Deeper
+
+An association's `field_config` may itself contain a `field_config` to shape a sub-association more
+than one level deep:
+
+```ruby
+self.field_config = {
+  cart_items: {
+    fields: [ :id, :quantity, :packs ],
+    field_config: {
+      packs: { fields: [ :id, :product_code ] },
+    },
+  },
+}
+```
+
+Here `packs` (an association on the `cart_items` model) serializes with only `id`/`product_code`
+instead of its full row. This nesting can go arbitrarily deep. A few things to keep in mind:
+
+- **Opt-in and shallow-safe.** A sub-association is only shaped when it has its own `field_config`
+  entry; otherwise it serializes exactly as before (its full `as_json`), so this never silently
+  narrows existing output.
+- **Static only.** Deeper levels are configured by the controller — per-request features
+  ([consumer-requested fields](#consumer-requested-association-fields), per-association `limit`) and
+  global `write_only`/`hidden` handling apply to the top level only. List a sub-association's
+  `fields` explicitly to keep sensitive columns out of it.
+- **No extra preloading.** Only the top association is eager-loaded; deeper ones serialize as
+  they're visited, so watch for N+1s on wide, deep trees.
+
 ### Consumer-Requested Association Fields
 
 By default the association `fields` above are fixed by the controller. For admin-style APIs you can

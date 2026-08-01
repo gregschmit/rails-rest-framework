@@ -184,6 +184,39 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       (ref.klass.method_defined?(field) && !ref.klass.reflect_on_association(field.to_sym))
   end
 
+  # Recursively translate an association's fields into a `serializable_hash` config
+  # (`only`/`methods`/`include`). Columns go to `only` and plain methods to `methods`; a field that
+  # is itself an association is recursed into (as a nested `include`) only when it has its own entry
+  # in `field_config[:field_config]`. Otherwise it falls through to a method and serializes as
+  # before (its full `as_json`), so deeper nesting is opt-in and never narrows the default output.
+  def _build_association_config(model, fields, field_config)
+    nested = field_config[:field_config] || {}
+    only = []
+    methods = []
+    includes = {}
+
+    fields.each do |sf|
+      sf = sf.to_s
+      sub_field_config = nested[sf.to_sym] || nested[sf]
+
+      if sf.in?(model.column_names)
+        only << sf
+      elsif sub_field_config && (ref = model.reflect_on_association(sf.to_sym)) && !ref.polymorphic?
+        sub_fields = sub_field_config[:fields]&.map(&:to_s) ||
+          RESTFramework::Utils.association_fields_for(ref)
+        includes[sf] = self._build_association_config(ref.klass, sub_fields, sub_field_config)
+      elsif model.method_defined?(sf)
+        methods << sf
+      else
+        only << sf
+      end
+    end
+
+    config = { only: only, methods: methods }
+    config[:include] = includes if includes.any?
+    config
+  end
+
   # Get a serializer configuration from the controller. `@controller` and `@model` must be set.
   def _get_controller_serializer_config
     columns = []
@@ -208,16 +241,13 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       if f.in?(column_names)
         columns << f
       elsif ref = reflections[f]
-        sub_columns = []
-        sub_methods = []
-        self._effective_association_fields(f, ref, field_config).each do |sf|
-          if !ref.polymorphic? && sf.in?(ref.klass.column_names)
-            sub_columns << sf
-          else
-            sub_methods << sf
-          end
+        effective_fields = self._effective_association_fields(f, ref, field_config)
+        sub_config = if ref.polymorphic?
+          # No single target class to introspect, so serialize every field as a method.
+          { only: [], methods: effective_fields }
+        else
+          self._build_association_config(ref.klass, effective_fields, field_config)
         end
-        sub_config = { only: sub_columns, methods: sub_methods }
 
         # Apply certain rules regarding collection associations.
         if ref.collection?
