@@ -651,6 +651,15 @@ module RESTFramework::Controller
     self.get_fields.reject { |f| cfg[f]&.[](:write_only) }
   end
 
+  # The fields a client may write (create/update): `get_fields` minus read_only fields. Excluding
+  # them here — before strong parameters expand associations into `_id`/`_ids`/`_attributes` keys —
+  # keeps a read_only association from ever producing a permitted (and otherwise unstrippable, since
+  # those keys don't match a field name) assignment key.
+  def writable_fields
+    cfg = self.class.field_configuration
+    self.get_fields.reject { |f| cfg[f]&.[](:read_only) }
+  end
+
   # `readable_fields` restricted to real columns, for query surfaces that build SQL directly
   # (find_by, search) and would raise on a virtual/method field.
   def readable_columns
@@ -673,12 +682,14 @@ module RESTFramework::Controller
     @_get_allowed_parameters = self.class.allowed_parameters
     return @_get_allowed_parameters if @_get_allowed_parameters
 
-    # Assemble strong parameters. Read-only fields are permitted here and stripped later per-action
-    # by `_rrf_strip_read_only_fields` (which keeps the primary key on bulk update to find records).
+    # Assemble strong parameters from writable fields only, so read-only fields never produce a
+    # permitted key — including the `_id`/`_ids`/`_attributes` variations an association expands
+    # into, which a later key-name-based filter couldn't catch. Bulk update re-permits the primary
+    # key (see `get_body_params`) since it needs it to locate each record.
     variations = []
     hash_variations = {}
     reflections = self.class.model.reflections
-    @_get_allowed_parameters = self.get_fields.map { |f|
+    @_get_allowed_parameters = self.writable_fields.map { |f|
       f = f.to_s
       config = self.class.field_configuration[f]
 
@@ -823,36 +834,11 @@ module RESTFramework::Controller
       body_params[k].unshift(*v)
     end
 
-    # Filter read-only fields. For bulk actions the permitted structure is `{ _json: [...] }`, so we
-    # strip read-only keys from each element rather than the top-level hash (whose only key is
-    # `_json`). Bulk update keeps the primary key, which it needs to locate each record.
-    if bulk_action
-      keep = bulk_action == :update ? [ pk.to_s ] : []
-      body_params[:_json]&.each do |element|
-        next unless element.is_a?(ActionController::Parameters)
-
-        self._rrf_strip_read_only_fields(element, keep: keep)
-      end
-    else
-      self._rrf_strip_read_only_fields(body_params)
-    end
-
     body_params
   end
   alias_method :get_create_params, :get_body_params
   alias_method :get_update_params, :get_body_params
   alias_method :get_destroy_params, :get_body_params
-
-  # Remove read-only fields from a permitted params hash in place. `keep` lists field names to
-  # preserve even when read-only (e.g. the primary key on bulk update, used to locate records).
-  def _rrf_strip_read_only_fields(params, keep: [])
-    params.delete_if do |f, _|
-      next false if f.in?(keep)
-
-      cfg = self.class.field_configuration[f]
-      cfg && cfg[:read_only]
-    end
-  end
 
   # Get the set of records this controller has access to.
   def get_recordset
