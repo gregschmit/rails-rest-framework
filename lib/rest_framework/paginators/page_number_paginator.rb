@@ -75,13 +75,25 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
   # Wrap the serialized page with appropriate metadata.
   def get_paginated_response(serialized_page)
     page_query_param = @controller.class.page_query_param
-    base_params = @controller.request.query_parameters.symbolize_keys
+    request = @controller.request
+    base_params = request.query_parameters.symbolize_keys
+
+    # Anchor next/previous to the request's own scheme/host/port so they point back at the same
+    # endpoint the client is using — even when the app's `default_url_options` host differs from the
+    # request host (e.g. an API served on a subdomain), which `url_for` would otherwise emit.
+    host_options = {
+      only_path: false,
+      protocol: request.protocol,
+      host: request.host,
+      port: request.optional_port,
+    }
+
     has_next = @total_count ? @page_number < @total_pages : @has_next
     next_url = if has_next
-      @controller.url_for({ **base_params, page_query_param => @page_number + 1 })
+      @controller.url_for({ **base_params, page_query_param => @page_number + 1, **host_options })
     end
     previous_url = if @page_number > 1
-      @controller.url_for({ **base_params, page_query_param => @page_number - 1 })
+      @controller.url_for({ **base_params, page_query_param => @page_number - 1, **host_options })
     end
 
     {

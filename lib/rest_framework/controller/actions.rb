@@ -22,7 +22,9 @@ module RESTFramework::Controller
     options: { methods: [ :options ], condition: ->(_c) { true }, kwargs: { anchor: true } },
   }.freeze
   RRF_BUILTIN_MEMBER_ACTIONS = {
-    show: { methods: [ :get ], condition: ->(c) { c.model } },
+    # `show` names the member route (`as: ""` -> the singular resource, e.g. `api_demo_user`);
+    # `update`/`destroy` share that path and reuse the helper.
+    show: { methods: [ :get ], condition: ->(c) { c.model }, kwargs: { as: "" } },
     update: { methods: [ :put, :patch ], condition: ->(c) { c.model } },
     destroy: { methods: [ :delete ], condition: ->(c) { c.model } },
   }.freeze
