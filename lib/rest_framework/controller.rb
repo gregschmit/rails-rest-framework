@@ -3,6 +3,7 @@
 # module rather than defining a separate submodule.
 module RESTFramework::Controller
   RRF_BASE_CONFIG = {
+    model: nil,
     singular: nil,
 
     # Options related to metadata and display.
@@ -11,10 +12,6 @@ module RESTFramework::Controller
     version: nil,
     inflect_acronyms: RESTFramework.config.inflect_acronyms,
     openapi_include_children: false,
-
-    # Options related to models.
-    model: nil,
-    recordset: nil,
 
     # Bulk configuration.
     #
@@ -97,6 +94,10 @@ module RESTFramework::Controller
 
     # Option for `recordset.create` vs `Model.create` behavior.
     create_from_recordset: true,
+
+    # Options for scoped nested routing.
+    scope_nested_by_parent: true,
+    scope_nested_through_controllers: true,
 
     # Options related to serialization.
     rescue_unknown_format_with: :json,
@@ -840,16 +841,84 @@ module RESTFramework::Controller
   alias_method :get_update_params, :get_body_params
   alias_method :get_destroy_params, :get_body_params
 
-  # Get the set of records this controller has access to.
+  # Get the set of records this controller has access to. Override this to scope records (e.g. to
+  # the current user); the default scopes to a nested parent resource when one is present in the
+  # path, otherwise the model's default scope (all records).
   def get_recordset
-    return self.class.recordset if self.class.recordset
+    return nil unless self.class.model
 
-    # If there is a model, return that model's default scope (all records by default).
-    if self.class.model
-      return self.class.model.all
+    self._rrf_nested_parent_recordset || self.class.model.all
+  end
+
+  # For a nested route, walk the whole parent chain in path order and return the innermost
+  # collection of this controller's model — e.g. `/movies/:movie_id/genres/:genre_id/tracks` becomes
+  # `Movie.find(movie_id).genres.find(genre_id).tracks`. Every link is enforced (a broken one raises
+  # `RecordNotFound` -> 404), and each association is resolved from its parent, so `belongs_to`,
+  # `has_many`, and `has_and_belongs_to_many` children all work. Each parent is looked up via its
+  # own controller's recordset (see `scope_nested_through_controllers`), so per-level access scoping
+  # is enforced. Returns `nil` when there is no nested parent, or a `<name>_id` param can't connect.
+  def _rrf_nested_parent_recordset
+    # Set on an ad-hoc parent instance below, so evaluating a parent's `get_recordset` doesn't
+    # recurse back into nested scoping (we want the parent's own scope, not to re-nest it).
+    return nil if @_rrf_scoping_parent
+    return nil unless self.class.scope_nested_by_parent && request
+
+    # `<name>_id` path parameters that name a model, in route order (outermost parent first).
+    parents = request.path_parameters.filter_map { |key, value|
+      key = key.to_s
+      next unless key.end_with?("_id")
+
+      model = key.delete_suffix("_id").classify.safe_constantize
+      next unless model.is_a?(Class) && model < ActiveRecord::Base
+
+      [ model, value ]
+    }
+    return nil if parents.empty?
+
+    # Find the outermost parent within its controller's scope, then descend: each next parent is
+    # constrained both to the previous parent's association and to its own controller's scope.
+    record = nil
+    parents.each do |model, id|
+      scope = _rrf_parent_recordset(model)
+
+      unless record.nil?
+        assoc = _rrf_collection_association_name(record.class, model)
+        return nil unless assoc
+
+        scope = record.public_send(assoc).merge(scope)
+      end
+
+      record = scope.find(id)
     end
 
-    nil
+    # Finally, the innermost parent's collection of this controller's model.
+    assoc = _rrf_collection_association_name(record.class, self.class.model)
+    return nil unless assoc
+
+    record.public_send(assoc)
+  end
+
+  # A parent's recordset for the nested-scope walk: its own controller's `get_recordset` (so that
+  # controller's access scoping is reused), or the bare model when the feature is off or no sibling
+  # controller is found. The ad-hoc instance shares this request and skips its own nested scoping.
+  def _rrf_parent_recordset(model)
+    return model.all unless self.class.scope_nested_through_controllers
+
+    controller = RESTFramework::Utils.controller_for_model(self.class, model)
+    return model.all unless controller
+
+    instance = controller.new
+    instance.request = request
+    instance.response = response
+    instance.instance_variable_set(:@_rrf_scoping_parent, true)
+    instance.get_recordset
+  end
+
+  # The name of `klass`'s collection association whose records are `target_model`, or `nil`.
+  def _rrf_collection_association_name(klass, target_model)
+    klass.reflect_on_all_associations.find { |ref|
+      ref.collection? && !ref.polymorphic? && ref.klass == target_model
+    }&.name
   end
 
   # Filter the recordset and return records this request has access to.

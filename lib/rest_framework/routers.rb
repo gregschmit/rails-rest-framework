@@ -32,20 +32,12 @@ module ActionDispatch::Routing
       end
     end
 
-    # Route one or more controllers from their action stores. Plural model controllers get
-    # collection/member scopes; singular and non-model controllers route everything at the root.
-    # Passing several names condenses simple routes into one call; per-name options (`path:`, `as:`,
-    # `controller:`, and a block) only apply to a single name.
-    def rest_route(*names, **kwargs, &block)
-      if names.size > 1 && (block || (kwargs.keys & [ :path, :as, :controller ]).any?)
-        raise ArgumentError, "rest_route: options and a block require a single name"
-      end
-
-      names.each { |name| _rrf_rest_route(name, **kwargs, &block) }
-    end
-
-    # Route a single controller from its action store.
-    def _rrf_rest_route(name, **kwargs)
+    # Route a single controller from its action store. Whether it routes as a singular `resource` or
+    # a plural `resources` is decided by the controller's own config (`singular`, and whether it has
+    # a `model`) — not by the method name: a plural model controller gets collection/member scopes,
+    # while singular and non-model controllers route everything at the root. Pass a block to nest
+    # resources like Rails' `resources` (the nested controller resolves in the current scope).
+    def rest_resource(name, **kwargs)
       controller = kwargs.delete(:controller) || name
       if controller.is_a?(Class)
         controller_class = controller
@@ -83,6 +75,18 @@ module ActionDispatch::Routing
 
         yield if block_given?
       end
+    end
+
+    # Route several controllers that share the same options in one call — handy for condensing a
+    # namespace. Per-name options (`path:`, `as:`, `controller:`) and a block only make sense for a
+    # single controller, so they're rejected when several names are given. The `s` is about routing
+    # multiple controllers, not plural routes — a single plural controller is still `rest_resource`.
+    def rest_resources(*names, **kwargs, &block)
+      if names.size > 1 && (block || (kwargs.keys & [ :path, :as, :controller ]).any?)
+        raise ArgumentError, "rest_resources: per-name options and a block require a single name"
+      end
+
+      names.each { |name| rest_resource(name, **kwargs, &block) }
     end
   end
 end

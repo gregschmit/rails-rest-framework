@@ -137,18 +137,20 @@ end
 
 ### Routing
 
-Use `rest_route` to route any controller. It wraps Rails' `resource` / `resources` routers, picking
-`resources` for a plural model controller and `resource` otherwise, and automatically routes the
-controller's built-in and extra actions. A controller with a `model` gets the full CRUD set; a
-modelless controller is routed at its root (its `index`, which renders `index_content`).
+Use `rest_resource` to route a controller (`rest_resources` routes several that share options). They
+wrap Rails' `resource` / `resources` routers, picking `resources` for a plural model controller and
+`resource` otherwise — so plurality follows the controller's config, not the helper name. Built-in
+and extra actions are routed automatically: a controller with a `model` gets the full CRUD set; a
+modelless controller is routed at its root (its `index`, which renders `index_content`). A block
+nests resources, and a nested recordset is auto-scoped to its parent (`/movies/:movie_id/genres` →
+`Movie.find(params[:movie_id]).genres`).
 
 ```ruby
 Rails.application.routes.draw do
-  rest_route :api  # `ApiController` serves the `/api` root.
+  rest_resource :api  # `ApiController` serves the `/api` root.
 
   namespace :api do
-    rest_route :movies
-    rest_route :users
+    rest_resources :movies, :users
   end
 end
 ```
@@ -181,9 +183,9 @@ changes; the migration checklist that follows walks through updating an existing
 - **Declarative actions** — `add_action` / `remove_action` declare extra routes with an explicit
   `member` / `collection` scope and per-declaration propagation, and can disable built-ins too,
   replacing the `extra_actions` config hashes.
-- **Unified routing** — one `rest_route` (accepting several names) replaces `rest_resource` /
-  `rest_resources` / `rest_root`; a modelless controller serves the API root from its
-  `index_content`.
+- **Simpler routing** — `rest_resource` routes one controller and `rest_resources` routes several
+  (plurality of the *routes* follows the controller's config, not the helper name); `rest_root` and
+  `rest_route` are gone, and nested resources are auto-scoped to their parent.
 - **Action delegation** — mark an action `metadata: { delegate: true }` to dispatch it to a model
   class method (collection) or record method (member), passing query params through as args/kwargs.
 - **Consumer-driven association queries** (opt-in via `enable_association_queries`) — clients can
@@ -218,7 +220,8 @@ See the guide for details on each item.
 - [ ] Convert `extra_actions` / `extra_member_actions` hashes to `add_action` / `remove_action`.
 - [ ] Render custom actions with `render(api: ...)`, replacing the older `api_response(...)` /
       `render_api(...)`.
-- [ ] Replace `rest_resource` / `rest_resources` / `rest_root` with `rest_route`.
+- [ ] Replace `rest_root` and `rest_route` with `rest_resource` (single controller) or
+      `rest_resources` (several) — plurality of the routes now comes from controller config.
 - [ ] Fold any dedicated root controller into the namespace's base controller, which now serves the
       root via `index_content` (the standalone `root` action and `rest_root` are gone).
 - [ ] Rename `singleton_controller` → `singular`.

@@ -96,7 +96,7 @@ class ApiController < ApplicationController
 end
 ```
 
-Point `rest_route` at the base controller to route it (see [Routers](../02_routers/index.md)).
+Point `rest_resource` at the base controller to route it (see [Routers](../02_routers/index.md)).
 
 ## Response Rendering
 
@@ -269,19 +269,11 @@ class Api::CoolMoviesController < ApiController
 end
 ```
 
-### `recordset`
+### Scoping Records with `get_recordset`
 
-`recordset` statically limits the set of records the controller operates on. It can be any
-`ActiveRecord::Relation`.
-
-```ruby
-class Api::CoolMoviesController < ApiController
-  self.model = Movie
-  self.recordset = Movie.where(cool: true).order(id: :asc)
-end
-```
-
-For dynamic recordsets (e.g., scoped to `current_user`), override `get_recordset` on the instance:
+Override `get_recordset` to limit the set of records the controller operates on — for example,
+scoping to `current_user`. It can return any `ActiveRecord::Relation`, and is evaluated per request
+(so it can depend on the current user, params, and so on):
 
 ```ruby
 class Api::CoolMoviesController < ApiController
@@ -294,7 +286,9 @@ end
 ```
 
 Always set `model` explicitly when overriding `get_recordset`, since the framework uses `model`
-(not the recordset) for things like fields, strong params, and the OpenAPI schema.
+(not the recordset) for things like fields, strong params, and the OpenAPI schema. Overriding
+`get_recordset` also replaces the default [nested-parent auto-scoping](../02_routers/index.md), so
+scope to the parent yourself if you need both.
 
 ### `bulk` — Bulk Actions
 
@@ -355,8 +349,8 @@ controller.
 
 If set to `true`, the resourceful router will generate singular (`resource`) rather than plural
 (`resources`) routes for this controller — meaning no `id` in the URL and no `index` action. You
-can also force plural by setting it to `false`. When `nil` (the default), `rest_route` uses plural
-routes for controllers with a `model` and singular routes otherwise.
+can also force plural by setting it to `false`. When `nil` (the default), routing uses plural routes
+for controllers with a `model` and singular routes otherwise.
 
 ## Fields
 
@@ -864,7 +858,6 @@ inheritance hierarchy. Assignments are local to the controller they're written o
 | Attribute                    | Default | Purpose                                                                                  |
 | ---------------------------- | ------- | ---------------------------------------------------------------------------------------- |
 | `model`                      | `nil`   | The `ActiveRecord` model. Required for built-in CRUD behavior.                           |
-| `recordset`                  | `nil`   | Static recordset. Falls back to `model.all`.                                             |
 | `bulk`                       | `false` | Enables bulk `create`, `update_all`, and `destroy_all` actions.                          |
 | `singular`                   | `nil`   | Force singular/plural resourceful routing.                                               |
 | `create_from_recordset`      | `true`  | Create new records through the recordset (inherit recordset conditions as defaults).     |

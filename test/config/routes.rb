@@ -17,25 +17,40 @@ Rails.application.routes.draw do
     asset: /[a-zA-Z0-9_\.-]+/,
   )
 
-  rest_route :api
+  rest_resource :api
 
   namespace :api do
-    rest_route :demo
+    rest_resource :demo
     namespace :demo do
-      rest_route :emails, :genres, :movies, :phone_numbers
-      rest_route :users do
-        rest_route :movies
+      rest_resources :emails, :genres, :phone_numbers
+      rest_resource :movies do
+        # Nested resource without a dedicated controller: reuses the top-level
+        # `Api::Demo::GenresController`, auto-scoped to `Movie.find(params[:movie_id]).genres`.
+        rest_resource :genres do
+          # Two levels deep: auto-scoped along the whole chain to
+          # `Movie.find(movie_id).genres.find(genre_id).movies` (enforcing genre-belongs-to-movie).
+          rest_resource :movies
+        end
+      end
+      rest_resource :users do
+        # Nested resource with a dedicated controller: `rest_resource` resolves the controller in
+        # the current module scope, so scope the module to reach `Api::Demo::Users::MoviesController`
+        # (which scopes the recordset to the user via its own `get_recordset`).
+        scope(module: :users) do
+          rest_resource :movies
+        end
       end
     end
 
-    rest_route :test
+    rest_resource :test
     namespace :test do
-      rest_route :user, :users
+      rest_resource :user
+      rest_resource :users
       resources :users, only: [] do
-        rest_route :user_emails
+        rest_resource :user_emails
       end
 
-      rest_route(
+      rest_resources(
         :added_select,
         :bare_create,
         :fields_hash_except,
@@ -52,25 +67,33 @@ Rails.application.routes.draw do
         :no_total_count,
       )
 
-      rest_route :network
+      rest_resource :network
+
+      # Nested resource whose parent controller scopes its recordset: auto-scoping looks the parent
+      # up through `Api::Test::Nested::MoviesController#get_recordset`, enforcing its access scope.
+      namespace :nested do
+        rest_resource :movies do
+          rest_resource :genres
+        end
+      end
 
       # Isolated namespace for the association-expansion feature: the parent controller and the
       # sibling it discovers are both under `assoc_exp`, so they don't collide with the real
       # `Api::Test::UsersController`.
       namespace :assoc_exp do
-        rest_route :users, :users_explicit, :users_disabled, :movies, :genres
-        rest_route :limits, :limits_per_assoc, :limits_disabled, :limits_unlimited
+        rest_resources :users, :users_explicit, :users_disabled, :movies, :genres
+        rest_resources :limits, :limits_per_assoc, :limits_disabled, :limits_unlimited
       end
 
       if defined?(ActiveModel::Serializer)
         namespace :active_model_serializer do
-          rest_route :users
+          rest_resource :users
         end
       end
     end
   end
 
   if defined?(ActiveModel::Serializer)
-    rest_route :render_json
+    rest_resource :render_json
   end
 end
