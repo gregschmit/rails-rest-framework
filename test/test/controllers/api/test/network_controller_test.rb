@@ -10,6 +10,6 @@ class Api::Test::NetworkControllerTest < ActionController::TestCase
   def test_can_get_test_action
     get(:test, as: :json)
     assert_response(:success)
-    assert(@response.parsed_body["message"] == "Hello, this is your non-resourceful route!")
+    assert(@response.parsed_body["message"] == "Hello, this is your non-model route!")
   end
 end
