@@ -224,6 +224,24 @@ class ApiController < ApplicationController
 end
 ```
 
+### Conditional Actions
+
+`propagate:` also accepts a `->(controller) { ... }` predicate. It receives the controller (the
+class the action would route on) and is evaluated during action composition: the action applies to
+this controller **and** its descendants wherever the predicate holds — for example, only on
+controllers that set a `model`:
+
+```ruby
+class ApiController < ApplicationController
+  include RESTFramework::Controller
+  # Reaches every descendant, but only routes where a model is set.
+  add_action(:stats, :get, type: :collection, propagate: ->(c) { c.model })
+end
+```
+
+This is the same mechanism the built-in actions use to gate themselves (e.g. `index` only on plural
+controllers). `remove_action`'s `propagate:` accepts a predicate too.
+
 ### Delegating to Model Methods
 
 If a declared action's `metadata[:delegate]` is `true`, the framework dispatches the action to the

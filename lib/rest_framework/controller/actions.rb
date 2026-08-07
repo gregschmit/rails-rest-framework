@@ -50,7 +50,10 @@ module RESTFramework::Controller
     # Route an action, choosing the collection/member scope. Pass `type:` on a plural model
     # controller, where the scopes differ; elsewhere the scope is implied — a singular controller's
     # sole resource is a member (so `delegate` targets the record), a modelless one has only a
-    # collection — and `type:` warns as unnecessary (unless the action is delegated).
+    # collection — and `type:` warns as unnecessary (unless the action is delegated). `propagate:`
+    # also accepts a `->(controller) { ... }` predicate to gate the action: it applies to this
+    # controller and its descendants wherever the predicate holds — e.g. `->(c) { c.model }` routes
+    # it only on controllers with a model.
     def add_action(name, methods, type: nil, **opts)
       singular_model = self.model && self.singular
 
@@ -112,9 +115,10 @@ module RESTFramework::Controller
       _rrf_action_removes(type)[name] = { propagate: _rrf_normalize_propagate(propagate) }
     end
 
-    # Normalize `propagate:` to `false` (local), `true` (self + descendants), or `:exclude_self`
-    # (descendants only). Non-standard values warn: `nil` becomes `false`, anything else truthy
-    # becomes `true`.
+    # Normalize `propagate:` to `false` (local), `true` (self + descendants), `:exclude_self`
+    # (descendants only), or a `->(controller) { ... }` predicate (self + descendants, wherever it
+    # returns truthy). Non-standard values warn: `nil` becomes `false`, anything else truthy becomes
+    # `true`.
     def _rrf_normalize_propagate(value)
       case value
       when false
@@ -125,21 +129,25 @@ module RESTFramework::Controller
         Rails.logger.warn("RRF: `propagate: nil` is nonstandard; treating as `false`.")
         false
       else
+        return value if value.respond_to?(:call)
+
         Rails.logger.warn("RRF: invalid `propagate:` value #{value.inspect}; treating as `true`.")
         true
       end
     end
 
-    # Whether an entry with the given `propagate`, declared on some class, reaches the controller
-    # we're composing for. `is_self` is true when that class is the controller itself.
-    def _rrf_reaches?(propagate, is_self)
+    # Whether an entry with the given `propagate`, declared on some class, reaches `controller` (the
+    # class we're composing for). `is_self` is true when the declaring class is `controller` itself.
+    def _rrf_reaches?(propagate, is_self, controller)
       case propagate
       when :exclude_self
         !is_self
       when true
         true
-      else # false
+      when false
         is_self
+      else # a `->(controller) { ... }` predicate: applies wherever it holds (self and descendants)
+        propagate.call(controller)
       end
     end
 
@@ -172,11 +180,11 @@ module RESTFramework::Controller
         is_self = klass.equal?(self)
 
         klass._rrf_action_removes(type).each do |name, remove|
-          effective.delete(name) if _rrf_reaches?(remove[:propagate], is_self)
+          effective.delete(name) if _rrf_reaches?(remove[:propagate], is_self, self)
         end
 
         klass._rrf_action_adds(type).each do |name, add|
-          effective[name] = add[:spec] if _rrf_reaches?(add[:propagate], is_self)
+          effective[name] = add[:spec] if _rrf_reaches?(add[:propagate], is_self, self)
         end
       end
 
