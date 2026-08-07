@@ -45,8 +45,8 @@ Rails.application.routes.draw do
     rest_resource :test
     namespace :test do
       # A singular and plural user resource coexist only in this test app; both would claim the
-      # `api_test_user` route helper (as they would in plain Rails), so name the singular one.
-      rest_resource :user, as: :user_singular
+      # `api_test_user` route helper (as they would in plain Rails), so suppress the singular's.
+      rest_resource :user, helpers: false
       rest_resource :users
       resources :users, only: [] do
         rest_resource :user_emails

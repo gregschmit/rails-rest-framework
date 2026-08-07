@@ -9,6 +9,28 @@ class RRFRouterTest < Minitest::Test
     ActionDispatch::Routing::RouteSet.new.draw(&block)
   end
 
+  def route_names(&block)
+    rs = ActionDispatch::Routing::RouteSet.new
+    rs.draw(&block)
+    rs.routes.map(&:name).compact
+  end
+
+  # By default a resource names its member route; `helpers: false` routes it with no helpers at all
+  # (so a singular and plural resource of the same model can coexist without a name collision).
+  def test_helpers_default_names_the_member_route
+    names = route_names do
+      scope(as: :api) { rest_resource(:user, controller: Api::Test::UserController) }
+    end
+    assert_includes(names, "api_user")
+  end
+
+  def test_helpers_false_suppresses_all_route_names
+    names = route_names do
+      scope(as: :api) { rest_resource(:user, controller: Api::Test::UserController, helpers: false) }
+    end
+    assert_empty(names)
+  end
+
   def test_multiple_names_with_a_per_name_option_raise
     [ { path: "films" }, { as: "films" }, { controller: "movies" } ].each do |opts|
       assert_raises(ArgumentError) { draw { rest_resources(:movies, :users, **opts) } }

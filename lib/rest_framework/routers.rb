@@ -9,8 +9,9 @@ module ActionDispatch::Routing
       mod.const_get("#{name.to_s.camelize}Controller")
     end
 
-    # Route each action from a controller's action store.
-    def _rrf_route_actions(actions)
+    # Route each action from a controller's action store. `helpers: false` routes every action
+    # unnamed (`as: nil`), so the resource contributes no URL/path helpers.
+    def _rrf_route_actions(actions, helpers: true)
       actions.each_value do |spec|
         # Delegated actions keep their declared action name (so routing and OpenAPI show the real
         # name); `method_for_action` redirects dispatch to `rrf_delegate`, which needs the scope.
@@ -18,6 +19,7 @@ module ActionDispatch::Routing
         if !spec.builtin && spec.metadata&.[](:delegate)
           kwargs = kwargs.merge(rrf_delegate_scope: spec.type)
         end
+        kwargs = kwargs.merge(as: nil) unless helpers
 
         spec.methods.each do |m|
           public_send(m, spec.path, action: spec.name, **kwargs)
@@ -36,7 +38,9 @@ module ActionDispatch::Routing
     # a plural `resources` is decided by the controller's own config (`singular`, and whether it has
     # a `model`) — not by the method name: a plural model controller gets collection/member scopes,
     # while singular and non-model controllers route everything at the root. Pass a block to nest
-    # resources like Rails' `resources` (the nested controller resolves in the current scope).
+    # resources like Rails' `resources` (the nested controller resolves in the current scope). Pass
+    # `helpers: false` to route the resource without URL/path helpers — handy when a singular and a
+    # plural resource of the same model would otherwise claim the same helper name.
     def rest_resource(name, **kwargs)
       controller = kwargs.delete(:controller) || name
       if controller.is_a?(Class)
@@ -47,6 +51,9 @@ module ActionDispatch::Routing
 
       # Set controller if it's not explicitly set.
       kwargs[:controller] = name unless kwargs[:controller]
+
+      # `helpers:` is ours, not Rails' — pull it out before forwarding the rest to the router.
+      helpers = kwargs.delete(:helpers) != false
 
       has_model = !!controller_class.model
       singular = controller_class.singular
@@ -61,16 +68,16 @@ module ActionDispatch::Routing
         if has_model
           if singular
             # Singular model controller: actions and member actions are the same.
-            self._rrf_route_actions(actions)
-            self._rrf_route_actions(member_actions)
+            self._rrf_route_actions(actions, helpers: helpers)
+            self._rrf_route_actions(member_actions, helpers: helpers)
           else
             # Plural model controller: route collection/member actions separately.
-            collection { self._rrf_route_actions(actions) }
-            member { self._rrf_route_actions(member_actions) }
+            collection { self._rrf_route_actions(actions, helpers: helpers) }
+            member { self._rrf_route_actions(member_actions, helpers: helpers) }
           end
         else
           # Non-model controller: only actions (there is no member `:id` scope).
-          self._rrf_route_actions(actions)
+          self._rrf_route_actions(actions, helpers: helpers)
         end
 
         yield if block_given?

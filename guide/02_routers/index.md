@@ -108,6 +108,16 @@ single-controller `rest_resource`, not the multi-controller `rest_resources`.)
 rest_resource :movies, path: "films", as: "films"
 ```
 
+Pass `helpers: false` to route a resource without any URL/path helpers. This is useful when a
+singular and a plural resource of the same model live in the same scope — like a `resource :user`
+("the current user") next to `resources :users` — where both would otherwise claim the `user`
+helper (a name collision Rails raises on, since `as: false`/`nil` doesn't suppress helpers there):
+
+```ruby
+rest_resources :users        # api_users, api_user, ...
+rest_resource :user, helpers: false   # routed, but contributes no helpers
+```
+
 ### Nested Resources
 
 Give `rest_resource` a block to nest resources like Rails' `resources`, so a child routes under the
