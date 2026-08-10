@@ -59,6 +59,7 @@ Rails.application.routes.draw do
         :fields_hash_exclude,
         :fields_hash_only,
         :fields_hash_only_except,
+        :json_column,
         :no_rescue_unknown_format,
         :read_only,
         :users_with_hidden,

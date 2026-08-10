@@ -716,6 +716,14 @@ module RESTFramework::Controller
         next nil
       end
 
+      # JSON/JSONB columns hold opaque structured data, so permit hash (and nested) values here.
+      # Scalar and array values can't share this slot in strong params, so `get_body_params`
+      # re-injects them after filtering.
+      if config[:type].in?(%i[json jsonb])
+        hash_variations[f] = {}
+        next nil
+      end
+
       if config[:reflection]
         # Add `_id`/`_ids` variations for associations.
         if id_field = config[:id_field]
@@ -745,6 +753,15 @@ module RESTFramework::Controller
     @_get_allowed_parameters << hash_variations
 
     @_get_allowed_parameters
+  end
+
+  # Writable JSON/JSONB columns, whose values are opaque and may arrive as any JSON type.
+  def get_json_columns
+    return @_get_json_columns if defined?(@_get_json_columns)
+
+    @_get_json_columns = self.writable_fields.map(&:to_s).select { |f|
+      self.class.field_configuration[f]&.[](:type).in?(%i[json jsonb])
+    }
   end
 
   # Use strong parameters to filter the request body.
@@ -813,6 +830,16 @@ module RESTFramework::Controller
       end
     end
 
+    # JSON/JSONB columns accept any JSON value. Strong params permit a hash for such a key (via
+    # `key: {}`; see `get_allowed_parameters`), but can't also accept a scalar or array in that
+    # slot, so remember non-hash values now and re-inject them after filtering.
+    json_scalar_or_array_data = {}
+    if !bulk_action && self.class.model
+      self.get_json_columns.each do |f|
+        json_scalar_or_array_data[f] = data[f] if data.key?(f) && !data[f].is_a?(Hash)
+      end
+    end
+
     # Filter the request body with strong params. If `bulk` is true, then we apply allowed
     # parameters to the `_json` key of the request body.
     body_params = if allowed_params == true
@@ -838,6 +865,11 @@ module RESTFramework::Controller
     # hashes that conform to the ActiveStorage API.
     has_many_attached_scalar_data.each do |k, v|
       body_params[k].unshift(*v)
+    end
+
+    # Re-inject scalar/array JSON column values that strong params dropped (see above).
+    json_scalar_or_array_data.each do |k, v|
+      body_params[k] = v
     end
 
     body_params

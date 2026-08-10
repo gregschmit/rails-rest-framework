@@ -112,6 +112,7 @@ ActiveRecord::Schema[8.1].define(version: 2024_09_06_180000) do
     t.string "legal_name", default: "", null: false
     t.string "login", default: "", null: false
     t.integer "manager_id"
+    t.json "preferences"
     t.string "short_name", default: "", null: false
     t.integer "state", default: 0, null: false
     t.string "status", default: "", null: false

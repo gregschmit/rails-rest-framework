@@ -16,6 +16,8 @@ class TestAppTables < ActiveRecord::Migration[6.0]
       t.time(:day_start)
       t.date(:last_reviewed_on)
 
+      t.json(:preferences)
+
       t.references(:manager, foreign_key: { on_delete: :nullify, to_table: :users })
 
       t.timestamps(null: true)
