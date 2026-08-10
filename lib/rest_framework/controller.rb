@@ -301,34 +301,23 @@ module RESTFramework::Controller
         cfg = field_config[f]&.dup || {}
         cfg[:label] ||= self.label_for(f)
 
+        # An explicit `read_only`/`write_only` in `field_config` wins over every framework default
+        # below (primary key, readonly attributes, the read/write-only config lists, and the
+        # method-field default), so those only apply when the developer set neither.
+        read_write_only_set = cfg.key?(:read_only) || cfg.key?(:write_only)
+
         # Annotate primary key.
         if self.model.primary_key == f
           cfg[:primary_key] = true
-
-          unless cfg.key?(:read_only)
-            cfg[:read_only] = true
-          end
+          cfg[:read_only] = true unless read_write_only_set
         end
 
         # Annotate field mutability and display properties.
-        cfg[:read_only] = true if f.in?(readonly_attributes) || f.in?(read_only_fields)
-        cfg[:write_only] = true if f.in?(write_only_fields)
-        cfg[:hidden] = true if f.in?(hidden_fields)
-
-        # Raise warnings on some bad combinations of properties.
-        if cfg[:write_only]
-          if cfg[:read_only]
-            Rails.logger.warn("RRF: `#{f}` write_only conflicts with read_only.")
-          end
-
-          if cfg[:hidden]
-            Rails.logger.warn("RRF: `#{f}` write_only implies hidden.")
-          end
-
-          if cfg[:hidden_from_index]
-            Rails.logger.warn("RRF: `#{f}` write_only implies hidden_from_index.")
-          end
+        unless read_write_only_set
+          cfg[:read_only] = true if f.in?(readonly_attributes) || f.in?(read_only_fields)
+          cfg[:write_only] = true if f.in?(write_only_fields)
         end
+        cfg[:hidden] = true if f.in?(hidden_fields)
 
         # Annotate column data.
         if column = columns[f]
@@ -432,7 +421,8 @@ module RESTFramework::Controller
         # Determine if this is just a method.
         if !cfg[:kind] && self.model.method_defined?(f)
           cfg[:kind] = "method"
-          cfg[:read_only] = true if cfg[:read_only].nil?
+          # Methods are read-only by default, unless the field was marked read/write-only.
+          cfg[:read_only] = true unless read_write_only_set || cfg[:write_only]
         end
 
         # Collect validator options into a hash on their type, while also updating `required` based
@@ -451,6 +441,21 @@ module RESTFramework::Controller
           cfg[:validators] ||= {}
           cfg[:validators][kind] ||= []
           cfg[:validators][kind] << options
+        end
+
+        # Warn on bad combinations, once every property has been resolved.
+        if cfg[:write_only]
+          if cfg[:read_only]
+            Rails.logger.warn("RRF: `#{f}` write_only conflicts with read_only.")
+          end
+
+          if cfg[:hidden]
+            Rails.logger.warn("RRF: `#{f}` write_only implies hidden.")
+          end
+
+          if cfg[:hidden_from_index]
+            Rails.logger.warn("RRF: `#{f}` write_only implies hidden_from_index.")
+          end
         end
 
         next [ f, cfg ]
