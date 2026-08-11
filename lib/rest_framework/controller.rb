@@ -687,8 +687,8 @@ module RESTFramework::Controller
         next true if f.in?(columns)
 
         # Skip polymorphic associations: they can't be JOINed, so filtering or ordering through them
-        # (e.g. `?favorite.name=x` or `?ordering=favorite.name`) would raise. This method is the safe
-        # field surface for those query features.
+        # (e.g. `?favorite.name=x` or `?ordering=favorite.name`) would raise. This method is the
+        # safe field surface for those query features.
         field = cfg[f]
         field&.[](:kind) == "association" && !field[:reflection]&.polymorphic?
       end
