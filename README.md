@@ -174,17 +174,16 @@ The gem version is in `lib/rest_framework/version.rb`. Cutting a release means b
 constant, tagging, and pushing; the pipeline builds the gem from the constant and pushes it to
 RubyGems when it sees the tag.
 
-Use `bin/release` (a thin wrapper around the [gem-release](https://github.com/svenfuchs/gem-release)
-gem's `gem bump`) with the exact version:
+Use the [gem-release](https://github.com/svenfuchs/gem-release) gem's `gem bump`; it edits the
+version constant, commits, and (with `--tag`) creates the annotated tag `v<version>`. It's a
+RubyGems plugin, so `bin/setup` installs it and `gem bump` works without `bundle exec`. Run it from
+the `master` branch with a clean working tree:
 
 ```shell
-bin/release 2.0.0.rc1   # cut a release candidate
-bin/release 2.0.0       # cut the final release
-bin/release 2.0.1       # a patch release
+gem bump rest_framework --version 2.0.0.rc1 --tag
 ```
 
-This bumps the constant, commits, and creates the annotated tag `v<version>` locally. Review, then
-push to publish:
+Review, then push to publish:
 
 ```shell
 git push --follow-tags
