@@ -1,15 +1,25 @@
 # Seed data is used for the Demo API as well as initial test data in lieu of fixtures.
 
+require "base64"
+require "stringio"
+
 # Always clear the database before seeding.
 puts "Clearing database..."
+Star.delete_all
 Email.delete_all
 Genre.delete_all
 Movie.delete_all
 PhoneNumber.delete_all
 User.delete_all
 
-Faker::Config.random = Random.new(42)
-srand(42)
+# `Movie.delete_all` skips callbacks, so the Action Text and Active Storage rows it owns aren't
+# removed; purge them here so re-seeding stays idempotent.
+ActiveStorage::Attachment.find_each(&:purge)
+ActionText::RichText.delete_all
+
+SEED = 42
+Faker::Config.random = Random.new(SEED)
+srand(SEED)
 
 puts "Seed data loading..."
 
@@ -87,16 +97,56 @@ Genre.create!(name: "Noir", description: "Noir movies are dark and cynical.")
 Genre.create!(name: "Superhero", description: "Superhero movies are about heroes.")
 Genre.create!(name: "Spy", description: "Spy movies are about espionage.")
 
-50.times do |_|
-  Movie.create!(
+all_genres = Genre.all.to_a
+
+# Tiny 10x10 solid-color PNGs, used as placeholder movie images.
+# rubocop:disable Layout/LineLength
+sample_images = {
+  "red.png" => "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8z8BQz0AEYBxVSF+FABJADveWkH6oAAAAAElFTkSuQmCC",
+  "green.png" => "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNk+M9Qz0AEYBxVSF+FAAhKDveksOjmAAAAAElFTkSuQmCC",
+  "blue.png" => "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FAP5FDvcfRYWgAAAAAElFTkSuQmCC",
+}.transform_values { |data| Base64.decode64(data) }
+# rubocop:enable Layout/LineLength
+
+50.times do
+  movie = Movie.create!(
     name: Faker::Movie.title,
     price: rand(5.0..20.0),
-    main_genre: Genre.all.sample,
+    main_genre: all_genres.sample,
+    description: "<p>#{Faker::Lorem.paragraph(sentence_count: 2)}</p>",
   )
+
+  # Genres (a HABTM, distinct from the single `main_genre`).
+  movie.genres = all_genres.sample(rand(1..3))
+
+  # Attach a cover to every movie, and a handful of pictures to some.
+  cover_name, cover_data = sample_images.to_a.sample
+  movie.cover.attach(
+    io: StringIO.new(cover_data), filename: cover_name, content_type: "image/png",
+  )
+  if rand < 0.4
+    sample_images.to_a.sample(rand(1..3)).each do |name, data|
+      movie.pictures.attach(io: StringIO.new(data), filename: name, content_type: "image/png")
+    end
+  end
 rescue ActiveRecord::RecordInvalid
 end
 
 example.movies += Movie.all.sample(5)
 admin.movies += Movie.all.sample(20)
+
+# Assign polymorphic favorites (a Movie or a Genre) to demonstrate how the framework serializes
+# polymorphic references.
+favorites = Movie.all.to_a + Genre.all.to_a
+example.update!(favorite: Movie.first)
+admin.update!(favorite: Genre.first)
+User.where(favorite_id: nil).limit(200).find_each do |u|
+  u.update!(favorite: favorites.sample)
+end
+
+# "Star" a mix of movies and genres for a couple of users, via the polymorphic join model.
+[ example, admin ].each do |u|
+  favorites.sample(5).each { |starrable| Star.create!(user: u, starrable: starrable) }
+end
 
 puts "Seed data loaded."

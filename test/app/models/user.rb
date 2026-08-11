@@ -12,9 +12,17 @@ class User < ApplicationRecord
   belongs_to(:billing_email, optional: true, class_name: "Email", foreign_key: "finance_email_id")
 
   belongs_to :manager, class_name: "User", optional: true
+
+  # A polymorphic association (a user's favorite is a `Movie` or a `Genre`) to exercise how the
+  # framework serializes and filters polymorphic references.
+  belongs_to :favorite, polymorphic: true, optional: true
+
   has_and_belongs_to_many :movies
   has_many :emails
   has_many :managed_users, class_name: "User", foreign_key: "manager_id"
+
+  # A "starred" collection via a join model whose target is polymorphic (`Movie` or `Genre`).
+  has_many :stars
   has_one :phone_number
 
   if Rails.gem_version < Gem::Version.new("7.2")

@@ -653,8 +653,10 @@ module RESTFramework::Controller
   end
 
   def readable_fields
-    cfg = self.class.field_configuration
-    self.get_fields.reject { |f| cfg[f]&.[](:write_only) }
+    @_readable_fields ||= begin
+      cfg = self.class.field_configuration
+      self.get_fields.reject { |f| cfg[f]&.[](:write_only) }
+    end
   end
 
   # The fields a client may write (create/update): `get_fields` minus read_only fields. Excluding
@@ -662,23 +664,35 @@ module RESTFramework::Controller
   # keeps a read_only association from ever producing a permitted (and otherwise unstrippable, since
   # those keys don't match a field name) assignment key.
   def writable_fields
-    cfg = self.class.field_configuration
-    self.get_fields.reject { |f| cfg[f]&.[](:read_only) }
+    @_writable_fields ||= begin
+      cfg = self.class.field_configuration
+      self.get_fields.reject { |f| cfg[f]&.[](:read_only) }
+    end
   end
 
   # `readable_fields` restricted to real columns, for query surfaces that build SQL directly
   # (find_by, search) and would raise on a virtual/method field.
   def readable_columns
-    self.readable_fields & self.class.model.column_names
+    @_readable_columns ||= self.readable_fields & self.class.model.column_names
   end
 
   # `readable_fields` restricted to columns and associations, for surfaces that also resolve dotted
   # `association.sub_field` paths (filtering, ordering). Excludes virtual/method fields, which have
   # no column to order or filter by.
   def readable_columns_or_associations
-    cfg = self.class.field_configuration
-    columns = self.class.model.column_names
-    self.readable_fields.select { |f| f.in?(columns) || cfg[f]&.[](:kind) == "association" }
+    @_readable_columns_or_associations ||= begin
+      cfg = self.class.field_configuration
+      columns = self.class.model.column_names
+      self.readable_fields.select do |f|
+        next true if f.in?(columns)
+
+        # Skip polymorphic associations: they can't be JOINed, so filtering or ordering through them
+        # (e.g. `?favorite.name=x` or `?ordering=favorite.name`) would raise. This method is the safe
+        # field surface for those query features.
+        field = cfg[f]
+        field&.[](:kind) == "association" && !field[:reflection]&.polymorphic?
+      end
+    end
   end
 
   # Get a hash of strong parameters for the current action.

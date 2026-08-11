@@ -196,15 +196,21 @@ module RESTFramework::Controller
 
           if cfg[:reflection]
             ref = cfg[:reflection]
+
+            # A polymorphic `belongs_to` has no single target class, so class-derived properties
+            # (`association_primary_key`, `join_table`) raise; expose the `*_type` column instead.
+            polymorphic = ref.respond_to?(:polymorphic?) && ref.polymorphic?
             v[:"x-rrf-reflection"] = {
+              polymorphic: polymorphic || nil,
               class_name: ref.respond_to?(:class_name) ? ref.class_name : nil,
               foreign_key: ref.respond_to?(:foreign_key) ? ref.foreign_key : nil,
+              foreign_type: polymorphic ? ref.foreign_type : nil,
               association_foreign_key: ref.respond_to?(:association_foreign_key) ?
                 ref.association_foreign_key : nil,
-              association_primary_key: ref.respond_to?(:association_primary_key) ?
+              association_primary_key: !polymorphic && ref.respond_to?(:association_primary_key) ?
                 ref.association_primary_key : nil,
               inverse_of: ref.respond_to?(:inverse_of) ? ref.inverse_of&.name : nil,
-              join_table: ref.respond_to?(:join_table) ? ref.join_table : nil,
+              join_table: !polymorphic && ref.respond_to?(:join_table) ? ref.join_table : nil,
             }.compact
             v[:"x-rrf-association_pk"] = cfg[:association_pk]
             v[:"x-rrf-association_fields"] = cfg[:fields]

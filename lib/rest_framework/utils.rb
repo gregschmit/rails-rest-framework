@@ -122,8 +122,14 @@ module RESTFramework::Utils
   # Get the fields for a given model, including not just columns (which includes foreign keys), but
   # also associations. Note that we always return an array of strings, not symbols.
   def self.fields_for(model, exclude_associations:, action_text:, active_storage:)
-    foreign_keys = model.reflect_on_all_associations(:belongs_to).map(&:foreign_key)
-    base_fields = model.column_names.reject { |c| c.in?(foreign_keys) }
+    belongs_to = model.reflect_on_all_associations(:belongs_to)
+
+    # A polymorphic `belongs_to` is backed by both a foreign key and a `*_type` column; the
+    # association represents both, so drop them from the plain column fields (as we already do for
+    # every foreign key).
+    excluded_columns = belongs_to.map(&:foreign_key)
+    excluded_columns += belongs_to.select(&:polymorphic?).map(&:foreign_type)
+    base_fields = model.column_names.reject { |c| c.in?(excluded_columns) }
 
     return base_fields if exclude_associations
 
@@ -173,7 +179,25 @@ module RESTFramework::Utils
       return fields
     end
 
-    [ "id", "name" ]
+    # A polymorphic association has no single target class, so we can't resolve a label column ahead
+    # of time. The id and type together identify the record; a per-record label is added at
+    # serialization time when the target has one (see `serialize_polymorphic`).
+    [ "id", "type" ]
+  end
+
+  # Serialize a polymorphic association's target as `{<pk> => id, "type" => type}`, plus a label
+  # entry when the target responds to one of the configured `label_fields`. The type comes from the
+  # parent's `*_type` column, so it matches exactly what is stored (and what a reverse lookup uses).
+  def self.serialize_polymorphic(target, type)
+    result = {}
+    Array(target.class.primary_key).each { |pk| result[pk] = target.public_send(pk) }
+    result["type"] = type
+
+    if label = RESTFramework.config.label_fields.find { |f| target.respond_to?(f) }
+      result[label] = target.public_send(label)
+    end
+
+    result
   end
 
   # Get a field's id/ids variation.

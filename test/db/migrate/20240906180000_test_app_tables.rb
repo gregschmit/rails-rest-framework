@@ -20,6 +20,8 @@ class TestAppTables < ActiveRecord::Migration[6.0]
 
       t.references(:manager, foreign_key: { on_delete: :nullify, to_table: :users })
 
+      t.references(:favorite, polymorphic: true, null: true)
+
       t.timestamps(null: true)
     end
 
@@ -68,6 +70,13 @@ index: { unique: true })
       :users, :movies, column_options: { null: false, foreign_key: { on_delete: :cascade } }
     ) do |t|
       t.index([ :user_id, :movie_id ], unique: true)
+    end
+
+    create_table(:stars) do |t|
+      t.references(:user, null: false, foreign_key: { on_delete: :cascade })
+      t.references(:starrable, polymorphic: true, null: false)
+
+      t.index([ :user_id, :starrable_type, :starrable_id ], unique: true)
     end
   end
 end

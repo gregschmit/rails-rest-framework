@@ -241,13 +241,25 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       if f.in?(column_names)
         columns << f
       elsif ref = reflections[f]
-        effective_fields = self._effective_association_fields(f, ref, field_config)
-        sub_config = if ref.polymorphic?
-          # No single target class to introspect, so serialize every field as a method.
-          { only: [], methods: effective_fields }
-        else
-          self._build_association_config(ref.klass, effective_fields, field_config)
+        # A polymorphic `belongs_to` has no single target class to introspect, so serialize it via a
+        # method that always emits the `type` (from the `*_type` column) alongside the id, plus a
+        # label when the target has one. Filtering/ordering skip polymorphic associations (see
+        # `readable_columns_or_associations`), so consumer-driven field/limit requests don't apply.
+        if ref.polymorphic?
+          foreign_type = ref.foreign_type
+          serializer_methods[f] = f
+          includes_map[f] = f.to_sym
+          self.define_singleton_method(f) do |record|
+            next nil unless target = record.send(f)
+
+            RESTFramework::Utils.serialize_polymorphic(target, record.send(foreign_type))
+          end
+
+          next
         end
+
+        effective_fields = self._effective_association_fields(f, ref, field_config)
+        sub_config = self._build_association_config(ref.klass, effective_fields, field_config)
 
         # Apply certain rules regarding collection associations.
         if ref.collection?

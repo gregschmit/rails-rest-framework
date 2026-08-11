@@ -101,11 +101,22 @@ ActiveRecord::Schema[8.1].define(version: 2024_09_06_180000) do
     t.index ["user_id"], name: "index_phone_numbers_on_user_id", unique: true
   end
 
+  create_table "stars", force: :cascade do |t|
+    t.integer "starrable_id", null: false
+    t.string "starrable_type", null: false
+    t.integer "user_id", null: false
+    t.index ["starrable_type", "starrable_id"], name: "index_stars_on_starrable_type_and_starrable_id"
+    t.index ["user_id", "starrable_type", "starrable_id"], name: "index_stars_on_user_id_and_starrable_type_and_starrable_id", unique: true
+    t.index ["user_id"], name: "index_stars_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.integer "age"
     t.decimal "balance", precision: 8, scale: 2
     t.datetime "created_at"
     t.time "day_start"
+    t.integer "favorite_id"
+    t.string "favorite_type"
     t.integer "finance_email_id"
     t.boolean "is_admin", default: false, null: false
     t.date "last_reviewed_on"
@@ -117,6 +128,7 @@ ActiveRecord::Schema[8.1].define(version: 2024_09_06_180000) do
     t.integer "state", default: 0, null: false
     t.string "status", default: "", null: false
     t.datetime "updated_at"
+    t.index ["favorite_type", "favorite_id"], name: "index_users_on_favorite_type_and_favorite_id"
     t.index ["finance_email_id"], name: "index_users_on_finance_email_id", unique: true
     t.index ["login"], name: "index_users_on_login", unique: true
     t.index ["manager_id"], name: "index_users_on_manager_id"
@@ -131,6 +143,7 @@ ActiveRecord::Schema[8.1].define(version: 2024_09_06_180000) do
   add_foreign_key "movies_users", "movies", on_delete: :cascade
   add_foreign_key "movies_users", "users", on_delete: :cascade
   add_foreign_key "phone_numbers", "users", on_delete: :cascade
+  add_foreign_key "stars", "users", on_delete: :cascade
   add_foreign_key "users", "emails", column: "finance_email_id", on_delete: :nullify
   add_foreign_key "users", "users", column: "manager_id", on_delete: :nullify
 end
