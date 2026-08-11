@@ -1,8 +1,14 @@
-require_relative "lib/rest_framework/version"
+# Read the version without loading the library. Bundler evaluates this gemspec once per on-disk copy
+# of the gem (e.g., both `vendor/bundle` and `vendor/cache` for a vendored git gem), so
+# `require`-ing `version.rb` here would define `RESTFramework::VERSION` twice in one process and
+# warn about an already-initialized constant.
+version = File.read(
+  File.expand_path("lib/rest_framework/version.rb", __dir__),
+)[/VERSION\s*=\s*"([^"]+)"/, 1]
 
 Gem::Specification.new do |spec|
   spec.name = "rest_framework"
-  spec.version = RESTFramework::VERSION
+  spec.version = version
   spec.authors = [ "Gregory N. Schmit" ]
   spec.email = [ "schmitgreg@gmail.com" ]
 
