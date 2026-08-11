@@ -1,13 +1,7 @@
 # A simple filtering backend that supports filtering a recordset based on query parameters.
 class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
   # Wrapper to indicate a type of query that must be negated with `where.not(...)`.
-  class Not
-    attr_reader :q
-
-    def initialize(q)
-      @q = q
-    end
-  end
+  Not = Struct.new(:q)
 
   PREDICATES = {
     true: true,
