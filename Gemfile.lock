@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rest_framework (0.dev)
+    rest_framework (2.0.0.rc0)
       rails (>= 4.0)
 
 GEM
@@ -131,6 +131,7 @@ GEM
     fugit (1.13.0)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
+    gem-release (2.2.4)
     globalid (1.4.0)
       activesupport (>= 6.1)
     httparty (0.24.2)
@@ -393,6 +394,7 @@ DEPENDENCIES
   debug
   faker
   foreman
+  gem-release
   httparty
   kamal
   kramdown

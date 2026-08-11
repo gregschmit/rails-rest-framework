@@ -67,7 +67,7 @@ controllers/
    └─ users_controller.rb
 ```
 
-### Serving the Root API Index
+### Serving the Base API Index
 
 A controller without a `model` renders its `index_content` at its index path, which serves as the
 API root. Because declared actions are local by default (they don't propagate to subclasses), you
@@ -167,6 +167,28 @@ web server and the job queue, which serves the test app and coverage/brakeman re
 - Test App: [http://127.0.0.1:3000](http://127.0.0.1:3000)
 - API: [http://127.0.0.1:3000/api](http://127.0.0.1:3000/api)
 - Reports: [http://127.0.0.1:3000/reports](http://127.0.0.1:3000/reports)
+
+### Releasing
+
+The gem version is in `lib/rest_framework/version.rb`. Cutting a release means bumping that
+constant, tagging, and pushing; the pipeline builds the gem from the constant and pushes it to
+RubyGems when it sees the tag.
+
+Use `bin/release` (a thin wrapper around the [gem-release](https://github.com/svenfuchs/gem-release)
+gem's `gem bump`) with the exact version:
+
+```shell
+bin/release 2.0.0.rc1   # cut a release candidate
+bin/release 2.0.0       # cut the final release
+bin/release 2.0.1       # a patch release
+```
+
+This bumps the constant, commits, and creates the annotated tag `v<version>` locally. Review, then
+push to publish:
+
+```shell
+git push --follow-tags
+```
 
 ## Version 2
 

@@ -16,7 +16,6 @@ RUN bundle install --jobs 4
 
 # Setup application.
 COPY . .
-RUN SECRET_KEY_BASE=1 bin/rails runner "RESTFramework::Version.stamp_version"
 RUN SECRET_KEY_BASE=1 bin/rails db:reset
 RUN SECRET_KEY_BASE=1 bin/rails assets:precompile || true
 RUN SECRET_KEY_BASE=1 LOGS=all bin/rails log:clear tmp:clear

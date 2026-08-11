@@ -82,6 +82,7 @@ group :development do
   gem "byebug"
   gem "debug"
   gem "foreman"
+  gem "gem-release", require: false
   gem "listen"
   gem "pry-rails"
   gem "rubocop-rails-omakase", require: false

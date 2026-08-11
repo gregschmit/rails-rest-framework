@@ -12,17 +12,6 @@ class RESTFrameworkTest < Minitest::Test
     refute_nil(RESTFramework::VERSION)
   end
 
-  def test_get_version_git
-    assert(RESTFramework::Version.get_version)
-  end
-
-  def test_get_version_stamp
-    RESTFramework::Version.unstamp_version
-    assert(RESTFramework::Version.get_version(skip_git: true) == RESTFramework::Version::UNKNOWN)
-    RESTFramework::Version.stamp_version
-    assert(RESTFramework::Version.get_version(skip_git: true))
-  end
-
   def test_unserializable_serializer
     unserializable_object = UnserializableUser.new
     exception = assert_raises(NoMethodError) do
