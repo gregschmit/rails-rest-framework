@@ -76,8 +76,6 @@ group :production do
 end
 
 group :development do
-  gem "better_errors", "2.9.1"  # Avoid `sassc` dependency.
-  gem "binding_of_caller"
   gem "brakeman"
   gem "byebug"
   gem "debug"
@@ -107,6 +105,6 @@ group :test do
   # only install it there; this also avoids resolving an incompatible SimpleCov on older Rubies.
   if RUNNING_OFFICIAL_RUBY_RAILS
     gem "simplecov", require: false
-    gem "simplecov-lcov", "0.8.0", require: false
+    gem "simplecov-lcov", require: false
   end
 end

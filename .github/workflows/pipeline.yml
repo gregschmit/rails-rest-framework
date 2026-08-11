@@ -58,6 +58,10 @@ jobs:
         uses: coverallsapp/github-action@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Point the reporter at our LCOV file explicitly. Otherwise it also auto-detects SimpleCov's
+          # internal `.resultset.json` and fails parsing its float timestamp.
+          file: coverage/lcov.info
+          format: lcov
         if: steps.lcov_exists.outputs.files_exists == 'true'
   deploy:
     needs: test

@@ -57,6 +57,11 @@ class Application < Rails::Application
   if defined?(SolidQueue)
     config.active_job.queue_adapter = :solid_queue
     config.solid_queue.connects_to = { database: { writing: :queue } }
+  else
+    # Without a real queue backend (older Rails), run jobs inline. The default `:async` adapter runs
+    # Active Storage's analyze job on a separate thread/connection, which races the seed's own
+    # writes and deadlocks SQLite (`SQLite3::BusyException: database is locked`).
+    config.active_job.queue_adapter = :inline
   end
 
   # Use vendored assets if testing `sprockets` or `propshaft`.
