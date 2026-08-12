@@ -174,19 +174,21 @@ The gem version is in `lib/rest_framework/version.rb`. Cutting a release means b
 constant, tagging, and pushing; the pipeline builds the gem from the constant and pushes it to
 RubyGems when it sees the tag.
 
-Use the [gem-release](https://github.com/svenfuchs/gem-release) gem's `gem bump`; it edits the
-version constant, commits, and (with `--tag`) creates the annotated tag `v<version>`. It's a
-RubyGems plugin, so `bin/setup` installs it and `gem bump` works without `bundle exec`. Run it from
-the `master` branch with a clean working tree:
+Use `bin/release` with the exact version. It bumps the version constant, refreshes `Gemfile.lock`,
+folds both into a single commit, and creates the annotated tag `v<version>` (via the
+[gem-release](https://github.com/svenfuchs/gem-release) gem). The lock refresh matters because
+`rest_framework` is a path gem: if the tagged commit's lock doesn't match the bumped gemspec, CI's
+frozen `bundle install` fails with "the gemspecs for path gems changed". Run it from the `master`
+branch with a clean working tree:
 
 ```shell
-gem bump rest_framework --version 2.0.0.rc1 --tag
+bin/release 2.0.0.rc1   # cut a release candidate
 ```
 
 Review, then push to publish:
 
 ```shell
-git push --follow-tags
+git push origin master --follow-tags
 ```
 
 ## Version 2
