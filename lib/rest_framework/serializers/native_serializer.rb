@@ -242,17 +242,18 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
         columns << f
       elsif ref = reflections[f]
         # A polymorphic `belongs_to` has no single target class to introspect, so serialize it via a
-        # method that always emits the `type` (from the `*_type` column) alongside the id, plus a
-        # label when the target has one. Filtering/ordering skip polymorphic associations (see
-        # `readable_columns_or_associations`), so consumer-driven field/limit requests don't apply.
+        # method that emits the `type` (from the `*_type` column) and id, a label when the target
+        # has one, and any other configured `fields` the target responds to. Consumer-driven
+        # field/limit requests don't apply (they need one target class; see the serializer method).
         if ref.polymorphic?
           foreign_type = ref.foreign_type
+          fields = field_config[:fields]
           serializer_methods[f] = f
           includes_map[f] = f.to_sym
           self.define_singleton_method(f) do |record|
             next nil unless target = record.send(f)
 
-            RESTFramework::Utils.serialize_polymorphic(target, record.send(foreign_type))
+            RESTFramework::Utils.serialize_polymorphic(target, record.send(foreign_type), fields)
           end
 
           next

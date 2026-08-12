@@ -188,13 +188,24 @@ module RESTFramework::Utils
   # Serialize a polymorphic association's target as `{<pk> => id, "type" => type}`, plus a label
   # entry when the target responds to one of the configured `label_fields`. The type comes from the
   # parent's `*_type` column, so it matches exactly what is stored (and what a reverse lookup uses).
-  def self.serialize_polymorphic(target, type)
+  #
+  # `fields` are the association's configured fields. `id`/`type` are always emitted above; any
+  # other field is resolved against the target and included when it responds to it, so a field
+  # absent on a target class (e.g. `price` on a `Genre`) is omitted rather than serialized as nil.
+  def self.serialize_polymorphic(target, type, fields = nil)
     result = {}
     Array(target.class.primary_key).each { |pk| result[pk] = target.public_send(pk) }
     result["type"] = type
 
     if label = RESTFramework.config.label_fields.find { |f| target.respond_to?(f) }
-      result[label] = target.public_send(label)
+      result[label.to_s] = target.public_send(label)
+    end
+
+    Array(fields).each do |f|
+      f = f.to_s
+      next if f.in?(%w[id type]) || result.key?(f)
+
+      result[f] = target.public_send(f) if target.respond_to?(f)
     end
 
     result

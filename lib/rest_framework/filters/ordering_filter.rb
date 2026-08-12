@@ -12,6 +12,7 @@ class RESTFramework::Filters::OrderingFilter < RESTFramework::Filters::BaseFilte
 
     # Ensure ordering_fields are strings since the split param will be strings.
     fields = self._get_fields
+    poly_columns = self._polymorphic_columns(@controller.class.ordering_fields)
     order_string = @controller.request.query_parameters[param]
 
     # Reject nested-hash inputs like `?ordering[evil]=x` (Rack parses these into
@@ -35,6 +36,13 @@ class RESTFramework::Filters::OrderingFilter < RESTFramework::Filters::BaseFilte
       # A plain, directly-allowlisted field.
       if column.in?(fields)
         ordering[column] = direction
+        next
+      end
+
+      # A polymorphic association's `<name>.id`/`<name>.type` maps to a backing column on the base
+      # table, so it orders directly with no JOIN (unlike other sub-fields).
+      if real_column = poly_columns[column]
+        ordering[real_column] = direction
         next
       end
 

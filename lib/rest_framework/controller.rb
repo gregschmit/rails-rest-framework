@@ -686,11 +686,31 @@ module RESTFramework::Controller
       self.readable_fields.select do |f|
         next true if f.in?(columns)
 
-        # Skip polymorphic associations: they can't be JOINed, so filtering or ordering through them
-        # (e.g. `?favorite.name=x` or `?ordering=favorite.name`) would raise. This method is the
-        # safe field surface for those query features.
+        # Skip polymorphic associations: they can't be JOINed, so filtering or ordering *through*
+        # them (e.g. `?favorite.name=x`) would raise. Their backing `*_id`/`*_type` columns are
+        # still filterable/orderable via `readable_polymorphic_columns`.
         field = cfg[f]
         field&.[](:kind) == "association" && !field[:reflection]&.polymorphic?
+      end
+    end
+  end
+
+  # Map each readable polymorphic `belongs_to`'s dotted `<name>.id`/`<name>.type` path to its
+  # backing `*_id`/`*_type` column. These columns live on the base table, so — unlike the
+  # association itself, which can't be JOINed — they filter and order like any other column. The
+  # dotted path mirrors the serialized shape, so clients filter with `?favorite.type=Genre`.
+  def readable_polymorphic_columns
+    @_readable_polymorphic_columns ||= begin
+      cfg = self.class.field_configuration
+      self.readable_fields.each_with_object({}) do |f, map|
+        field = cfg[f]
+        next unless field&.[](:kind) == "association"
+
+        ref = field[:reflection]
+        next unless ref&.polymorphic?
+
+        map["#{f}.id"] = ref.foreign_key
+        map["#{f}.type"] = ref.foreign_type
       end
     end
   end

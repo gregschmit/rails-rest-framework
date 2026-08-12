@@ -57,6 +57,7 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
   # query config in the form of: `[base_query, pred_queries, includes]`.
   def _get_query_config
     fields = self._get_fields
+    poly_columns = self._polymorphic_columns(@controller.class.filter_fields)
     includes = []
 
     # Predicate queries must be added to a separate list because multiple predicates can be used.
@@ -75,10 +76,18 @@ class RESTFramework::Filters::QueryFilter < RESTFramework::Filters::BaseFilter
         next [ field, v ]
       end
 
+      # A polymorphic association's `<name>.id`/`<name>.type` maps to a backing column on the base
+      # table, so it filters directly with no JOIN (unlike other sub-fields).
+      if column = poly_columns[field]
+        next [ column, v ]
+      end
+
       # First, try to parse a simple predicate and check if it is filterable.
       pred_field, predicate = self.parse_predicate(field)
       if predicate && pred_field.in?(fields)
         field = pred_field
+      elsif predicate && (column = poly_columns[pred_field])
+        field = column
       else
         # Last, try to parse a sub-field or sub-field w/predicate.
         root_field, sub_field = field.split(".", 2)

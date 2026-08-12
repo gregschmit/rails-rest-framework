@@ -66,6 +66,7 @@ Rails.application.routes.draw do
         :find_by,
         :nested_field_config,
         :polymorphic,
+        :polymorphic_fields,
         :stars,
         :users_with_association_fields,
         :unpaginated,
