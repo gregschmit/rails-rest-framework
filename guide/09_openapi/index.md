@@ -1,7 +1,7 @@
 # OpenAPI
 
 REST Framework auto-generates an OpenAPI document for every controller, reflecting the
-real configuration that drives the API: `fields`, `field_config`, validators, enum variants,
+real configuration that drives the API: `fields` (membership and per-field `config`), validators, enum variants,
 association metadata, rich-text and attachment fields, bulk support, and more. The document is
 served from the controller's `OPTIONS` endpoint — no extra setup, no drift between spec and
 behavior.
@@ -46,13 +46,13 @@ under `components.schemas.<SchemaName>`. The schema name defaults to the control
 with `"Controller"` stripped and `"::"` replaced with `"."` — so `Api::MoviesController` becomes
 `Api.Movies`. Every `field` becomes a property:
 
-- `title` — set from the label (either `field_config[:label]` or the auto-generated titleized
+- `title` — set from the label (either the field's `config` `label:` or the auto-generated titleized
   name).
 - `type` — derived from the column or attribute (`string`, `integer`, `boolean`, etc.), or set
   to `array` / `object` for associations.
 - `readOnly` — `true` when the field is marked read-only (primary keys, fields in
-  `read_only_fields`, method fields, or fields with `field_config[f][:read_only] = true`).
-- `default` — default from the schema or `field_config`.
+  `read_only_fields`, method fields, or fields with `read_only: true` in their `config`).
+- `default` — default from the schema or the field's `config`.
 - `enum` — enum key names, when the column is an ActiveRecord enum.
 - `required` — fields inferred from `null: false` or presence validators land in the schema's
   top-level `required` array.

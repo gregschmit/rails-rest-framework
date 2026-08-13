@@ -8,8 +8,7 @@ class RRFReadOnlyAssociationParamsTest < ActiveSupport::TestCase
   def build_controller(field_config)
     Class.new(Api::TestController) do
       self.model = User
-      self.fields = [ :id, :login, :manager ]
-      self.field_config = field_config
+      self.fields = { only: [ :id, :login, :manager ], config: field_config }
     end.new
   end
 

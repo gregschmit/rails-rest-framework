@@ -185,10 +185,10 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
   # Recursively translate an association's fields into a `serializable_hash` config
   # (`only`/`methods`/`include`). Columns go to `only` and plain methods to `methods`; a field that
   # is itself an association is recursed into (as a nested `include`) only when it has its own entry
-  # in `field_config[:field_config]`. Otherwise it falls through to a method and serializes as
-  # before (its full `as_json`), so deeper nesting is opt-in and never narrows the default output.
-  def _build_association_config(model, fields, field_config)
-    nested = field_config[:field_config] || {}
+  # in `nested` (the per-field `config:` map). Otherwise it falls through to a method and serializes
+  # as before (its full `as_json`), so deeper nesting is opt-in and never narrows the output.
+  def _build_association_config(model, fields, nested)
+    nested ||= {}
     only = []
     methods = []
     includes = {}
@@ -200,9 +200,11 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
       if sf.in?(model.column_names)
         only << sf
       elsif sub_field_config && (ref = model.reflect_on_association(sf.to_sym)) && !ref.polymorphic?
-        sub_fields = sub_field_config[:fields]&.map(&:to_s) ||
-          RESTFramework::Utils.association_fields_for(ref)
-        includes[sf] = self._build_association_config(ref.klass, sub_fields, sub_field_config)
+        sub_spec = RESTFramework::Utils.normalize_field_spec(sub_field_config[:fields])
+        sub_fields = RESTFramework::Utils.resolve_field_names(
+          sub_spec, RESTFramework::Utils.association_fields_for(ref)
+        )
+        includes[sf] = self._build_association_config(ref.klass, sub_fields, sub_spec[:config])
       elsif model.method_defined?(sf)
         methods << sf
       else
@@ -258,7 +260,9 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
         end
 
         effective_fields = self._effective_association_fields(f, ref, field_config)
-        sub_config = self._build_association_config(ref.klass, effective_fields, field_config)
+        sub_config = self._build_association_config(
+          ref.klass, effective_fields, field_config[:field_config]
+        )
 
         # Apply certain rules regarding collection associations.
         if ref.collection?

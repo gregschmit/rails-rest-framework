@@ -2,7 +2,7 @@
 
 Serializers convert ActiveRecord objects (records and relations) into Ruby primitives
 (`Array` / `Hash`), which the framework then renders as JSON, XML, or HTML. If you've configured
-`fields` and `field_config` well (see [Fields](../03_controllers/#fields) in the Controllers
+`fields` well (see [Fields](../03_controllers/#fields) in the Controllers
 section), the default serializer will produce exactly what you want — no serializer class
 needed.
 
@@ -17,7 +17,7 @@ Reach for a serializer configuration when:
 - You want to override the selection the framework derived from `fields`.
 
 For most read-only adjustments, simply declaring `fields` and using `hidden` / `hidden_from_index`
-in `field_config` is enough. The sections below cover the more advanced cases.
+in a field's `config` is enough. The sections below cover the more advanced cases.
 
 ## `NativeSerializer`
 
@@ -39,7 +39,7 @@ You can configure the serializer in three ways, in order of precedence:
 1. Inline on the controller via `native_serializer_config` /
    `native_serializer_singular_config` / `native_serializer_plural_config`.
 2. By writing a `NativeSerializer` subclass and pointing `serializer_class` at it.
-3. Implicitly — by leaving serializer config blank and just using `fields` / `field_config`.
+3. Implicitly — by leaving serializer config blank and just using `fields`.
 
 ### Inline Controller Configuration
 

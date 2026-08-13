@@ -96,27 +96,50 @@ module RESTFramework::Utils
     s
   end
 
-  # Parse fields hashes.
+  # A `fields` spec's structural (non-`config`) keys, i.e. those that shape set membership.
+  FIELD_SPEC_KEYS = [ :only, :except, :include, :exclude, :config ].freeze
+
+  # Normalize a field spec — an Array, a Hash, or nil — into a canonical
+  # `{only:, include:, exclude:, config:}` Hash containing only the keys that are present. A plain
+  # Array is sugar for `only:`. `except:` is an alias of `exclude:`; the two are merged.
+  def self.normalize_field_spec(spec)
+    return {} if spec.nil?
+    return { only: spec } unless spec.is_a?(Hash)
+
+    exclude = (Array(spec[:exclude]) + Array(spec[:except])).presence
+    { only: spec[:only], include: spec[:include], exclude: exclude, config: spec[:config] }.compact
+  end
+
+  # Resolve a field spec (Array | Hash | nil) to an ordered array of string field names: start from
+  # `base` unless `only:` replaces it, then apply `include:`. Any field named in `config:` is
+  # implicitly part of the set (so a configured field never needs to be listed twice). `exclude:` is
+  # applied last, so it can still drop a field that `config:`/`include:` would otherwise add.
+  def self.resolve_field_names(spec, base)
+    spec = self.normalize_field_spec(spec)
+    names = (spec[:only] || base).map(&:to_s)
+    names += spec[:include].map(&:to_s) if spec[:include]
+    names |= spec[:config].keys.map(&:to_s) if spec[:config]
+    names -= spec[:exclude].map(&:to_s) if spec[:exclude]
+    names
+  end
+
+  # Resolve a top-level `fields` hash to an ordered array of string field names, using the model's
+  # default fields as the base. The `config:` key carries per-field configuration and is ignored for
+  # membership.
   def self.parse_fields_hash(h, model, exclude_associations:, action_text:, active_storage:)
-    parsed_fields = h[:only] || (
-      model ? self.fields_for(
-        model,
-        exclude_associations: exclude_associations,
-        action_text: action_text,
-        active_storage: active_storage,
-      ) : []
-    )
-    parsed_fields += h[:include].map(&:to_s) if h[:include]
-    parsed_fields -= h[:exclude].map(&:to_s) if h[:exclude]
-    parsed_fields -= h[:except].map(&:to_s) if h[:except]
+    base = model ? self.fields_for(
+      model,
+      exclude_associations: exclude_associations,
+      action_text: action_text,
+      active_storage: active_storage,
+    ) : []
 
     # Warn for any unknown keys.
-    (h.keys - [ :only, :except, :include, :exclude ]).each do |k|
+    (h.keys.map(&:to_sym) - FIELD_SPEC_KEYS).each do |k|
       Rails.logger.warn("RRF: Unknown key in fields hash: #{k}.")
     end
 
-    # We should always return strings, not symbols.
-    parsed_fields.map(&:to_s)
+    self.resolve_field_names(h, base)
   end
 
   # Get the fields for a given model, including not just columns (which includes foreign keys), but

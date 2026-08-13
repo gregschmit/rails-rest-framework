@@ -7,7 +7,7 @@ class RRFOpenapiTest < ActiveSupport::TestCase
   def test_schema_annotates_read_only_and_write_only_fields
     controller = Class.new(Api::TestController) do
       self.model = User
-      self.field_config = { balance: { write_only: true } }
+      self.fields = { config: { balance: { write_only: true } } }
     end
     props = controller.openapi_schema[:properties]
 

@@ -5,8 +5,10 @@ class Api::Test::PolymorphicFieldsController < Api::TestController
   # serialize them per-target: `price` exists on `Movie` but not `Genre`, so it is omitted there.
   # `id`/`type` are omitted here on purpose — they always identify a polymorphic ref, so they are
   # emitted regardless of the configured fields.
-  self.fields = %w[id login favorite]
-  self.field_config = {
-    favorite: { fields: [ :name, :price ] },
+  self.fields = {
+    only: %w[id login favorite],
+    config: {
+      favorite: { fields: [ :name, :price ] },
+    },
   }
 end

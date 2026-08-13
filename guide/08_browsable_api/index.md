@@ -17,8 +17,7 @@ returned as JSON. The layout gives you:
 - Request metadata (the current path, method, status).
 - The serialized JSON and XML payloads, pretty-printed and syntax-highlighted.
 - A route listing showing every action on this controller (and nested controllers).
-- Generated HTML forms for `POST` / `PUT` / `PATCH`, respecting `fields`, `field_config`, and
-  validators.
+- Generated HTML forms for `POST` / `PUT` / `PATCH`, respecting `fields` and validators.
 - A raw-body form for arbitrary JSON/XML payloads (useful for bulk actions).
 - Dark/light/system theme toggle.
 
@@ -181,7 +180,7 @@ still rendering raw responses.
 
 For `POST` / `PUT` / `PATCH` routes, the browsable API renders two form types:
 
-- **HTML Form** — a traditional Rails form, driven by `fields` and `field_config`. It respects
+- **HTML Form** — a traditional Rails form, driven by `fields`. It respects
   required fields, default values, enum dropdowns, association pickers, and nested attributes.
   Only shown when the controller has a `model`.
 - **Raw Form** — a textarea for pasting a JSON, XML, or form-encoded body, with a content-type

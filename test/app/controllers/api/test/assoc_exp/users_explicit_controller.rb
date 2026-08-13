@@ -3,7 +3,9 @@
 # (`Api::Test::AssocExp::UsersController`) would allow more.
 class Api::Test::AssocExp::UsersExplicitController < Api::TestController
   self.model = User
-  self.fields = %w[id login manager]
+  self.fields = {
+    only: %w[id login manager],
+    config: { manager: { requestable_fields: %w[age] } },
+  }
   self.enable_association_queries = true
-  self.field_config = { manager: { requestable_fields: %w[age] } }
 end

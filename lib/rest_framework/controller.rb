@@ -26,9 +26,10 @@ module RESTFramework::Controller
     bulk_max_size: nil,
     bulk_max_raw_size: nil,
 
-    # Configuring record fields.
+    # Configuring record fields. `fields` is the single source of truth: an Array (sugar for
+    # `only:`), or a Hash of `only:`/`include:`/`exclude:`/`except:` (set membership) plus `config:`
+    # (per-field configuration, keyed by field name).
     fields: nil,
-    field_config: nil,
     read_only_fields: RESTFramework.config.read_only_fields,
     write_only_fields: RESTFramework.config.write_only_fields,
     hidden_fields: nil,
@@ -269,7 +270,8 @@ module RESTFramework::Controller
     def field_configuration
       return @field_configuration if @field_configuration
 
-      field_config = self.field_config&.with_indifferent_access || {}
+      field_config = (self.fields.is_a?(Hash) ? self.fields[:config] : nil)
+        &.with_indifferent_access || {}
       columns = self.model.columns_hash
       column_defaults = self.model.column_defaults
       reflections = self.model.reflections
@@ -351,8 +353,15 @@ module RESTFramework::Controller
           else
             ref_columns = ref.klass.columns_hash
           end
-          cfg[:fields] ||= RESTFramework::Utils.association_fields_for(ref)
-          cfg[:fields] = cfg[:fields].map(&:to_s)
+          # The association's `fields` config is itself a spec (Array or `only:`/`include:`/
+          # `exclude:`/`config:` Hash). Resolve its membership to a name array (consumed by the
+          # serializer, filters, and OpenAPI) and stash any nested `config:` for the serializer's
+          # recursion.
+          spec = RESTFramework::Utils.normalize_field_spec(cfg[:fields])
+          cfg[:fields] = RESTFramework::Utils.resolve_field_names(
+            spec, RESTFramework::Utils.association_fields_for(ref)
+          )
+          cfg[:field_config] = spec[:config] if spec[:config]
 
           # Strings, to match `:fields` when intersecting requested fields against the allowlist.
           if cfg[:requestable_fields]

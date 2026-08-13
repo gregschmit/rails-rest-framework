@@ -371,7 +371,7 @@ for controllers with a `model` and singular routes otherwise.
 
 ## Fields
 
-`fields` and `field_config` decide:
+`fields` is the single source of truth for everything field-related. It decides:
 
 - Which columns, associations, and methods appear in serialized output.
 - Which parameters the API accepts in the request body (via strong parameters).
@@ -422,8 +422,9 @@ Supported keys:
 | `only`    | Seed the list with just these entries (instead of the default columns/associations). |
 | `include` | Add entries to the set (e.g., model methods, extra associations).                    |
 | `exclude` | Remove entries from the set. Alias: `except`.                                        |
+| `config`  | Per-field configuration, keyed by field name. Fields named here are implicitly included in the set. See [Per-Field Configuration](#per-field-configuration-config). |
 
-All four can be combined:
+The membership keys can be combined:
 
 ```ruby
 self.fields = {
@@ -433,7 +434,9 @@ self.fields = {
 }
 ```
 
-Unknown keys emit a `Rails.logger.warn` at load time.
+The array form is just sugar for `only:` — `self.fields = [ :id, :name ]` is exactly
+`self.fields = { only: [ :id, :name ] }`. Unknown membership keys emit a `Rails.logger.warn` at
+load time.
 
 **Mixing columns, associations, and methods:** because the framework inspects the model, a single
 `fields` list can mix all three:
@@ -455,26 +458,40 @@ self.fields = [
 - Methods are read-only (never accepted in the request body), but their return values are
   serialized.
 
-### Per-Field Configuration: `field_config`
+### Per-Field Configuration: `config`
 
-`field_config` lets you override how a specific field behaves. It's a hash keyed by field name
-whose values are option hashes:
+The `config` key inside `fields` lets you override how a specific field behaves. It's a hash keyed
+by field name whose values are option hashes:
 
 ```ruby
 class Api::UsersController < ApiController
   self.model = User
-  self.fields = [ :id, :name, :email, :password, :bio, :profile_picture ]
-  self.field_config = {
-    email: { label: "Email Address" },
-    password: { write_only: true },                 # Never serialize back out.
-    bio: { hidden_from_index: true },               # Skip on collection responses.
-    profile_picture: { required: true },
+  self.fields = {
+    only: [ :id, :name, :email, :password, :bio, :profile_picture ],
+    config: {
+      email: { label: "Email Address" },
+      password: { write_only: true },                 # Never serialize back out.
+      bio: { hidden_from_index: true },               # Skip on collection responses.
+      profile_picture: { required: true },
+    },
   }
 end
 ```
 
-You only need to specify the keys you actually want to override — the framework fills in defaults
-from the model's schema and validators.
+Membership (`only`/`include`/`exclude`) and per-field `config` live in the same hash, so a field is
+named once. In fact, **a field named in `config` is implicitly included** — you don't have to add it
+to `only`/`include` as well:
+
+```ruby
+self.fields = {
+  only: [ :id, :name ],
+  config: { is_featured: { read_only: true } },  # `is_featured` is included, no need to list it above
+}
+```
+
+`exclude` is applied last, so it still wins if you both exclude and configure the same field. You
+only need to specify the keys you actually want to override — the framework fills in defaults from
+the model's schema and validators.
 
 **Recognized keys:**
 
@@ -489,7 +506,7 @@ from the model's schema and validators.
 | `default`                    | Default value (inferred from the schema).                                                       |
 | `type`                       | The field's type (inferred from columns/attributes).                                            |
 | `enum_variants`              | For enum columns, a map of value to database representation.                                    |
-| `fields`                     | For associations, the fields to render/accept. See [Association Fields](#association-fields). |
+| `fields`                     | For associations, a nested field spec (same form as top-level `fields`). See [Association Fields](#association-fields). |
 | `id_field`                   | For associations, the scalar id field (e.g., `user_id`, `tag_ids`).                             |
 | `nested_attributes_options`  | Passed through for `accepts_nested_attributes_for` associations.                                |
 
@@ -511,7 +528,7 @@ end
 ```
 
 These can be overridden per-controller via the `read_only_fields` / `write_only_fields` class
-attributes, or per-field via `read_only` / `write_only` keys in `field_config`.
+attributes, or per-field via `read_only` / `write_only` keys in a field's `config`.
 
 ### Hidden vs. `hidden_from_index` vs. `write_only`
 
@@ -523,11 +540,11 @@ attributes, or per-field via `read_only` / `write_only` keys in `field_config`.
   passwords and similar credentials. Implies `hidden`.
 
 The controller-level `hidden_fields` attribute is a shortcut for setting `hidden: true` on a list
-of fields without writing out a full `field_config`.
+of fields without writing out a full `config`.
 
 ### Computing the Full Field Configuration
 
-At runtime the framework merges `field_config` with data it infers from the model — columns,
+At runtime the framework merges the per-field `config` with data it infers from the model — columns,
 attribute defaults, reflections, validators, primary-key info, enum variants, Action Text /
 Active Storage reflections — into a single hash available as `field_configuration`:
 
@@ -552,15 +569,19 @@ default, the primary key plus the first "label-like" column that exists (from
 `RESTFramework.config.label_fields`: `name`, `label`, `login`, `title`, `email`, `username`,
 `url`).
 
-You can override the fields for any association via `field_config`:
+You can override the fields for any association via its `config` entry. An association's `fields`
+takes the **same form** as the top-level `fields` — an array (sugar for `only:`) or a hash of
+`only:`/`include:`/`exclude:`/`config:`:
 
 ```ruby
 class Api::MoviesController < ApiController
   self.model = Movie
-  self.fields = [ :id, :name, :director, :cast_members ]
-  self.field_config = {
-    director: { fields: [ :id, :name, :date_of_birth ] },
-    cast_members: { fields: [ :id, :name, :net_worth ] },
+  self.fields = {
+    only: [ :id, :name, :director, :cast_members ],
+    config: {
+      director: { fields: [ :id, :name, :date_of_birth ] },
+      cast_members: { fields: [ :id, :name, :net_worth ] },
+    },
   }
 end
 ```
@@ -573,15 +594,19 @@ Association fields participate in:
 
 #### Nesting Deeper
 
-An association's `field_config` may itself contain a `field_config` to shape a sub-association more
-than one level deep:
+Because an association's `fields` is a full spec, its `config:` can shape a sub-association more than
+one level deep:
 
 ```ruby
-self.field_config = {
-  cart_items: {
-    fields: [ :id, :quantity, :packs ],
-    field_config: {
-      packs: { fields: [ :id, :product_code ] },
+self.fields = {
+  config: {
+    cart_items: {
+      fields: {
+        only: [ :id, :quantity, :packs ],
+        config: {
+          packs: { fields: [ :id, :product_code ] },
+        },
+      },
     },
   },
 }
@@ -590,7 +615,7 @@ self.field_config = {
 Here `packs` (an association on the `cart_items` model) serializes with only `id`/`product_code`
 instead of its full row. This nesting can go arbitrarily deep. A few things to keep in mind:
 
-- **Opt-in and shallow-safe.** A sub-association is only shaped when it has its own `field_config`
+- **Opt-in and shallow-safe.** A sub-association is only shaped when it has its own `config`
   entry; otherwise it serializes exactly as before (its full `as_json`), so this never silently
   narrows existing output.
 - **Static only.** Deeper levels are configured by the controller — per-request features
@@ -625,14 +650,16 @@ and the primary key is always kept. This is **secure by default** — requested 
 an allowlist, and disallowed/unknown fields are silently dropped:
 
 1. **Explicit allowlist.** Declare the extra fields a consumer may request for an association via
-   `field_config` (the defaults are always allowed, so list only what's beyond them). This is a
+   its `config` entry (the defaults are always allowed, so list only what's beyond them). This is a
    trusted list you own (like `fields` itself):
 
    ```ruby
-   self.field_config = {
-     main_genre: {
-       fields: [ :id, :name ],                # serialized by default
-       requestable_fields: [ :description ],  # additionally requestable
+   self.fields = {
+     config: {
+       main_genre: {
+         fields: [ :id, :name ],                # serialized by default
+         requestable_fields: [ :description ],  # additionally requestable
+       },
      },
    }
    ```
@@ -664,12 +691,14 @@ GET /api/admin/movies?associations.cast_members.limit=50&associations.genres.lim
 The value is capped at `association_limit_max` (default `100`). `limit=all` — or its aliases
 `limit=none` and `limit=0` — yields exactly that cap. To allow more (or truly unlimited) records,
 raise the cap: set `association_limit_max` to a larger number, or `nil` to lift it entirely (then
-`limit=all` serializes every record). The cap can also be overridden per association in
-`field_config`:
+`limit=all` serializes every record). The cap can also be overridden per association in its
+`config` entry:
 
 ```ruby
-self.field_config = {
-  cast_members: { limit_max: 500 },
+self.fields = {
+  config: {
+    cast_members: { limit_max: 500 },
+  },
 }
 ```
 
@@ -760,15 +789,14 @@ class Api::MoviesController < ApiController
   self.fields = {
     only: [ :id, :name, :release_date, :summary, :enabled ],
     include: [ :director, :cast_members, :is_featured, :poster ],
-  }
-
-  self.field_config = {
-    name:         { required: true, label: "Title" },
-    summary:      { hidden_from_index: true },
-    director:     { fields: [ :id, :name, :date_of_birth ] },
-    cast_members: { fields: [ :id, :name, :net_worth ] },
-    is_featured:  { read_only: true },
-    poster:       { required: true },
+    config: {
+      name:         { required: true, label: "Title" },
+      summary:      { hidden_from_index: true },
+      director:     { fields: [ :id, :name, :date_of_birth ] },
+      cast_members: { fields: [ :id, :name, :net_worth ] },
+      is_featured:  { read_only: true },
+      poster:       { required: true },
+    },
   }
 
   self.read_only_fields = [ :id, :created_at, :updated_at ]
@@ -887,8 +915,7 @@ attributes — see [Extra Actions](#extra-actions) and
 
 | Attribute                  | Default  | Purpose                                                                                   |
 | -------------------------- | -------- | ----------------------------------------------------------------------------------------- |
-| `fields`                   | `nil`    | Fields exposed by the controller. `nil` means all columns + associations.                 |
-| `field_config`             | `nil`    | Per-field overrides (`read_only`, `hidden`, `label`, etc.). See [Fields](#fields).        |
+| `fields`                   | `nil`    | Fields exposed by the controller (membership + per-field `config`). `nil` means all columns + associations. See [Fields](#fields). |
 | `read_only_fields`         | (global) | Fields treated as read-only (excluded from allowed params).                               |
 | `write_only_fields`        | (global) | Fields treated as write-only (excluded from serialization).                               |
 | `hidden_fields`            | `nil`    | Fields excluded from serialization unless explicitly requested via the query params.      |

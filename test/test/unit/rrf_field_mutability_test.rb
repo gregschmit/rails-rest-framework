@@ -1,15 +1,14 @@
 require "test_helper"
 
-# `field_configuration` read_only/write_only precedence: an explicit `read_only`/`write_only` (in
-# `field_config`, or a write_only via the `write_only_fields` config) wins over the framework's
+# `field_configuration` read_only/write_only precedence: an explicit `read_only`/`write_only` (in a
+# field's `config`, or a write_only via the `write_only_fields` config) wins over the framework's
 # defaults. Notably the method-field read-only default must not force `read_only: true` onto a
 # write_only field (which would leave it neither serialized nor writable).
 class RRFFieldMutabilityTest < ActiveSupport::TestCase
-  def cfg_for(field, fields:, field_config: {}, write_only_fields: nil)
+  def cfg_for(field, fields:, config: {}, write_only_fields: nil)
     klass = Class.new(Api::TestController) do
       self.model = User
-      self.fields = fields
-      self.field_config = field_config
+      self.fields = { only: fields, config: config }
     end
     klass.write_only_fields = write_only_fields if write_only_fields
     klass.field_configuration[field.to_s]
@@ -25,7 +24,7 @@ class RRFFieldMutabilityTest < ActiveSupport::TestCase
     cfg = cfg_for(
       :calculated_property,
       fields: %w[id calculated_property],
-      field_config: { calculated_property: { write_only: true } },
+      config: { calculated_property: { write_only: true } },
     )
     assert(cfg[:write_only])
     assert_nil(cfg[:read_only], "write_only should suppress the method read-only default")
@@ -35,7 +34,7 @@ class RRFFieldMutabilityTest < ActiveSupport::TestCase
     cfg = cfg_for(
       :calculated_property,
       fields: %w[id calculated_property],
-      field_config: { calculated_property: { read_only: false } },
+      config: { calculated_property: { read_only: false } },
     )
     assert_equal(false, cfg[:read_only])
   end
@@ -55,7 +54,7 @@ class RRFFieldMutabilityTest < ActiveSupport::TestCase
     cfg = cfg_for(
       :created_at,
       fields: %w[id created_at],
-      field_config: { created_at: { read_only: false } },
+      config: { created_at: { read_only: false } },
     )
     assert_equal(false, cfg[:read_only])
   end
