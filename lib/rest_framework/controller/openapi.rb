@@ -183,11 +183,11 @@ module RESTFramework::Controller
           v[:writeOnly] = true if cfg[:write_only]
           v[:default] = cfg[:default] if cfg.key?(:default)
 
-          if options = cfg[:options]
-            # A strict JSON-Schema `enum` only for true enums; `x-rrf-options` carries the choices
-            # for any field (an enum, or e.g. a string column with configured `options`).
+          if (options = cfg[:options]).present?
+            # Emit `oneOf` for options, but also emit `enum` for true ActiveRecord enums, since some
+            # older tooling reads `enum` but not `oneOf`.
+            v[:oneOf] = options.map { |value, label| { const: value, title: label } }
             v[:enum] = options.keys if cfg[:enum]
-            v[:"x-rrf-options"] = options
           end
 
           if validators = cfg[:validators]

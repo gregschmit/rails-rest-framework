@@ -53,7 +53,11 @@ with `"Controller"` stripped and `"::"` replaced with `"."` — so `Api::MoviesC
 - `readOnly` — `true` when the field is marked read-only (primary keys, fields in
   `read_only_fields`, method fields, or fields with `read_only: true` in their `config`).
 - `default` — default from the schema or the field's `config`.
-- `enum` — the allowed values, only when the column is a true ActiveRecord enum.
+- `oneOf` — a list of `{ const, title }` choices (value + display label) for any field with
+  `options` (a true ActiveRecord enum, or a field with `options` configured), so each value carries
+  a human-readable label (which a bare `enum` can't).
+- `enum` — the allowed values, emitted for true ActiveRecord enums *in addition to* `oneOf`, since
+  some older tooling reads `enum` but not `oneOf`.
 - `required` — fields inferred from `null: false` or presence validators land in the schema's
   top-level `required` array.
 
@@ -69,7 +73,6 @@ browsable-API clients and tools that want to consume the full field metadata.
 | `x-rrf-kind`                         | `"column"`, `"association"`, `"method"`, `"attribute"`, `"rich_text"`, or `"attachment"`.   |
 | `x-rrf-rich_text`                    | `true` when the field is an Action Text rich text attribute.                                |
 | `x-rrf-attachment`                   | `:has_one_attached` or `:has_many_attached` for Active Storage attachments.                 |
-| `x-rrf-options`                      | Full `{ value => label }` choice map for the field (enums, or any field with configured `options`); standard `enum` only lists the values, and only for true enums. |
 | `x-rrf-validators`                   | Hash of validator kind → array of option hashes, for every model-level validator.           |
 | `x-rrf-reflection`                   | Association metadata: `class_name`, `foreign_key`, `association_foreign_key`, `association_primary_key`, `inverse_of`, `join_table`. |
 | `x-rrf-association_pk`               | The primary key of the associated class.                                                    |
