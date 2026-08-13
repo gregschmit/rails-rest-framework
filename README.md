@@ -253,12 +253,16 @@ See the guide for details on each item.
       array).
 - [ ] Rename config: `sub_fields` → `fields`, `native_serializer_associations_limit[_max]` →
       `association_limit[_max]`, `native_serializer_include_associations_count` →
-      `include_association_count`; the `?associations_limit=N` param is gone.
+      `include_association_count`, `native_serializer_{only,except,include,exclude}_query_param` →
+      `{only,except,include,exclude}_query_param`; the `?associations_limit=N` param is gone.
 - [ ] Move `field_config` into `fields`: it's now the `config:` key of the `fields` hash
       (`self.fields = { only: [...], config: { email: { label: "Email Address" } } }`). A field
       named in `config:` is implicitly part of the set. An association's `fields:` takes the same
       spec form (an array, or an `only:`/`include:`/`exclude:`/`config:` hash), replacing the old
       nested `field_config:` key.
+- [ ] Replace the `native_serializer_config` / `native_serializer_singular_config` /
+      `native_serializer_plural_config` attributes with a custom `serializer_class` — a
+      `NativeSerializer` subclass carrying `config` / `singular_config` / `plural_config`.
 - [ ] Note client-visible behavior changes: delegated actions wrap their result under a `return`
       key; a non-permitted `find_by` returns `404`; `update_all` / `destroy_all` are plural-only;
       ordering/pagination read from the query string only.

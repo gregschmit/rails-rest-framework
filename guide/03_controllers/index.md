@@ -972,13 +972,10 @@ See the [Serializers](../04_serializers/) section for full details.
 
 | Attribute                                         | Default            | Purpose                                                                    |
 | ------------------------------------------------- | ------------------ | -------------------------------------------------------------------------- |
-| `native_serializer_config`                        | `nil`              | Default config for `NativeSerializer`.                                     |
-| `native_serializer_singular_config`               | `nil`              | Config used for single-record responses.                                   |
-| `native_serializer_plural_config`                 | `nil`              | Config used for collection responses.                                      |
-| `native_serializer_only_query_param`              | `"only"`           | Query param to limit serialized fields.                                    |
-| `native_serializer_except_query_param`            | `"except"`         | Query param to omit serialized fields.                                     |
-| `native_serializer_include_query_param`           | `"include"`        | Query param to reveal `hidden` fields.                                     |
-| `native_serializer_exclude_query_param`           | `"exclude"`        | Query param to exclude specific fields.                                    |
+| `only_query_param`                                | `"only"`           | Query param to limit serialized fields.                                    |
+| `except_query_param`                              | `"except"`         | Query param to omit serialized fields.                                     |
+| `include_query_param`                             | `"include"`        | Query param to reveal `hidden` fields.                                     |
+| `exclude_query_param`                             | `"exclude"`        | Query param to exclude specific fields.                                    |
 | `association_limit`                       | `10`               | Default number of records serialized per collection association (`nil` = unlimited). |
 | `association_limit_max`                   | `100`              | Ceiling a consumer may raise a per-association `limit` to (`nil` = uncapped; `limit=all` yields the cap). |
 | `include_association_count`                       | `false`            | Add a `<assoc>.count` field for each collection association.               |

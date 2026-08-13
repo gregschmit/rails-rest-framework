@@ -34,43 +34,16 @@ under the hood. Its config is the same hash you would pass to `serializable_hash
 }
 ```
 
-You can configure the serializer in three ways, in order of precedence:
+You can configure the serializer in two ways, in order of precedence:
 
-1. Inline on the controller via `native_serializer_config` /
-   `native_serializer_singular_config` / `native_serializer_plural_config`.
-2. By writing a `NativeSerializer` subclass and pointing `serializer_class` at it.
-3. Implicitly — by leaving serializer config blank and just using `fields`.
+1. By writing a `NativeSerializer` subclass and pointing `serializer_class` at it.
+2. Implicitly — by leaving serializer config blank and just using `fields`.
 
-### Inline Controller Configuration
+### Serializer Class
 
-`native_serializer_config` is used for both single-record and collection responses. Add
-`native_serializer_singular_config` and/or `native_serializer_plural_config` to differentiate:
-
-```ruby
-class Api::MoviesController < ApiController
-  self.model = Movie
-
-  self.native_serializer_config = {
-    only: [ :id, :name ],
-    methods: [ :active ],
-    include: { cast_members: { only: [ :id, :name ] } },
-  }
-
-  # Add extra detail on `show`.
-  self.native_serializer_singular_config = {
-    only: [ :id, :name ],
-    methods: [ :active, :some_expensive_computed_property ],
-    include: {
-      cast_members: { only: [ :id, :name ], methods: [ :net_worth ] },
-    },
-  }
-end
-```
-
-### Reusable Serializer Class
-
-Define a subclass of `RESTFramework::NativeSerializer` when you want to reuse a configuration
-across controllers, or when you want to nest serializers cleanly:
+Define a subclass of `RESTFramework::NativeSerializer` when you want to shape output beyond what
+`fields` gives you — different config per single/collection response, reuse across controllers, or
+cleanly nested serializers:
 
 ```ruby
 class CastMemberSerializer < RESTFramework::NativeSerializer

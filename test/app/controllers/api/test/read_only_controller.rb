@@ -6,9 +6,14 @@ class Api::Test::ReadOnlyController < Api::TestController
     self.config = { only: [ :login, :age, :balance ] }
   end
 
-  self.native_serializer_config = { include: { manager: { only: [ :login, :age, :balance ] } } }
-  self.native_serializer_singular_config = {
-    include: { manager: SingularManagerSerializer },
-    methods: [ :calculated_property ],
-  }
+  # `config` is the default (used for collections here); `singular_config` adds detail on `show`.
+  class Serializer < RESTFramework::NativeSerializer
+    self.config = { include: { manager: { only: [ :login, :age, :balance ] } } }
+    self.singular_config = {
+      include: { manager: SingularManagerSerializer },
+      methods: [ :calculated_property ],
+    }
+  end
+
+  self.serializer_class = Serializer
 end

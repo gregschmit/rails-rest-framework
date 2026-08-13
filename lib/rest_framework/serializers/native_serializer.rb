@@ -44,10 +44,10 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     return @fields if defined?(@fields)
     return nil unless base_fields = @controller&.get_fields
 
-    only_param = @controller.class.native_serializer_only_query_param
-    except_param = @controller.class.native_serializer_except_query_param
-    include_param = @controller.class.native_serializer_include_query_param
-    exclude_param = @controller.class.native_serializer_exclude_query_param
+    only_param = @controller.class.only_query_param
+    except_param = @controller.class.except_query_param
+    include_param = @controller.class.include_query_param
+    exclude_param = @controller.class.exclude_query_param
 
     only = EXTRACT_FROM_QUERY.call(only_param, @controller)
     except = EXTRACT_FROM_QUERY.call(except_param, @controller)
@@ -96,19 +96,6 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
 
     # Lastly, try returning the default config.
     self.config
-  end
-
-  # Get a native serializer configuration from the controller.
-  def get_controller_native_serializer_config
-    return nil unless @controller
-
-    if @many == true
-      controller_serializer = @controller.class.native_serializer_plural_config
-    elsif @many == false
-      controller_serializer = @controller.class.native_serializer_singular_config
-    end
-
-    controller_serializer || @controller.class.native_serializer_config
   end
 
   # The record cap for a collection association (`nil` = unlimited). The default is applied even
@@ -356,11 +343,6 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
     # Return a locally defined serializer config if one is defined.
     if local_config = self.get_local_native_serializer_config
       return local_config.deep_dup
-    end
-
-    # Return a serializer config if one is defined on the controller.
-    if serializer_config = self.get_controller_native_serializer_config
-      return serializer_config.deep_dup
     end
 
     # If the config wasn't determined, build a serializer config from controller fields.

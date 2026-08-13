@@ -41,14 +41,11 @@ module RESTFramework::Controller
     # Handling request body parameters.
     allowed_parameters: nil,
 
-    # Options for the default native serializer.
-    native_serializer_config: nil,
-    native_serializer_singular_config: nil,
-    native_serializer_plural_config: nil,
-    native_serializer_only_query_param: "only".freeze,
-    native_serializer_except_query_param: "except".freeze,
-    native_serializer_include_query_param: "include".freeze,
-    native_serializer_exclude_query_param: "exclude".freeze,
+    # Query params for the default native serializer's field selection.
+    only_query_param: "only".freeze,
+    except_query_param: "except".freeze,
+    include_query_param: "include".freeze,
+    exclude_query_param: "exclude".freeze,
 
     # Options for including associations and collection counts.
     exclude_associations: false,
@@ -474,17 +471,14 @@ module RESTFramework::Controller
     # The fields a consumer may request for an association beyond its defaults, derived from the
     # associated model's sibling controller: what that controller serializes, so the association can
     # never expose more than its own endpoint would. Empty unless the sibling is discoverable and
-    # introspectable — a custom serializer makes its `get_fields` meaningless. Hidden fields are
-    # included (retrievable via `?only=` there); write-only fields and nested associations aren't.
+    # introspectable — a custom `serializer_class` makes its `get_fields` meaningless. Hidden fields
+    # are included (retrievable via `?only=` there); write-only and nested associations aren't.
     def association_requestable_fields(ref)
       return [] if ref.polymorphic?
 
       sibling = RESTFramework::Utils.controller_for_model(self, ref.klass)
       return [] unless sibling
-      return [] if sibling.serializer_class ||
-        sibling.native_serializer_config ||
-        sibling.native_serializer_singular_config ||
-        sibling.native_serializer_plural_config
+      return [] if sibling.serializer_class
 
       cfg = sibling.field_configuration
       sibling.get_fields.reject { |sf|
