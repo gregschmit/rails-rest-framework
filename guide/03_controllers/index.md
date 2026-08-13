@@ -23,8 +23,7 @@ end
 > (pagination, filter backends, serializer config, etc.), wrap the assignment in a
 > `propagate` block on a base controller.
 
-Including `Controller` by itself gives you a "base" controller — no CRUD actions are exposed, but
-you get:
+Including `Controller` by itself gives you a "base" controller; you get:
 
 - The `api` renderer (and the `render_api` helper) that powers the browsable API.
 - A default `index_content` — rendered at the index of a modelless controller — for a simple root.

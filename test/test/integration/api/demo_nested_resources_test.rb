@@ -2,7 +2,7 @@ require "test_helper"
 
 # Two nested-resource patterns in the demo API:
 # - `/movies/:movie_id/genres` reuses the top-level `Api::Demo::GenresController` (no dedicated
-#   controller) and is auto-scoped to the movie's genres via `scope_nested_by_parent`.
+#   controller) and is auto-scoped to the movie's genres by the default `get_recordset`.
 # - `/users/:user_id/movies` targets a dedicated `Api::Demo::Users::MoviesController`, reached by a
 #   `scope(module: :users)` since `rest_resources` resolves the controller in the current scope.
 class Api::DemoNestedResourcesTest < ActionDispatch::IntegrationTest

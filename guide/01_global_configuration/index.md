@@ -1,10 +1,10 @@
 # Global Configuration
 
 Almost all REST Framework behavior is configured on individual controllers via class attributes,
-because different APIs in the same codebase often need different behavior. A small set of
-settings, however, are truly global — either because they're read at gem-load time, because they
-affect things outside the controller pipeline, or because they provide the defaults that
-controller-level attributes inherit from.
+because different APIs in the same codebase often need different behavior. A small set of settings,
+however, are truly global — either because they're read at gem-load time, because they affect things
+outside the controller pipeline, or because they provide the defaults that controller-level
+attributes inherit from.
 
 These live under `RESTFramework.config` and are set in an initializer:
 

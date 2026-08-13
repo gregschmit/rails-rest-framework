@@ -145,14 +145,13 @@ work). This follows the **whole chain** when nested more than one level deep —
 Only path parameters drive this, so a client can't forge scoping via the query string.
 
 Each parent is looked up through **its own controller's `get_recordset`** (the sibling controller
-found by model, the same discovery used for association fields), so a parent the current user can't
-reach simply isn't found — access scoping is enforced at every level, existence-hiding style. This
-requires the parent controller's `get_recordset` to be derivable from the request (the usual
-`current_user`); set `scope_nested_through_controllers = false` to look parents up directly on the
-model instead.
+found by model, the same discovery used for association fields) when one exists, so a parent the
+current user can't reach simply isn't found — access scoping is enforced at every level,
+existence-hiding style. When no sibling controller is found, the parent is looked up directly on the
+model.
 
-Override `get_recordset` to take full control, or set `scope_nested_by_parent = false` to disable
-the auto-scoping entirely.
+Override `get_recordset` to take full control of the scope (including disabling the parent
+auto-scoping entirely).
 
 ## Non-model Routing
 

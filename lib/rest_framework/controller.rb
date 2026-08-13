@@ -53,19 +53,9 @@ module RESTFramework::Controller
     exclude_associations: false,
     include_association_count: false,
 
-    # The number of records serialized per collection association, so responses are bounded out of
-    # the box (`nil` = unlimited). With `enable_association_queries`, a client can raise it for a
-    # given association via `?<prefix>.<name>.limit=N` or `limit=all` (`none`/`0` are aliases), both
-    # capped at `association_limit_max` (the "all" forms yield the cap). Set the max to `nil` to let
-    # a client request unlimited records.
+    # Options for association serialization.
     association_limit: 10,
     association_limit_max: 100,
-
-    # Let clients request extra fields for a serialized association via
-    # `?<prefix>.<association>.fields=a,b,c`. The allowlist keeps an association from ever exposing
-    # more than its own endpoint would: an explicit per-association `requestable_fields` in
-    # `field_config`, else the fields the associated model's sibling controller serializes.
-    # Off/secure by default.
     enable_association_queries: false,
     association_query_prefix: "associations".freeze,
 
@@ -94,10 +84,6 @@ module RESTFramework::Controller
 
     # Option for `recordset.create` vs `Model.create` behavior.
     create_from_recordset: true,
-
-    # Options for scoped nested routing.
-    scope_nested_by_parent: true,
-    scope_nested_through_controllers: true,
 
     # Options related to serialization.
     rescue_unknown_format_with: :json,
@@ -926,13 +912,14 @@ module RESTFramework::Controller
   # `Movie.find(movie_id).genres.find(genre_id).tracks`. Every link is enforced (a broken one raises
   # `RecordNotFound` -> 404), and each association is resolved from its parent, so `belongs_to`,
   # `has_many`, and `has_and_belongs_to_many` children all work. Each parent is looked up via its
-  # own controller's recordset (see `scope_nested_through_controllers`), so per-level access scoping
-  # is enforced. Returns `nil` when there is no nested parent, or a `<name>_id` param can't connect.
+  # own controller's recordset, so per-level access scoping is enforced. Returns `nil` when there is
+  # no nested parent, or a `<name>_id` param can't connect. Override `get_recordset` to scope
+  # differently.
   def _rrf_nested_parent_recordset
     # Set on an ad-hoc parent instance below, so evaluating a parent's `get_recordset` doesn't
     # recurse back into nested scoping (we want the parent's own scope, not to re-nest it).
     return nil if @_rrf_scoping_parent
-    return nil unless self.class.scope_nested_by_parent && request
+    return nil unless request
 
     # `<name>_id` path parameters that name a model, in route order (outermost parent first).
     parents = request.path_parameters.filter_map { |key, value|
@@ -970,11 +957,9 @@ module RESTFramework::Controller
   end
 
   # A parent's recordset for the nested-scope walk: its own controller's `get_recordset` (so that
-  # controller's access scoping is reused), or the bare model when the feature is off or no sibling
-  # controller is found. The ad-hoc instance shares this request and skips its own nested scoping.
+  # controller's access scoping is reused), or the bare model when no sibling controller is found.
+  # The ad-hoc instance shares this request and skips its own nested scoping.
   def _rrf_parent_recordset(model)
-    return model.all unless self.class.scope_nested_through_controllers
-
     controller = RESTFramework::Utils.controller_for_model(self.class, model)
     return model.all unless controller
 

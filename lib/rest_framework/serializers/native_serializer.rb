@@ -116,17 +116,15 @@ class RESTFramework::Serializers::NativeSerializer < RESTFramework::Serializers:
   # `field_config` override so an explicit `nil` there means unlimited/uncapped rather than falling
   # back to the controller default.
   def _effective_association_limit(association_name, field_config)
-    controller = @controller&.class
+    klass = @controller&.class
 
-    default = field_config.key?(:limit) ?
-      field_config[:limit] : controller&.association_limit
-    return default unless controller&.enable_association_queries
+    default = field_config.key?(:limit) ? field_config[:limit] : klass&.association_limit
+    return default unless klass&.enable_association_queries
 
     requested = self._requested_association_limit(association_name)
     return default if requested.nil?
 
-    max = field_config.key?(:limit_max) ?
-      field_config[:limit_max] : controller.association_limit_max
+    max = field_config.key?(:limit_max) ? field_config[:limit_max] : klass.association_limit_max
 
     # `all` means "as many as allowed" — the cap, or unlimited when the cap is `nil`.
     return max if requested == :all
