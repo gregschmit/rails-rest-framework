@@ -1,7 +1,7 @@
 # OpenAPI
 
 REST Framework auto-generates an OpenAPI document for every controller, reflecting the
-real configuration that drives the API: `fields` (membership and per-field `config`), validators, enum variants,
+real configuration that drives the API: `fields` (membership and per-field `config`), validators, field options,
 association metadata, rich-text and attachment fields, bulk support, and more. The document is
 served from the controller's `OPTIONS` endpoint — no extra setup, no drift between spec and
 behavior.
@@ -53,7 +53,7 @@ with `"Controller"` stripped and `"::"` replaced with `"."` — so `Api::MoviesC
 - `readOnly` — `true` when the field is marked read-only (primary keys, fields in
   `read_only_fields`, method fields, or fields with `read_only: true` in their `config`).
 - `default` — default from the schema or the field's `config`.
-- `enum` — enum key names, when the column is an ActiveRecord enum.
+- `enum` — the allowed values, only when the column is a true ActiveRecord enum.
 - `required` — fields inferred from `null: false` or presence validators land in the schema's
   top-level `required` array.
 
@@ -69,7 +69,7 @@ browsable-API clients and tools that want to consume the full field metadata.
 | `x-rrf-kind`                         | `"column"`, `"association"`, `"method"`, `"attribute"`, `"rich_text"`, or `"attachment"`.   |
 | `x-rrf-rich_text`                    | `true` when the field is an Action Text rich text attribute.                                |
 | `x-rrf-attachment`                   | `:has_one_attached` or `:has_many_attached` for Active Storage attachments.                 |
-| `x-rrf-enum_variants`                | Full map of enum name → database value (standard `enum` only lists keys).                   |
+| `x-rrf-options`                      | Full `{ value => label }` choice map for the field (enums, or any field with configured `options`); standard `enum` only lists the values, and only for true enums. |
 | `x-rrf-validators`                   | Hash of validator kind → array of option hashes, for every model-level validator.           |
 | `x-rrf-reflection`                   | Association metadata: `class_name`, `foreign_key`, `association_foreign_key`, `association_primary_key`, `inverse_of`, `join_table`. |
 | `x-rrf-association_pk`               | The primary key of the associated class.                                                    |

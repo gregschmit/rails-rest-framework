@@ -505,7 +505,7 @@ the model's schema and validators.
 | `required`                   | Mark the field as required in metadata (inferred from `null: false` / presence validators).    |
 | `default`                    | Default value (inferred from the schema).                                                       |
 | `type`                       | The field's type (inferred from columns/attributes).                                            |
-| `enum_variants`              | For enum columns, a map of value to database representation.                                    |
+| `options`                    | Choices for the field, as a `{ value => label }` map. Auto-derived for enum columns; set it yourself on any field (e.g. a string column). |
 | `fields`                     | For associations, a nested field spec (same form as top-level `fields`). See [Association Fields](#association-fields). |
 | `id_field`                   | For associations, the scalar id field (e.g., `user_id`, `tag_ids`).                             |
 | `nested_attributes_options`  | Passed through for `accepts_nested_attributes_for` associations.                                |
@@ -545,7 +545,7 @@ of fields without writing out a full `config`.
 ### Computing the Full Field Configuration
 
 At runtime the framework merges the per-field `config` with data it infers from the model — columns,
-attribute defaults, reflections, validators, primary-key info, enum variants, Action Text /
+attribute defaults, reflections, validators, primary-key info, field options, Action Text /
 Active Storage reflections — into a single hash available as `field_configuration`:
 
 ```ruby

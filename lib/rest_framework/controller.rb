@@ -327,9 +327,13 @@ module RESTFramework::Controller
           if type = attribute.type
             cfg[:type] ||= type.type if type.type
 
-            # Get enum variants.
+            # Mark true enums so OpenAPI can emit a strict `enum`. The variants also populate the
+            # general `options` map (which a non-enum field can provide via its `config`), inverted
+            # to `{ stored_value => label }` so the key is the option and the value is its display
+            # form. A user-provided `options` takes precedence.
             if type.is_a?(ActiveRecord::Enum::EnumType)
-              cfg[:enum_variants] = type.send(:mapping)
+              cfg[:enum] = true
+              cfg[:options] ||= type.send(:mapping).invert
 
               # TranslateEnum Integration:
               translate_method = "translated_#{f.pluralize}"
