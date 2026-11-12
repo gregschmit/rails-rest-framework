@@ -91,6 +91,9 @@ GEM
     brakeman (8.1.0)
       racc
     builder (3.3.0)
+    bullet (8.3.1)
+      activesupport (>= 3.0.0)
+      uniform_notifier (~> 1.11)
     byebug (13.0.0)
       reline (>= 0.6.0)
     cloudflare-rails (7.0.0)
@@ -360,6 +363,7 @@ GEM
     unicode-display_width (3.3.0)
       unicode-emoji (~> 4.3)
     unicode-emoji (4.3.0)
+    uniform_notifier (1.18.1)
     uri (1.1.2)
     useragent (0.16.11)
     web-console (4.3.0)
@@ -381,6 +385,7 @@ PLATFORMS
 
 DEPENDENCIES
   brakeman
+  bullet
   byebug
   cloudflare-rails
   debug

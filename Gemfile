@@ -23,6 +23,9 @@ gem "rails", RAILS_VERSION
 gem "rake"
 gem "sqlite3", RAILS_VERSION >= Gem::Version.new("8") ? ">= 2" : "~> 1.4"
 
+# json 3 rejects the `quirks_mode` option that Rails <8.1 passes to `JSON.generate`.
+gem "json", "< 3" if RAILS_VERSION < Gem::Version.new("8.1")
+
 gem "faker"
 gem "rack-cors"
 
@@ -93,7 +96,8 @@ group :development do
   # Profiling
   gem "rack-mini-profiler"
 
-  if RAILS_VERSION <= Gem::Version.new("7.2")
+  # Bullet drops old Rails versions quickly, so only load it on the official Ruby/Rails.
+  if RUNNING_OFFICIAL_RUBY_RAILS
     gem "bullet"
   end
 end
