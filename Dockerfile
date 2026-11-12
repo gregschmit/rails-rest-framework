@@ -1,4 +1,4 @@
-FROM ruby:3.2.2-bookworm AS base
+FROM ruby:3.2.11-bookworm AS base
 LABEL org.opencontainers.image.source=https://github.com/gregschmit/rails-rest-framework
 WORKDIR /app
 ENV BUNDLE_PATH="/usr/local/bundle"
