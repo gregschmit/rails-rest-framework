@@ -43,6 +43,13 @@ class RRFActionsTest < Minitest::Test
     assert_includes(c.actions.keys, :destroy_all)
   end
 
+  def test_singular_model_controller_has_no_bulk_builtins
+    c = controller { self.model = User; self.singular = true; self.bulk = true }
+
+    refute_includes(c.actions.keys, :update_all)
+    refute_includes(c.actions.keys, :destroy_all)
+  end
+
   def test_singular_model_controller_has_no_index
     c = controller { self.model = User; self.singular = true }
 

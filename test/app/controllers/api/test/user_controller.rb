@@ -6,6 +6,8 @@ class Api::Test::UserController < Api::TestController
   end
 
   self.singular = true
+  # Bulk is set only to prove a singular controller ignores it.
+  self.bulk = true
   self.fields = %w[login is_admin balance]
   # Singular controller: `add_action` is a member action, so `delegate` targets the record.
   add_action(:delegated, :get, metadata: { delegate: true })

@@ -1,7 +1,8 @@
 module RESTFramework::Controller
   def create
     # Bulk create: if `bulk` is enabled and the request body is an array, delegate to `create_all`.
-    if self.class.bulk && params[:_json].is_a?(Array)
+    # Singular controllers never bulk, like they never route `update_all` / `destroy_all`.
+    if self.class.bulk && !self.class.singular && params[:_json].is_a?(Array)
       return self.create_all
     end
 

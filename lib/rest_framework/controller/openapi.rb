@@ -152,7 +152,7 @@ module RESTFramework::Controller
         # While bulk update/destroy are obvious because they create new router endpoints, bulk
         # create overloads the existing collection `POST` endpoint, so we add a special key to the
         # OpenAPI metadata to indicate bulk create is supported.
-        "x-rrf-bulk-create": self.bulk,
+        "x-rrf-bulk-create": self.singular ? false : self.bulk,
       } : {}).compact
     end
 
