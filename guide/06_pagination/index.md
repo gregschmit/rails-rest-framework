@@ -101,6 +101,9 @@ filters and ordering are preserved when paging. For example, paginating
 `/api/movies?genre=scifi&ordering=-year` returns `next` URLs that keep `genre=scifi` and
 `ordering=-year`.
 
+Only the page param changes. The URLs also keep the request's host, path, and format (a `.json`
+extension or `?format=json`), so `next` returns the same kind of response from the same endpoint.
+
 ## Turning Pagination Off for a Controller
 
 Since pagination is on by default, set `paginator_class = nil` to disable it. The `index` action

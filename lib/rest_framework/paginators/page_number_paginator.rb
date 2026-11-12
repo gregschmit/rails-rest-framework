@@ -72,29 +72,23 @@ class RESTFramework::Paginators::PageNumberPaginator < RESTFramework::Paginators
     @data.limit(@page_size).offset(offset)
   end
 
+  # Build the URL for `page_number` from the current request, changing only the page param. Avoid
+  # `url_for`: it reads query params as routing options, so it drops the format, takes the host from
+  # `default_url_options`, and treats `controller`/`action` params as route directives.
+  def _page_url(page_number)
+    request = @controller.request
+    query = request.query_parameters.merge(
+      @controller.class.page_query_param => page_number.to_s,
+    )
+
+    "#{request.base_url}#{request.path}?#{query.to_query}"
+  end
+
   # Wrap the serialized page with appropriate metadata.
   def get_paginated_response(serialized_page)
-    page_query_param = @controller.class.page_query_param
-    request = @controller.request
-    base_params = request.query_parameters.symbolize_keys
-
-    # Anchor next/previous to the request's own scheme/host/port so they point back at the same
-    # endpoint the client is using — even when the app's `default_url_options` host differs from the
-    # request host (e.g. an API served on a subdomain), which `url_for` would otherwise emit.
-    host_options = {
-      only_path: false,
-      protocol: request.protocol,
-      host: request.host,
-      port: request.optional_port,
-    }
-
     has_next = @total_count ? @page_number < @total_pages : @has_next
-    next_url = if has_next
-      @controller.url_for({ **base_params, page_query_param => @page_number + 1, **host_options })
-    end
-    previous_url = if @page_number > 1
-      @controller.url_for({ **base_params, page_query_param => @page_number - 1, **host_options })
-    end
+    next_url = self._page_url(@page_number + 1) if has_next
+    previous_url = self._page_url(@page_number - 1) if @page_number > 1
 
     {
       count: @count,
